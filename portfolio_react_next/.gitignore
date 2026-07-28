@@ -1,0 +1,36 @@
+# 의존성
+node_modules/
+.pnpm-store/
+
+# 빌드 산출물 (제출물에서 제외되어야 하는 자동 생성 디렉토리)
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# 테스트/커버리지
+coverage/
+playwright-report/
+test-results/
+
+# 환경변수
+.env
+.env.local
+.env.*.local
+
+# 로그
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 에디터 / OS / 로컬 도구
+.vscode/
+.idea/
+.claude/
+.DS_Store
+*.swp
+
+# TypeScript 증분 빌드 정보
+*.tsbuildinfo
+next-env.d.ts

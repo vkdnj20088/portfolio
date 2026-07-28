@@ -1,0 +1,229 @@
+/*
+ * 한 메시지 = 2행 그리드. 1행은 [시간 | 말풍선](명세의 시간 위치 - 사용자 우측/
+ * AI 좌측), 2행은 말풍선 아래의 액션(복사·피드백·재생성)이다.
+ *
+ * 액션을 말풍선 "옆"에 두면 숨김(opacity 0)이어도 자리는 차지해 - 버튼 서너 개면
+ * 200px 이 넘는다 - 말풍선 폭을 상시 압박한다(좁은 창에서 한 글자 세로 줄까지 실측).
+ * 아래 행으로 내리면 액션은 말풍선 폭과 무관하고, 자리를 상시 확보하므로
+ * hover 로 드러나도 주변 메시지가 밀리지 않는다.
+ */
+.row {
+  display: grid;
+  column-gap: var(--space-2);
+  row-gap: var(--space-1);
+  /* 검색 결과로 이동해 올 때(scrollIntoView) 목록 위/아래 끝에 딱 붙지 않게 여유를 둔다. */
+  scroll-margin: var(--space-4);
+}
+
+/* 사용자: 말풍선 우측 정렬, 시간은 말풍선 오른쪽(바깥), 액션은 말풍선 아래 */
+.user {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'body time'
+    'actions .';
+  justify-items: end;
+}
+
+/* AI: 좌측 정렬, 시간은 말풍선 왼쪽(바깥), 액션은 말풍선 아래 */
+.assistant {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'time body'
+    '. actions';
+  justify-items: start;
+}
+
+/* 사용자 메시지는 말풍선이 곧 본문 칸이다(AI 는 화자 열이 칸을 맡는다) */
+.user .bubble {
+  grid-area: body;
+}
+
+.bubble {
+  max-width: min(72%, 560px);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+}
+
+/* ── AI 화자 표시(STEP 10) - 이름/말풍선을 한 열로 묶어 왼쪽 라인을 맞춘다 ── */
+.assistantBody {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: min(72%, 560px);
+}
+
+/* 폭 상한은 열(assistantBody)이 갖는다 - 말풍선은 열 안에서만 자란다 */
+.assistantBody .bubble {
+  max-width: 100%;
+}
+
+.assistantMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  /* 텍스트가 얹히지 않는 그래픽 - 순수 브랜드 색을 쓰는 자리다(STEP 7 기준) */
+  background-color: var(--color-brand);
+  color: #ffffff;
+}
+
+.name {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.user .bubble {
+  background-color: var(--color-bubble-user);
+  color: var(--color-bubble-user-text);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.assistant .bubble {
+  background-color: var(--color-bubble-assistant);
+  color: var(--color-bubble-assistant-text);
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.text {
+  /* 입력의 줄바꿈을 살리되 긴 토큰(URL 등)은 말풍선 안에서 꺾는다 */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+}
+
+.text + .text {
+  margin-top: var(--space-2);
+}
+
+/* 코드 조각(STEP 12) - parts 유니온 확장의 실증. 넓은 코드는 말풍선 안에서 자체 스크롤한다 */
+.codeBlock {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.text + .codeBlock,
+.codeBlock + .text {
+  margin-top: var(--space-2);
+}
+
+.time {
+  grid-area: time;
+  /* 1행 높이는 말풍선(본문 칸)이 정하므로 end 정렬 = 말풍선 하단 라인이다 */
+  align-self: end;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  padding-bottom: 2px;
+}
+
+/* 보조 동작 - 평소엔 숨기고 hover/키보드 포커스에서 드러낸다(사이드바와 같은 문법).
+   자리는 상시 확보돼 있어(2행) 드러나는 순간에도 레이아웃이 밀리지 않는다. */
+.actions {
+  grid-area: actions;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.row:hover .actions,
+.row:focus-within .actions {
+  opacity: 1;
+}
+
+/* hover 라는 계기가 없는 입력 환경(터치)에서는 항상 드러낸다 */
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
+}
+
+/* 평가된 메시지(STEP 11) - 저장된 상태가 hover 없이도 보이도록 상시 노출 */
+.actionsPinned {
+  opacity: 1;
+}
+
+/*
+ * ── 모바일(STEP 14) - 시간을 말풍선 아래 행으로 ──────────────────────────
+ * 고정 포맷 시간(YYYY-MM-DD HH:mm, 107px)이 좁은 화면에서는 본문 행의 4할을
+ * 차지해 말풍선이 화면의 3할까지 눌린다(375px 실측 112px). 시간을 아래 행으로
+ * 내리고 폭 상한을 86% 로 올려 말풍선이 본문답게 넓어진다. 명세의 좌/우
+ * 구분은 정렬 방향으로 유지되고(사용자 우측 정렬/AI 좌측 정렬), 참고
+ * 와이어프레임 역시 좁은 화면에서 시간을 말풍선 아래에 그린다.
+ */
+@media (max-width: 640px) {
+  .user,
+  .assistant {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'body'
+      'time'
+      'actions';
+  }
+
+  /* 옆 배치용 하단 라인 맞춤이 더는 필요 없다 */
+  .time {
+    align-self: auto;
+    padding-bottom: 0;
+  }
+
+  .assistantBody,
+  .user .bubble {
+    max-width: min(86%, 560px);
+  }
+}
+
+/*
+ * 검색 결과에서 이동해 온 메시지 표시(STEP 16).
+ * 색만으로 알리지 않는다 - 테두리와 배경을 함께 바꿔 고대비/흑백에서도 어디로 왔는지 보인다.
+ * 잠깐 머물다 사라지는 이유: 영구 표시는 다음 검색과 섞여 "지금 찾은 것"을 흐린다.
+ */
+.highlighted {
+  border-radius: var(--radius-md);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  background-color: var(--color-primary-subtle);
+  animation: highlightFade var(--duration-slow, 240ms) ease-out;
+}
+
+/* 포커스가 들어와도(프로그램적 이동) 링이 겹쳐 산만해지지 않게 - 강조 자체가 위치 표시다. */
+.highlighted:focus {
+  outline-color: var(--color-primary);
+}
+
+.row:focus {
+  outline: none;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+@keyframes highlightFade {
+  from {
+    background-color: transparent;
+    outline-color: transparent;
+  }
+}

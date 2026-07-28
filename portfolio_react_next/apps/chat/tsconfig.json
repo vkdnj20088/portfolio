@@ -1,0 +1,14 @@
+{
+  "extends": "@chat/typescript-config/nextjs.json",
+  "compilerOptions": {
+    // baseUrl 은 두지 않는다: TS 6.0 부터 deprecated(TS5101), 7.0 에서 제거된다.
+    // baseUrl 이 없으면 paths 는 이 tsconfig 파일 위치 기준으로 해석되므로 동작이 같다.
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  // e2e 는 Playwright 러너가 자체 타입/실행을 갖는다(브라우저 컨텍스트 콜백 포함).
+  // next build 의 타입체크와 섞이지 않게 여기서 제외한다 - 검증은 CI 의 playwright 잡이 맡는다.
+  "exclude": ["node_modules", "e2e"]
+}

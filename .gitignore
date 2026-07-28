@@ -1,0 +1,37 @@
+# 루트 공통 무시 규칙.
+# 프로젝트별 빌드 산출물과 의존성은 각 서브폴더의 .gitignore 가 담당한다.
+# 여기서는 OS, 에디터, 로컬 도구처럼 저장소 전역에서 새어들 수 있는 것을 막고,
+# 흔한 빌드/의존성 디렉토리를 방어적으로 한 번 더 전역에서 무시한다.
+
+# OS
+.DS_Store
+Thumbs.db
+._*
+
+# 에디터 / 로컬 도구
+.vscode/
+.idea/
+*.swp
+*.swo
+# 포트폴리오 산출물에 AI 도구 흔적을 남기지 않는다.
+.claude/
+
+# 로그
+*.log
+
+# 환경변수 / 비밀 (방어)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# 방어적 전역 무시 (1차 담당은 각 서브폴더 .gitignore)
+node_modules/
+.next/
+.turbo/
+dist/
+build/
+.gradle/
+coverage/
+*.tsbuildinfo

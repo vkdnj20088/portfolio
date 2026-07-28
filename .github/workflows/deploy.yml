@@ -1,0 +1,225 @@
+# 통합 EC2 배포. push 로 자동 실행하지 않는다(workflow_dispatch 수동 전용) - 배포는 항상 의도적이어야 한다.
+# 흐름: 빌드(백엔드 jar / Next standalone 3개 / 인트로 정적) -> 아티팩트 -> 서버로 rsync ->
+#        릴리스 원자 교체 -> 재기동 -> 헬스 게이트 -> 실패 시 직전 릴리스로 롤백.
+#
+# 산출물 복사는 반드시 `cp -a` 다. GNU cp 의 `-r` 은 심링크를 따라가 실체를 복사하는데(BSD 와 다르다),
+# pnpm 의 node_modules 는 .pnpm 저장소를 가리키는 심링크 구조라 그 순간 의존성 해석이 깨진다
+# (서버에서 "Cannot find module 'styled-jsx'" 로만 드러나 원인을 찾기 어렵다 - 실제로 겪음).
+#
+# 러너가 arm64 인 이유: 서버가 t4g(Graviton, arm64)다. Next 의 standalone 산출물에는 sharp 의
+# **플랫폼 전용 네이티브 바이너리**가 트레이싱돼 함께 실린다. x64 러너에서 빌드하면 arm64 서버에서
+# 못 쓰는 바이너리가 올라간다(이미지 최적화 경로에서만 터져 원인 찾기도 어렵다).
+# 빌드 아키텍처를 서버와 맞추는 것이 가장 단순하고 확실한 해법이다.
+#
+# 보안: 이 워크플로는 github.event.* (이슈/PR 제목·본문 등 신뢰할 수 없는 입력)를 전혀 쓰지 않는다.
+# workflow_dispatch 의 inputs 는 쓰기 권한자만 넣을 수 있고, run: 에 인라인하지 않고 env: 로 넘긴다.
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '배포 대상'
+        type: choice
+        options: [all, intro, chat, docqa, exchange, backend]
+        default: all
+      sse:
+        description: '챗/문서QA 에서 실제 SSE 전송을 켜서 빌드(NEXT_PUBLIC_TRANSPORT=sse)'
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false # 배포는 겹치면 위험 - 취소하지 않고 직렬화한다
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm # 서버(t4g/arm64)와 동일 아키텍처
+    steps:
+      - uses: actions/checkout@v4
+
+      # 백엔드 bootJar (JVM 바이트코드라 아키텍처 무관하지만, 러너를 통일해 둔다)
+      - if: ${{ inputs.target == 'all' || inputs.target == 'backend' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - if: ${{ inputs.target == 'all' || inputs.target == 'backend' }}
+        uses: gradle/actions/setup-gradle@v4
+      - if: ${{ inputs.target == 'all' || inputs.target == 'backend' }}
+        name: 백엔드 jar 빌드
+        working-directory: portfolio_jquery_spring
+        run: |
+          ./gradlew bootJar --no-daemon
+          mkdir -p "${GITHUB_WORKSPACE}/dist/backend"
+          cp build/libs/*-SNAPSHOT.jar "${GITHUB_WORKSPACE}/dist/backend/app.jar"
+
+      # 모노레포(chat / docqa) standalone
+      - if: ${{ inputs.target == 'all' || inputs.target == 'chat' || inputs.target == 'docqa' }}
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: portfolio_react_next/package.json
+      - if: ${{ inputs.target == 'all' || inputs.target == 'chat' || inputs.target == 'docqa' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: portfolio_react_next/.nvmrc
+          cache: pnpm
+          cache-dependency-path: portfolio_react_next/pnpm-lock.yaml
+      - if: ${{ inputs.target == 'all' || inputs.target == 'chat' || inputs.target == 'docqa' }}
+        name: 모노레포 설치
+        working-directory: portfolio_react_next
+        run: pnpm install --frozen-lockfile
+
+      - if: ${{ inputs.target == 'all' || inputs.target == 'chat' }}
+        name: chat 빌드(standalone)
+        working-directory: portfolio_react_next
+        env:
+          # NEXT_PUBLIC_* 는 빌드 타임에 번들에 박힌다 - 여기서 결정한다.
+          NEXT_PUBLIC_TRANSPORT: ${{ inputs.sse && 'sse' || '' }}
+          # 데모 안의 "포트폴리오로 돌아가기" 는 인트로(443 루트)로 보낸다.
+          NEXT_PUBLIC_PORTFOLIO_URL: 'https://__HOST__/'
+        run: |
+          pnpm --filter @chat/chat build
+          # standalone 산출물 조립: 루트(node_modules 포함) + static + public.
+          # 모노레포라 server.js 는 apps/chat 하위이고 static 도 같은 경로에 놓아야 한다.
+          DEST="${GITHUB_WORKSPACE}/dist/chat"
+          mkdir -p "${DEST}/apps/chat/.next"
+          cp -a apps/chat/.next/standalone/. "${DEST}/"
+          cp -a apps/chat/.next/static "${DEST}/apps/chat/.next/static"
+          if [ -d apps/chat/public ]; then cp -a apps/chat/public "${DEST}/apps/chat/public"; fi
+          # 심링크가 뭉개지면 서버에서 "Cannot find module 'styled-jsx'" 로만 드러난다(실제로 겪음).
+          # 여기서 해석되는지 확인해 빌드 단계에서 실패시킨다. -e 는 심링크를 따라가므로 깨진 링크를 잡는다.
+          test -e "${DEST}/apps/chat/node_modules/next/package.json" || { echo "::error::standalone 의존성 심링크가 깨졌습니다(cp 옵션 확인)"; exit 1; }
+          node -e "require('${DEST}/apps/chat/node_modules/next/dist/server/require-hook.js')" || { echo "::error::next require-hook 로드 실패 - 의존성 해석 불가"; exit 1; }
+
+      - if: ${{ inputs.target == 'all' || inputs.target == 'docqa' }}
+        name: docqa 빌드(standalone)
+        working-directory: portfolio_react_next
+        env:
+          NEXT_PUBLIC_PORTFOLIO_URL: 'https://__HOST__/'
+        run: |
+          pnpm --filter @chat/docqa build
+          DEST="${GITHUB_WORKSPACE}/dist/docqa"
+          mkdir -p "${DEST}/apps/docqa/.next"
+          cp -a apps/docqa/.next/standalone/. "${DEST}/"
+          cp -a apps/docqa/.next/static "${DEST}/apps/docqa/.next/static"
+          if [ -d apps/docqa/public ]; then cp -a apps/docqa/public "${DEST}/apps/docqa/public"; fi
+          test -e "${DEST}/apps/docqa/node_modules/next/package.json" || { echo "::error::standalone 의존성 심링크가 깨졌습니다(cp 옵션 확인)"; exit 1; }
+          node -e "require('${DEST}/apps/docqa/node_modules/next/dist/server/require-hook.js')" || { echo "::error::next require-hook 로드 실패 - 의존성 해석 불가"; exit 1; }
+
+      # 거래소(단독 프로젝트, npm) standalone
+      - if: ${{ inputs.target == 'all' || inputs.target == 'exchange' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: portfolio_exchange_next/package-lock.json
+      - if: ${{ inputs.target == 'all' || inputs.target == 'exchange' }}
+        name: exchange 빌드(standalone)
+        working-directory: portfolio_exchange_next
+        env:
+          NEXT_PUBLIC_PORTFOLIO_URL: 'https://__HOST__/'
+        run: |
+          npm ci
+          npm run build
+          # 단독 프로젝트라 server.js 가 standalone 루트에 있다(모노레포와 경로가 다르다).
+          DEST="${GITHUB_WORKSPACE}/dist/exchange"
+          mkdir -p "${DEST}/.next"
+          cp -a .next/standalone/. "${DEST}/"
+          cp -a .next/static "${DEST}/.next/static"
+          if [ -d public ]; then cp -a public "${DEST}/public"; fi
+
+      # 인트로(정적 HTML 한 장)
+      - if: ${{ inputs.target == 'all' || inputs.target == 'intro' }}
+        name: 인트로 수집(+ 압축)
+        run: |
+          mkdir -p dist/intro
+          cp -a intro/. dist/intro/
+          # 인트로만 번들러를 거치지 않아 소스가 그대로 노출된다(설계 주석 58곳 포함). 데모 다섯은
+          # 전부 압축·난독화되어 나가는데 정문만 원본이면 일관성이 깨진다. 주석은 저장소에 남기고
+          # 배포 산출물에서만 뗀다 - 문서는 소스의 몫이고, 아티팩트의 몫이 아니다.
+          npx --yes html-minifier-terser@7 \
+            --collapse-whitespace --conservative-collapse --remove-comments \
+            --minify-css true --minify-js true \
+            --remove-redundant-attributes --remove-script-type-attributes \
+            -o dist/intro/index.html intro/index.html
+          # 압축이 조용히 실패해 빈 파일이나 반쪽 결과를 배포하는 사고를 막는다.
+          # 식별자(DEMO_PORTS 등)는 맹글링되어 사라지므로, 살아남는 것으로만 확인한다:
+          # 문자열 리터럴 / 클래스명 / 데이터 속성.
+          node -e '
+            const fs = require("fs");
+            const s = fs.readFileSync("dist/intro/index.html", "utf8");
+            const orig = fs.statSync("intro/index.html").size;
+            const fail = (m) => { console.error("::error::인트로 압축 " + m); process.exit(1); };
+            if (s.length < orig * 0.4) fail("결과가 비정상적으로 작습니다: " + s.length);
+            if (s.includes("<!--")) fail("HTML 주석이 남았습니다");
+            for (const k of ["/exchange/BTC", "data-demo", "wthumb", "contact-wrap"])
+              if (!s.includes(k)) fail("핵심 요소가 사라졌습니다: " + k);
+            console.log("인트로 압축 OK: " + orig + " -> " + s.length + " bytes");
+          '
+
+      # upload-artifact 는 심링크를 "따라가" 실체를 저장한다. pnpm 의 node_modules 는
+      # .pnpm 저장소를 가리키는 심링크 구조라, 그대로 올리면 next 가 실디렉터리가 되고
+      # 형제 의존(styled-jsx)이 해석 경로에서 사라진다 - 서버에서만
+      # "Cannot find module 'styled-jsx'" 로 드러나 원인을 찾기 어렵다(실제로 겪음).
+      # tar 는 심링크를 심링크로 보존하므로 아카이브 한 겹을 씌워 전송한다.
+      - name: 산출물 아카이브(심링크 보존)
+        run: tar -czf dist.tar.gz -C dist .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: dist.tar.gz
+          retention-days: 3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production # (선택) 배포 승인 게이트를 붙일 수 있는 환경
+    steps:
+      - uses: actions/checkout@v4 # infra/deploy-remote.sh 를 쓴다
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+
+      - name: 산출물 풀기 + 심링크 검증
+        run: |
+          mkdir -p dist && tar -xzf dist.tar.gz -C dist
+          # 아카이브를 거치며 심링크가 뭉개졌으면 여기서 멈춘다. 서버에 올린 뒤 크래시 루프로
+          # 알게 되는 것보다, 전송 전에 실패하는 편이 낫다.
+          for app in chat docqa; do
+            [ -d "dist/$app" ] || continue
+            test -e "dist/$app/apps/$app/node_modules/next/package.json" \
+              || { echo "::error::$app 산출물의 의존성 심링크가 깨졌습니다"; exit 1; }
+          done
+          echo "심링크 검증 통과"
+
+      # 데모 안의 복귀 링크는 인트로(=443 루트)로 보낸다. 빌드 산출물에는 자리표시자로 넣고
+      # 배포 직전에 치환한다(빌드 로그에 주소를 남기지 않는다).
+      # 도메인이 있으면 리포지토리 변수 PUBLIC_HOST(예: jongeunchoi.dev)를 쓰고, 없으면
+      # 기존처럼 배포 대상 IP 로 떨어진다 - 도메인 도입 전후 모두 동작한다.
+      - name: 복귀 링크 호스트 치환
+        env:
+          HOST: ${{ vars.PUBLIC_HOST || secrets.DEPLOY_HOST }}
+        run: |
+          grep -rl '__HOST__' dist 2>/dev/null | while read -r f; do
+            sed -i "s|__HOST__|${HOST}|g" "$f"
+          done || true
+
+      # 시크릿은 run: 에 인라인하지 않고 env 로 넘긴다(워크플로 인젝션 방지 모범사례).
+      - name: SSH 준비
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: 전송 + 릴리스 교체 + 헬스 게이트 + 롤백
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ inputs.target }}
+        run: bash infra/deploy-remote.sh

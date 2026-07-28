@@ -1,0 +1,46 @@
+// BEM + SCSS 중첩 메모: `&--primary` 는 `.btn--primary` 로 컴파일된다.
+// 트레이드오프를 알고 쓴다 - 이 표기법은 클래스명 전체 문자열이 소스에 남지 않아
+// `grep .btn--primary` 로 찾을 수 없다. 블록 파일이 곧 그 블록의 단일 소유자라는 규칙
+// (파일당 BEM 블록 1개)으로 상쇄한다: `.btn` 관련 정의는 전부 이 파일 안에 있다.
+
+@use '../mixins' as m;
+
+.btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    @include m.control-border;
+    background: var(--btn-bg);
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text);
+    transition:
+        background 0.15s,
+        border-color 0.15s;
+
+    &:hover {
+        background: var(--btn-bg-hover);
+    }
+
+    // 기존에는 텍스트 입력에만 포커스 링이 있었다. mixin 으로 뽑고 나니 같은 디자인 언어를
+    // 버튼에도 그대로 재사용할 수 있다(복붙이 아니라 공유).
+    // :focus 가 아니라 :focus-visible 인 이유 - 마우스 클릭에는 링이 뜨지 않고
+    // 키보드 이동일 때만 뜬다. 즉 마우스 사용자 경험을 해치지 않으면서 키보드 접근성만 얻는다.
+    &:focus-visible {
+        outline: none;
+        @include m.focus-ring;
+    }
+
+    // --primary 는 :hover 뒤에 와야 한다. `.btn--primary:hover`(0,2,0)와
+    // `.btn:hover`(0,2,0)는 특정도가 같아 **선언 순서**로 승부가 갈린다.
+    &--primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+
+        &:hover {
+            background: var(--primary-d);
+            border-color: var(--primary-d);
+        }
+    }
+}

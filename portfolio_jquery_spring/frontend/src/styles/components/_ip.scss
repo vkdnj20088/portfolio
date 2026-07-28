@@ -1,0 +1,133 @@
+// IP 접근 설정 페이지 전용 컴포넌트.
+// 알파 틴트는 color-mix 대신 Sass rgba(빌드 타임)로 만든다 - 지원 브라우저 하한(Chrome 88)에서
+// color-mix 는 아직 없기 때문(파일 확장자 차단 앱과 동일한 제약).
+@use '../tokens' as t;
+
+.app--wide { max-width: 960px; }
+
+.num { font-variant-numeric: tabular-nums; }
+
+.btn--sm { padding: 4px 10px; font-size: 12px; }
+
+// ── 툴바(검색 + 기간 필터 + 추가) ──────────────────────────────
+.ip-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ip-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+
+  > input[type='text'] {
+    min-width: 160px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--text);
+    font: inherit;
+  }
+}
+.ip-filter {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted);
+
+  input {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--text);
+    font: inherit;
+  }
+}
+
+// ── 추가 폼 패널 ───────────────────────────────────────────────
+.ip-add {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(t.$primary, 0.04);
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.ip-add__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 16px;
+}
+.ip-add .field input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+}
+.ip-add__ip {
+  display: flex;
+  gap: 8px;
+
+  input { flex: 1; min-width: 0; }
+  .btn { white-space: nowrap; }
+}
+// "내 IP 포함/미포함" 라이브 배지(서버 /match 판정 결과).
+.ip-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  &--ok { color: var(--status-ok); }
+  &--muted { color: var(--muted); }
+  &--error { color: var(--status-error); }
+}
+.ip-add__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+// ── 목록 테이블 ────────────────────────────────────────────────
+.ip-table-wrap { overflow-x: auto; }
+.ip-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    background: rgba(t.$primary, 0.04);
+  }
+  tbody tr:hover { background: rgba(t.$primary, 0.03); }
+  &__act { text-align: right; width: 1%; }
+}
+.ip-empty {
+  padding: 30px 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ip-more { text-align: center; margin-top: 14px; }
+
+@media (max-width: 720px) {
+  .ip-add__grid { grid-template-columns: 1fr; }
+  .ip-toolbar,
+  .ip-toolbar__filters { flex-direction: column; align-items: stretch; }
+}

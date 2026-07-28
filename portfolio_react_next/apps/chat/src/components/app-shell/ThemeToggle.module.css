@@ -1,0 +1,36 @@
+.group {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+}
+
+.option {
+  padding: 2px var(--space-2);
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.option:hover {
+  color: var(--color-text);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* 눌림 상태는 aria-pressed 가 진실원 - 시각 상태와 보조기술 상태가 갈라질 수 없다 */
+.option[aria-pressed='true'] {
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}

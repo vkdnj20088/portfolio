@@ -1,0 +1,34 @@
+# /etc/systemd/system/portfolio-exchange.service
+# JC Exchange (Next.js standalone). 모노레포가 아닌 단독 프로젝트라 server.js 가 릴리스 루트에 있다.
+#   sudo systemctl daemon-reload && sudo systemctl enable --now portfolio-exchange
+[Unit]
+# 기동 실패가 반복되면 5분/5회에서 멈춘다 - 무한 재시작으로 자원을 태우지 않게.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+Description=Portfolio - JC Exchange (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/portfolio/exchange/current
+EnvironmentFile=-/etc/portfolio/frontend.env
+Environment=NODE_ENV=production
+Environment=PORT=3010
+Environment=HOSTNAME=127.0.0.1
+Environment=NODE_OPTIONS=--max-old-space-size=192
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+LockPersonality=true
+ReadWritePaths=/opt/portfolio/exchange
+
+[Install]
+WantedBy=multi-user.target

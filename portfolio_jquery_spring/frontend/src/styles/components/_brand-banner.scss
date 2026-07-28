@@ -1,0 +1,48 @@
+// 브랜드 배너: 최상단 지원자명. 담백한 제품형 헤더(단색 바이올렛 정체성, 그라디언트/글로우 없음).
+
+@use '../tokens' as t;
+@use '../mixins' as m;
+
+.brand-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 22px;
+    // 평탄한 다크 헤더(살짝 바이올렛 톤). 무지개 그라디언트 대신 단색으로 정돈했다.
+    background: #1e1b2b;
+    // 하단에 얇은 단색 accent 라인(레인보우 스트립 제거).
+    border-bottom: 2px solid t.$primary;
+
+    &__brand {
+        @include m.inline-center(9px);
+    }
+
+    &__mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        // 단색 바이올렛 마크(그라디언트/글로우 없음).
+        background: t.$primary;
+    }
+
+    &__wordmark {
+        color: #fff;
+        font-weight: 800;
+        font-size: 19px;
+        letter-spacing: -0.5px;
+    }
+
+    &__applicant {
+        color: #cbc6de;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.2px;
+    }
+
+    // 워드마크의 두 번째 조각. 그라디언트 텍스트를 걷어내고 단색으로(background-clip 미사용).
+    &__grad {
+        color: #fff;
+        font-weight: 800;
+    }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@chat/chat-domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@chat/search-domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@chat/eslint-config": "workspace:*",
+    "@chat/typescript-config": "workspace:*",
+    "eslint": "^9.18.0",
+    "typescript": "6.0.3",
+    "vitest": "^3.2.7"
+  }
+}

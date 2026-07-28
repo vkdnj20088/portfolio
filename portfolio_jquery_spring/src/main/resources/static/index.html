@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JC Guard - 최종은의 jQuery + Spring Boot 포트폴리오 (파일 확장자 차단)</title>
+    <meta name="description" content="파일 확장자에 따라 첨부/전송을 제한하는 서비스. 고정 확장자 토글과 커스텀 확장자 관리(최대 200개)를 제공하며, 확장자 위조를 막기 위해 파일 내용(Magic Number)까지 함께 검증합니다.">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    
+<script defer="defer" src="/js/bundle.435f2061.js"></script><link href="/css/bundle.08a78ebe.css" rel="stylesheet"></head>
+<body>
+<header class="brand-banner">
+    <div class="brand-banner__brand">
+        <span class="brand-banner__mark" aria-hidden="true"></span>
+        <span class="brand-banner__wordmark">JC Guard</span>
+    </div>
+    <div class="brand-banner__applicant">최종은의 <span class="brand-banner__grad">jQuery + Spring Boot</span> 포트폴리오</div>
+</header>
+
+<main class="app">
+    <header class="app__header">
+        <h1>파일 확장자 차단</h1>
+        <p>파일확장자에 따라 특정 형식의 파일을 첨부하거나 전송하지 못하도록 제한할 수 있습니다.</p>
+    </header>
+
+    <section class="card">
+        <div class="field">
+            
+            <span class="field__label" id="fixedListLabel">고정 확장자</span>
+            <div id="fixedList" class="fixed-list" role="group" aria-labelledby="fixedListLabel" aria-live="polite"></div>
+        </div>
+
+        <div class="field">
+            <label class="field__label" for="extInput">커스텀 확장자</label>
+            <div class="custom-input">
+                <input id="extInput" type="text" maxlength="20" placeholder="확장자 입력 (영문/숫자, 최대 20자)" autocomplete="off">
+                <button id="addBtn" type="button" class="btn btn--primary">+ 추가</button>
+            </div>
+
+            <div class="custom-box">
+                <div class="custom-box__counter"><span id="count">0</span>/<span id="limit">200</span></div>
+                <div id="customList" class="chips" aria-live="polite"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="field">
+            <label class="field__label" for="fileInput">파일 첨부 검증 데모</label>
+            <p class="hint">
+                설정한 차단 목록 + 파일 내용(Magic Number)으로 이중 검증합니다.
+                확장자를 <code>.jpg</code>로 위장한 실행파일도 내용으로 차단됩니다.
+            </p>
+            <div class="custom-input">
+                <input id="fileInput" type="file">
+                <button id="fileBtn" type="button" class="btn">검증</button>
+            </div>
+            <div id="fileResult" class="file-result" hidden></div>
+        </div>
+    </section>
+</main>
+
+<a class="portfolio-home" href="/" aria-label="포트폴리오 소개로 돌아가기">
+    <span class="ph-ic" aria-hidden="true">&#8592;</span> 포트폴리오
+</a>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

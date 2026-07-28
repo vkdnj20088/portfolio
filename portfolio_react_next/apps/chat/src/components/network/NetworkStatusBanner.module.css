@@ -1,0 +1,41 @@
+/*
+ * 라이브 리전은 항상 DOM 에 존재해야 한다. 배너가 나타날 때 리전 자체를 새로 마운트하면
+ * 스크린리더가 변경을 감지하지 못하는 경우가 있다 -> 껍데기는 남기고 내용만 토글한다.
+ */
+.liveRegion {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-banner);
+}
+
+.offline,
+.unstable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+}
+
+.offline {
+  background-color: var(--color-danger-subtle);
+  color: var(--color-danger);
+  border-bottom: 1px solid var(--color-danger);
+}
+
+.unstable {
+  background-color: var(--color-warning-subtle);
+  color: var(--color-warning);
+  border-bottom: 1px solid var(--color-warning);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+  flex-shrink: 0;
+}

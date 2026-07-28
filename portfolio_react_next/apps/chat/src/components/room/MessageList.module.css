@@ -1,0 +1,201 @@
+/* 스크롤러와 "맨 아래로" 오버레이 버튼(STEP 11)을 함께 감싸는 기준 좌표계 */
+.listWrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* 목록 끝에서 스크롤이 바깥(페이지)으로 전파되지 않게 - Chrome 63+ 로 하한 안 */
+  overscroll-behavior: contain;
+}
+
+/* "맨 아래로" 점프 버튼(STEP 11) - 오버레이라 목록 높이(앵커링)에 영향이 없다 */
+.jumpButton {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-4);
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  /* 복귀만 이징 - 누르는 순간은 아래에서 transition 0 으로 즉각(STEP 9 문법) */
+  transition:
+    background-color var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.jumpButton:hover {
+  background-color: var(--color-surface);
+}
+
+.jumpButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.jumpButton:active {
+  transform: scale(0.94);
+  transition-duration: var(--duration-fast), 0s;
+}
+
+/* 대기 말풍선 + 중지 버튼(STEP 11)을 나란히 - 화자 열(assistantBody) 안의 한 행 */
+.waitingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6) var(--space-2);
+}
+
+/* 좁은 화면에서는 좌우 여백을 줄여 본문 폭을 회수한다(STEP 14) */
+@media (max-width: 640px) {
+  .inner {
+    padding: var(--space-4) var(--space-4) var(--space-2);
+  }
+}
+
+/* 날짜가 바뀌는 지점의 구분선(STEP 10) - 시간 규칙(YYYY-MM-DD HH:mm)의 날짜부를 쓴다 */
+.dateDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.dateDivider::before,
+.dateDivider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+
+.olderRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.olderErrorText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.assistantRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.waitingBubble {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* 폭 상한은 화자 열(assistantBody)이 갖는다 - 응답 말풍선과 같은 규칙 */
+  max-width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-sm);
+  background-color: var(--color-bubble-assistant);
+  color: var(--color-bubble-assistant-text);
+}
+
+/* 생성 커서(STEP 10) - delta 스트리밍이 흐르면 텍스트 끝에서 깜빡인다.
+   지금 mock(완성본 한 번)에서는 보이는 구간이 없는 예비 장치다. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background-color: currentColor;
+  animation: caretBlink 1s steps(2, start) infinite;
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.streamText {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+}
+
+.dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: var(--space-1) 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-text-muted);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* 모션 최소화 선호 시에는 토큰의 전역 규칙이 애니메이션을 사실상 정지시킨다 */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.errorBubble {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-sm);
+  background-color: var(--color-danger-subtle);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}

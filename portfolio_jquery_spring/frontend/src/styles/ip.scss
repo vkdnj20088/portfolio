@@ -1,0 +1,13 @@
+// IP 접근 설정 페이지 SCSS 엔트리. @use 순서 = 출력(캐스케이드) 순서.
+// 파일 확장자 차단 페이지(main.scss)와 토큰/공용 컴포넌트를 공유하되, ip 전용 컴포넌트를 더한다.
+
+@use 'tokens';
+@use 'base';
+@use 'components/brand-banner';
+@use 'layout';
+@use 'components/card';
+@use 'components/form';
+@use 'components/button';
+@use 'components/toast';
+@use 'components/ip';
+@use 'components/portfolio-home';

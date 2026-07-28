@@ -1,0 +1,72 @@
+# 기본(로컬/데모) 프로파일 - H2 인메모리. 별도 DB 설치 없이 바로 실행 가능.
+# 프로덕션(MySQL)은 application-prod.yml, 활성화: --spring.profiles.active=prod
+spring:
+  datasource:
+    url: jdbc:h2:mem:extdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          # 시간 컬럼(Instant)을 UTC 로 읽고 쓴다. 서버 TZ 와 무관하게 절대 시점을 보존해
+          # IP 규칙의 "디바이스 시간대 렌더" 요건을 정확히 뒷받침한다.
+          time_zone: UTC
+  flyway:
+    # 로컬/테스트(H2)는 Hibernate(create-drop)로 스키마를 만든다. 마이그레이션(db/migration/*.sql)은
+    # MySQL 전용이라 여기선 끈다 - Flyway 는 prod(MySQL)에서만 켜서 스키마를 소유한다.
+    enabled: false
+  h2:
+    console:
+      enabled: true          # http://localhost:8080/h2-console (개발 확인용)
+  servlet:
+    multipart:               # 파일 검증 데모 업로드 상한 - 초과 시 GlobalExceptionHandler 가 413 로 변환
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+server:
+  port: 8080
+  # 응답 압축(Lighthouse text-compression). 정적 HTML/CSS/JS + JSON 응답을 gzip 한다.
+  # 해시 번들(JS/CSS)과 목록 JSON 의 전송량을 줄인다. 1KB 미만은 압축 이득이 없어 제외.
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,text/javascript,application/javascript,application/json,image/svg+xml,text/plain
+    min-response-size: 1024
+
+# actuator 노출은 안전 범위만: health(기동 판정) + info + metrics(관측성 #I3).
+# env/beans/configprops/heapdump/threaddump 등 민감·무거운 엔드포인트는 노출하지 않는다.
+# health 는 상세를 감춘다(show-details: never) - 내부 구성 정보 누출 방지.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.portfolio.extension: INFO
+  # 구조화 로그: 모든 콘솔 로그에 요청 상관 id(cid, MDC)를 실어 한 요청의 흐름을 이어 본다.
+  # cid 가 없는 로그(기동 등)에는 '-' 가 찍힌다.
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [cid=%X{cid:--}] %-40.40logger{39} : %m%n"
+
+# 파일 격리 저장(#8). quarantine-dir 를 비우면 {java.io.tmpdir}/quarantine 을 쓴다(웹루트 밖).
+# prod 는 웹루트/홈 밖의 전용 경로(예: /var/lib/extension-block/quarantine)로 지정 권장.
+app:
+  ip-seed:
+    # IP 규칙 더미 데이터 시딩 건수. 0 이면 시딩 안 함(로컬/테스트 기본). 라이브 데모는 1000000 로 채운다.
+    count: 0
+  distributed-lock:
+    # in-process(단일 JVM, 기본) | mysql(GET_LOCK) | redis(Redisson). 커스텀 추가 임계 구역 직렬화.
+    provider: in-process
+  storage:
+    quarantine-dir: ""
+    max-file-size-bytes: 5242880   # 5MB - 멀티파트 상한과 정렬

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Next.js",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "allowJs": true,
+    "jsx": "preserve",
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    // TS 6.0 이 기본 활성화한 side-effect import 해석 검사(TS2882)를 끈다.
+    // 대상은 `import './globals.css'` 하나뿐인데, 켜 두려면 `declare module '*.css'` 가 필요하고
+    // 그 와일드카드는 Next 가 제공하는 CSS Modules 타이핑을 any 로 가릴 수 있다.
+    // 부수효과 import 의 경로 오타는 어차피 웹팩이 빌드 실패로 잡으므로 이 검사는 여기서 중복이다.
+    "noUncheckedSideEffectImports": false
+  }
+}

@@ -1,0 +1,20 @@
+// 페이지 레이아웃 골격.
+
+.app {
+    max-width: 720px;
+    margin: 40px auto;
+    padding: 0 16px;
+
+    &__header {
+        h1 {
+            margin: 0 0 6px;
+            font-size: 22px;
+        }
+
+        p {
+            margin: 0 0 20px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+    }
+}

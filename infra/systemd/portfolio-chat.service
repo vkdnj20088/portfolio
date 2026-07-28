@@ -1,0 +1,39 @@
+# /etc/systemd/system/portfolio-chat.service
+# JC Chat (Next.js standalone). 배포 워크플로가 .next/standalone 을 current 로 심링크한다.
+#   sudo systemctl daemon-reload && sudo systemctl enable --now portfolio-chat
+[Unit]
+# 기동 실패가 반복되면 5분/5회에서 멈춘다 - 무한 재시작으로 자원을 태우지 않게.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+Description=Portfolio - JC Chat (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+# current = standalone 루트(node_modules 가 여기 있다). 모노레포라 server.js 는 apps/chat 하위다.
+WorkingDirectory=/opt/portfolio/chat/current
+# EnvironmentFile 을 먼저 둔다 - 아래 Environment= 가 나중에 와서 PORT/HOSTNAME 을 확실히 이긴다.
+EnvironmentFile=-/etc/portfolio/frontend.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+# 2GB 인스턴스(t4g.small)에 Node 3개가 함께 산다. 힙 상한을 두지 않으면 각 프로세스가
+# 시스템 메모리의 절반 가까이를 상한으로 잡아, 한 앱의 일시적 스파이크가 다른 앱을 밀어낸다.
+Environment=NODE_OPTIONS=--max-old-space-size=192
+ExecStart=/usr/bin/node apps/chat/server.js
+Restart=on-failure
+RestartSec=5
+# 하드닝(루프백 바인딩 + 읽기 전용 시스템 경로).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+LockPersonality=true
+ReadWritePaths=/opt/portfolio/chat
+
+[Install]
+WantedBy=multi-user.target

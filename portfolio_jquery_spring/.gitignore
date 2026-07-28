@@ -1,0 +1,40 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Frontend (npm) - 소스(frontend/src: app.ts, styles/*.scss, index.html 템플릿)와
+# 산출물(static/js/bundle.<hash>.js, static/css/style.<hash>.css, static/index.html)은 커밋.
+# node_modules 와 로컬 Node(다운로드본)만 무시.
+/frontend/node_modules/
+/.gradle/nodejs/
+npm-debug.log*
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+# Eclipse/STS 컴파일 출력(위 .classpath/.project 와 같은 출처) - build/ 와 동일한 성격.
+# .gitignore 는 줄 끝 주석을 지원하지 않으므로 주석은 반드시 별도 줄에 둔다.
+bin/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Env / secrets
+.env
+application-local.yml
+# SSH 개인키는 절대 커밋하지 않는다.
+*.pem
+*.key
+
+# jqwik 속성 테스트 실행 산출물(로컬 실패 재현용 DB) - 소스가 아니다
+.jqwik-database

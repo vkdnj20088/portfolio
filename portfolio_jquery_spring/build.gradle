@@ -1,0 +1,115 @@
+import com.github.gradle.node.npm.task.NpmTask
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.github.node-gradle.node' version '7.1.0'   // 프론트엔드(TypeScript + webpack) 빌드
+}
+
+group = 'com.portfolio'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // 배포 헬스체크(/actuator/health)
+    implementation 'org.springframework.boot:spring-boot-starter-cache'    // Boot 4: 캐시 오토컨피그(@EnableCaching 기본 CacheManager)가 별도 모듈로 분리됨
+    implementation 'com.github.ben-manes.caffeine:caffeine'                // #6 유계 TTL 캐시 - 다중 인스턴스 per-JVM 캐시의 '영구 스테일'을 상한으로 바꾼다(버전 Boot BOM 관리)
+    implementation 'org.apache.tika:tika-core:3.3.2'                        // #8 내용 기반 검증 - 손코딩 4시그니처 너머의 견고한 콘텐츠 타입 판별(Boot BOM 미관리라 버전 명시)
+    // #10 마이그레이션 규율. Boot 4 는 오토컨피그를 기술별 모듈로 분리했으므로 flyway-core 라이브러리만으론
+    // 기동 시 자동 실행이 안 된다 - spring-boot-flyway(오토컨피그 모듈)가 있어야 Flyway 가 돌고 JPA(validate)
+    // 앞에 정렬된다. flyway-core 는 이 모듈에 전이 포함된다.
+    implementation 'org.springframework.boot:spring-boot-flyway'
+    implementation 'org.flywaydb:flyway-mysql'                             // Flyway 10+ 는 MySQL 8 전용 모듈이 필요하다
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14' // #Q2 OpenAPI 자동 문서(/v3/api-docs, /swagger-ui)
+
+    // #9 선택적 분산 락 전략(Redisson). compileOnly 라 기본 산출물(bootJar)엔 포함되지 않는다 -
+    // 구현이 실제 Redisson API 로 올바르게 컴파일됨은 보장하되, 쓰지 않는 배포에 netty 등 무거운
+    // 전이 의존을 싣지 않는다. redis 프로바이더를 켜려면 런타임에 이 의존을 추가한다(RedissonDistributedLock 주석).
+    compileOnly 'org.redisson:redisson:3.35.0'
+
+    runtimeOnly 'com.h2database:h2'                 // 로컬/테스트 (zero-config)
+    runtimeOnly 'com.mysql:mysql-connector-j'       // 프로덕션(prod 프로파일)
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-webmvc-test' // Boot 4: @WebMvcTest 슬라이스가 별도 모듈로 분리됨
+    testImplementation 'net.jqwik:jqwik:1.9.2'                            // #Q3 속성기반 테스트 - 예제 너머 불변식(정규화 멱등·임의 입력 무크래시)
+
+    // #7 통합 테스트 - 실제 MySQL 8(Testcontainers 2.x)에서 200 경계 TOCTOU 를 실증한다.
+    // Boot 4.1 BOM 은 testcontainers 모듈 버전을 관리하지 않으므로 testcontainers-bom 을 직접 임포트한다.
+    testImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-mysql'
+}
+
+// 기본 test 는 H2 로 빠르게 돈다(Docker 불필요, "무설정 실행" 유지).
+// integration(Docker)·benchmark(대량 시딩·측정)는 기본에서 제외해 빠르고 결정적으로 유지한다.
+tasks.named('test') {
+    useJUnitPlatform {
+        excludeTags 'integration', 'benchmark'
+    }
+}
+
+// OFFSET vs 키셋 페이지네이션 지연 벤치(#I5). 대량 행을 시딩해 측정하므로 별도 태스크로 둔다.
+tasks.register('benchmarkTest', Test) {
+    description = 'OFFSET vs 키셋 페이지네이션 지연 벤치(H2, 대량 시딩). ./gradlew benchmarkTest'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags 'benchmark'
+    }
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter(tasks.named('test'))
+}
+
+// 통합 테스트(Testcontainers, 실제 MySQL 8) - Docker 필요. 기본 build/check 에 묶지 않고 별도
+// 태스크로 두어, 클론 직후 ./gradlew test 는 Docker 없이도 그대로 통과한다. CI 에서 별도로 실행한다.
+tasks.register('integrationTest', Test) {
+    description = 'Testcontainers 통합 테스트(실제 MySQL 8). Docker 필요.'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter(tasks.named('test'))
+}
+
+// ── 프론트엔드(TypeScript + webpack) ──────────────────────────────────────
+// download=true 이므로 리뷰어 시스템에 Node 가 없어도 Gradle 이 로컬 Node 를 받아 사용한다.
+node {
+    version = '22.11.0'
+    download = true
+    nodeProjectDir = file("${projectDir}/frontend")
+}
+
+// 번들 재생성 태스크(opt-in). 산출물(해시된 js/css 와 index.html)은 무설정 실행(./gradlew bootRun)과
+// 백엔드 테스트를 Node 툴체인에 결합하지 않기 위해 저장소에 커밋되어 있다. 프론트/스타일 수정 시:
+//   ./gradlew webpackBuild        (Gradle 이 Node 자동 다운로드)
+//   또는  cd frontend && npm ci && npm run build
+tasks.register('webpackBuild', NpmTask) {
+    dependsOn 'npmInstall'
+    args = ['run', 'build']
+    // frontend/src 아래에 app.ts 와 styles/*.scss 가 함께 있으므로 이 한 줄이 둘 다 커버한다.
+    inputs.dir("${projectDir}/frontend/src")
+    inputs.files(
+            "${projectDir}/frontend/package.json",
+            "${projectDir}/frontend/webpack.config.js",
+            "${projectDir}/frontend/tsconfig.json")
+    // 산출물: 해시된 번들(+LICENSE 사이드카), 해시된 스타일, 그리고 두 파일명이 주입된 index.html.
+    // favicon 은 webpack 산출물이 아니므로(손관리) 여기에 넣지 않는다 - static/ 전체를 outputs 로
+    // 잡으면 favicon 변경이 이 태스크를 out-of-date 로 만든다.
+    outputs.dir("${projectDir}/src/main/resources/static/js")
+    outputs.dir("${projectDir}/src/main/resources/static/css")
+    outputs.file("${projectDir}/src/main/resources/static/index.html")
+}

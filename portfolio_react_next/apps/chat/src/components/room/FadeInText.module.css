@@ -1,0 +1,15 @@
+/*
+ * opacity 만 애니메이션한다 - 레이아웃이 처음부터 최종 높이라
+ * 4단계의 "새 메시지 시 최하단 스크롤"이 조각 등장 중에 어긋나지 않는다.
+ * (조각이 자리를 차지하며 나타나는 방식이면 스크롤 목표 높이가 계속 자란다.)
+ */
+.piece {
+  opacity: 0;
+  animation: fadeIn 240ms var(--ease-out) forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}

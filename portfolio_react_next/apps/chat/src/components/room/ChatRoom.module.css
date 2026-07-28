@@ -1,0 +1,101 @@
+.room {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  flex-shrink: 0;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.noticeTitle {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.noticeBody {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.homeLink {
+  /* 색이 곧 텍스트인 자리는 표면용 primary 가 아니라 link 토큰을 쓴다(대비 요구가 다름) */
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.homeLink:hover {
+  text-decoration: underline;
+}
+
+.composerArea {
+  flex-shrink: 0;
+  /* 하단은 웹뷰 홈 인디케이터의 safe-area 를 합성한다(STEP 14) - viewportFit:
+     cover(STEP 1)와 짝이고, 인셋이 없는 환경에서는 env() 가 0 이라 변화가 없다. */
+  padding: var(--space-2) var(--space-6) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+}
+
+/* 좁은 화면의 좌우 여백 다이어트(STEP 14) - 목록(.inner)과 같은 폭 회수 */
+@media (max-width: 640px) {
+  .header {
+    padding: 0 var(--space-4);
+  }
+
+  .composerArea {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
+
+.composerInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.sendError {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  text-align: center;
+}
+
+/* 알림형 방 - 입력 폼 자리의 안내 */
+.receiveOnlyNotice {
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}

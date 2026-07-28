@@ -1,0 +1,73 @@
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+
+  padding: var(--space-2);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-fast) ease;
+}
+
+.composer:focus-within {
+  border-color: var(--color-primary);
+}
+
+.textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 160px;
+
+  padding: var(--space-2) var(--space-2);
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+}
+
+.textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.textarea:disabled {
+  opacity: 0.6;
+}
+
+/* 전송 버튼의 두 형태(STEP 14) - 데스크톱은 STEP 7 판단대로 텍스트 "전송",
+   좁은 화면은 뤼튼 스타일 원형 ↑ 로 교대한다. aria-label 이 고정이라 접근
+   가능한 이름은 양쪽 모두 "전송" - 명세의 "전송 버튼" 정체성은 표시 형태와
+   무관하게 유지된다. */
+.sendIcon {
+  display: none;
+}
+
+/* iOS 웹뷰(개요의 모바일 예고)는 16px 미만 입력에 포커스 시 강제 줌이 걸린다 -
+   모바일 한정 상향이라 데스크톱 타이포그래피에는 영향이 없다(STEP 14). */
+@media (max-width: 640px) {
+  .textarea {
+    font-size: 16px;
+  }
+
+  /* 텍스트 버튼이 컴포저 폭의 21% 를 차지하던 것을 40px 원으로 줄여
+     텍스트영역에 돌려준다 */
+  .sendLabel {
+    display: none;
+  }
+
+  .sendIcon {
+    display: inline;
+  }
+
+  .send {
+    width: 40px;
+    padding: 0;
+    border-radius: var(--radius-full);
+    font-size: var(--text-lg);
+  }
+}

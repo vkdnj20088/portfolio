@@ -1,0 +1,184 @@
+/* 포커스가 오기 전에는 화면 밖, Tab 으로 닿으면 좌상단에 나타난다 */
+.skipLink {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-toast);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* 포커스 이동용 tabIndex=-1 이 만드는 아웃라인은 시각적 의미가 없다 */
+.main:focus {
+  outline: none;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  /*
+   * 100dvh 가 아니라 100vh 를 쓴다. dvh 는 Chrome 108+ 이라 지원 하한(88)을 넘긴다.
+   * 모바일 주소창 높이 변화 대응은 웹뷰 최적화 단계에서 다룬다(README STEP 1 참고).
+   */
+  height: 100vh;
+  overflow: hidden;
+}
+
+.shell {
+  display: flex;
+  flex: 1;
+  min-height: 0; /* flex 자식이 넘칠 때 내부 스크롤이 생기도록 */
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  /* 노치 단말 웹뷰 대비 - 지원 하한에서 안전하다(Chrome 69+). */
+  padding-left: env(safe-area-inset-left);
+  /* 접힘 전환(STEP 13) 중 280px 기준의 내용이 좁아진 폭 밖으로 새지 않게 */
+  overflow: hidden;
+  transition: width var(--duration-base) var(--ease-out);
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  flex-shrink: 0;
+}
+
+.sidebarLogo {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sidebarBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* 사이드바 끝에서 본문이 따라 스크롤되지 않게 */
+}
+
+.sidebarFooter {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  /* 하단 safe-area 합성(STEP 14) - 홈 인디케이터가 테마 토글을 덮지 않게 */
+  padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding-right: env(safe-area-inset-right);
+}
+
+/*
+ * ── 사이드바 접힘(STEP 13) - html[data-sidebar='collapsed'] 가 유일한 스위치 ──
+ * 내용은 언마운트하지 않고 숨긴다(visibility) - 목록의 스크롤/검색 상태가
+ * 접힘을 살아남고, 숨김은 포커스와 보조기술 대상에서도 함께 빠진다.
+ *
+ * 타이밍 비대칭이 의도다: 접을 때는 내용이 즉시 사라지며 폭이 줄고(120ms 페이드
+ * 동안 visibility 는 지연 유지), 펼칠 때는 폭 전환이 끝난 "뒤" 내용이 나타난다
+ * (base 지연) - 280px 기준으로 그려진 내용이 좁은 폭에서 재배치되는 장면을
+ * 양방향 모두 보여 주지 않기 위해서다.
+ */
+.sidebarBody,
+.sidebarFooter {
+  transition:
+    opacity var(--duration-fast) ease var(--duration-base),
+    visibility 0s;
+}
+
+:global(html[data-sidebar='collapsed']) .sidebar {
+  width: var(--sidebar-width-rail);
+}
+
+/* 레일 헤더는 세로 스택 - 로고(마크)와 펼침 버튼이 위아래로 앉는다.
+   "모든 페이지 좌측 상단에 로고" 요구는 접힌 상태에도 유효하다 - 워드마크만
+   접고(Logo 모듈이 담당) 홈 링크인 마크는 레일에 남긴다. */
+:global(html[data-sidebar='collapsed']) .sidebarHeader {
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  height: auto;
+  padding: var(--space-2) 0;
+}
+
+:global(html[data-sidebar='collapsed']) .sidebarBody,
+:global(html[data-sidebar='collapsed']) .sidebarFooter {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-fast) ease,
+    visibility 0s linear var(--duration-fast);
+}
+
+/* 전역 규칙은 duration 만 죽이고 delay 는 못 지운다(5단계와 같은 근거) -
+   모션 최소화에서는 펼침 내용이 지연 없이 즉시 나타나야 한다. */
+@media (prefers-reduced-motion: reduce) {
+  .sidebarBody,
+  .sidebarFooter {
+    transition-delay: 0s;
+  }
+}
+
+/*
+ * ── 좁은 화면(STEP 14) - 펼친 사이드바는 본문 위의 오버레이가 된다 ─────────
+ * 220px 를 본문과 나눠 가지면 375px 에서 본문이 155px 로 짜부라진다(컴포저가
+ * 세로 글자로 꺾이는 것을 실측). 본문 흐름에는 레일 폭(56px)만 상시 양보하고
+ * 펼친 목록은 그 위에 겹친다 - 펼침/접힘에 걸쳐 본문 폭이 불변이라 오버레이가
+ * 여닫혀도 뒤의 대화 레이아웃이 재배치되지 않고, 와이어프레임의 "목록 화면과
+ * 채팅 화면" 전환을 한 화면에서 얻는다. 방을 선택하면 목록이 접힌다(드로어 관례).
+ */
+@media (max-width: 640px) {
+  .shell {
+    position: relative;
+  }
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-sidebar);
+    width: 220px;
+  }
+
+  .main {
+    padding-left: var(--sidebar-width-rail);
+  }
+
+  /* 본문 위에 떠 있음을 그림자로 알린다 - 접힌 레일은 경계선으로 충분하다 */
+  :global(html:not([data-sidebar='collapsed'])) .sidebar {
+    box-shadow: var(--shadow-md);
+  }
+}

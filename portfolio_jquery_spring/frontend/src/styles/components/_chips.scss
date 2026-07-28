@@ -1,0 +1,50 @@
+@use '../tokens' as t;
+@use '../mixins' as m;
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    &__empty {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 400;
+    }
+}
+
+.chip {
+    @include m.inline-center(8px);
+    background: var(--chip);
+    color: var(--primary-d);
+    border-radius: 16px;
+    padding: 5px 6px 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+
+    &__x {
+        @include m.inline-center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: none;
+        // 칩 글자색($primary-d)의 12% -> 같은 원본에서 파생
+        background: rgba(t.$primary-d, 0.12);
+        color: var(--primary-d);
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 1;
+
+        &:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        // 칩 삭제 버튼도 키보드로 도달한다(button 요소) -> 같은 포커스 링을 준다.
+        &:focus-visible {
+            outline: none;
+            @include m.focus-ring;
+        }
+    }
+}

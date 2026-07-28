@@ -1,0 +1,86 @@
+// 폼 영역: 라벨/힌트/고정확장자 목록/커스텀 입력/커스텀 박스
+
+@use '../mixins' as m;
+
+.field {
+    margin-bottom: 8px;
+
+    &__label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+}
+
+.hint {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--muted);
+
+    code {
+        background: var(--chip);
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--primary-d);
+    }
+}
+
+.fixed-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+
+    label {
+        @include m.inline-center(6px);
+        font-size: 14px;
+        cursor: pointer;
+        // Safari 17.0~17.3 은 접두사가 있어야 한다(17.4 부터 무접두사 지원).
+        // 이 앱의 지원 하한은 번들이 결정한다: tsconfig target 이 ES2025 라 그보다 옛 브라우저는
+        // 애초에 JS 가 안 돈다. 그 하한에 맞춘 접두사만 손으로 남긴다. autoprefixer 는
+        // 도입해도 이 줄을 대신 못 만든다(정직한 모던 타깃에선 생성되지 않음) -> README 19 참고.
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
+.custom-input {
+    display: flex;
+    gap: 8px;
+
+    input[type='text'] {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 14px;
+        @include m.control-border;
+        background: var(--card); // 다크에서 표면 정합(미지정 시 UA 흰색 잔존)
+        color: var(--text);
+        outline: none;
+        transition:
+            border-color 0.15s,
+            box-shadow 0.15s;
+
+        &:focus {
+            @include m.focus-ring;
+        }
+    }
+
+    input[type='file'] {
+        flex: 1;
+        font-size: 13px;
+    }
+}
+
+.custom-box {
+    margin-top: 14px;
+    @include m.control-border;
+    padding: 14px;
+    min-height: 96px;
+
+    &__counter {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 10px;
+    }
+}

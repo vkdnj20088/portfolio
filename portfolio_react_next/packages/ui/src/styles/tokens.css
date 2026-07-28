@@ -1,0 +1,175 @@
+/*
+ * 디자인 토큰 - 색/간격/타이포의 단일 진실원.
+ *
+ * CSS 커스텀 프로퍼티로 두는 이유:
+ *  - 런타임 계층이라 캐스케이드를 타고 상속된다. 다크 모드나 테마 교체를 나중에 붙일 때
+ *    빌드 도구를 바꾸지 않고 값만 갈아끼울 수 있다.
+ *  - 20명이 동시에 작업할 때 "이 파랑은 어느 파랑인가"를 논쟁하지 않게 하는 어휘가 된다.
+ *
+ * 브라우저 지원: CSS 변수는 Chrome 49+ 이므로 요구 하한(Chrome 88)에서 안전하다.
+ * 반대로 oklch(Chrome 111+), color-mix(111+), @layer(99+) 는 하한을 넘기므로 쓰지 않는다.
+ */
+
+:root {
+  /* 네이티브 위젯(스크롤바, 폼 컨트롤)도 테마를 따르게 한다 - Chrome 81+ */
+  color-scheme: light;
+
+  /* ── 색: 표면 ─────────────────────────────────────────────── */
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f8;
+  --color-surface-raised: #ffffff;
+  --color-border: #e5e5e7;
+  --color-border-strong: #d1d1d6;
+
+  /* ── 색: 텍스트 ───────────────────────────────────────────── */
+  --color-text: #18181b;
+  --color-text-muted: #71717a;
+  --color-text-inverse: #ffffff;
+
+  /* ── 색: 브랜드/강조/상태 ─────────────────────────────────── */
+  /*
+   * 브랜드 레드(#F54211)는 흰 텍스트 대비 3.70:1 로 AA(4.5:1) 미달이다.
+   * 그래서 두 토큰으로 분리한다:
+   *  - --color-brand: 순수 브랜드. 텍스트가 얹히지 않는 그래픽/마크 전용
+   *    (WCAG 1.4.11 그래픽 기준 3:1 은 충족).
+   *  - --color-primary: 흰 텍스트가 얹히는 표면(버튼, 말풍선)용으로
+   *    브랜드에서 최소로 어둡게 캘리브레이션한 값. #D93A0F = 4.60:1 AA 통과.
+   * 링크처럼 색 자체가 "텍스트" 인 자리는 표면과 대비 요구가 달라 --color-link 로
+   * 다시 분리한다(다크 모드에서 두 값이 서로 다른 방향으로 움직인다).
+   */
+  --color-brand: #f54211;
+  --color-primary: #d93a0f;
+  --color-primary-hover: #b93109;
+  --color-primary-subtle: #fdeae3;
+  --color-link: #d93a0f;
+  --color-danger: #dc2626;
+  --color-danger-subtle: #fef2f2;
+  --color-warning: #b45309;
+  --color-warning-subtle: #fffbeb;
+  --color-success: #15803d;
+
+  /* ── 채팅 말풍선 ─────────────────────────────────────────── */
+  --color-bubble-user: #d93a0f;
+  --color-bubble-user-text: #ffffff;
+  --color-bubble-assistant: #f4f4f5;
+  --color-bubble-assistant-text: #18181b;
+
+  /* ── 간격 (4px 스케일) ───────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── 라운드 ──────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ── 타이포 ──────────────────────────────────────────────── */
+  /* Pretendard 는 이 앱의 본문 서체다. 웹폰트 파일은 동봉하지 않는다
+     (용량/라이선스 관리 대비 실익이 작다) - 설치된 환경에서만 적용되고 아니면
+     기존 시스템 스택으로 자연 폴백한다. */
+  --font-sans:
+    Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo',
+    'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+
+  --leading-tight: 1.35;
+  --leading-normal: 1.6;
+
+  /* ── 그림자 ──────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.06);
+  --shadow-md: 0 4px 12px rgba(24, 24, 27, 0.08);
+
+  /* ── 레이아웃 ────────────────────────────────────────────── */
+  --sidebar-width: 280px;
+  /* 접힌 사이드바(레일) - 펼침 토글 버튼 하나가 여백을 갖고 앉는 폭 */
+  --sidebar-width-rail: 56px;
+  --header-height: 56px;
+  --content-max-width: 768px;
+
+  /* ── z-index: 숫자를 흩뿌리지 않고 한 곳에서 순서를 정한다 ── */
+  --z-sidebar: 10;
+  --z-header: 20;
+  --z-dropdown: 30;
+  --z-banner: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* ── 모션 ────────────────────────────────────────────────── */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * 다크 모드 - 다크 베이스(#262626).
+ *
+ * STEP 1 에서 "토큰이 런타임 계층이라 다크 모드를 나중에 값 교체만으로 붙일 수 있다"고
+ * 설계했던 것의 실증이다: 컴포넌트 CSS 는 한 줄도 바뀌지 않는다(--color-link 사용처 전환
+ * 두 곳 제외 - 표면색과 텍스트색의 대비 요구가 달라 토큰을 분리해야 했던 지점).
+ * 모든 값은 WCAG AA 를 수치로 검증했다: 본문 15.13:1, 보조 텍스트 6.00:1,
+ * 어시스턴트 말풍선 12.63:1, danger 5.83:1, warning 8.31:1, 링크 6.64:1.
+ * 기본은 시스템 선호를 따르고, 수동 선택(STEP 11 토글)이 있으면 그것이 우선한다.
+ *
+ * 셀렉터가 미디어쿼리가 아니라 data-theme 인 이유(STEP 11): 자동(시스템)과 수동
+ * 오버라이드를 미디어쿼리+속성으로 이원화하면 이 블록 전체를 두 번 선언해야 하고,
+ * 값 이원화는 언젠가 반드시 한쪽을 놓친다. 대신 문서 진입 시점의 인라인 스크립트
+ * (FOUC 방지, 루트 레이아웃)와 토글이 "해석된 테마" 를 항상 data-theme 으로
+ * 실체화한다 - 다크 값의 진실원은 이 블록 하나다. light-dark()(Chrome 123+)는
+ * 하한(88) 밖. JS 없는 환경은 라이트로 폴백하는데, mock 이 클라이언트인 이 앱은
+ * 어차피 JS 없이 동작하지 않으므로 실손실이 없다.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #262626;
+  --color-surface: #1f1f1f;
+  --color-surface-raised: #303030;
+  --color-border: #3d3d3d;
+  --color-border-strong: #4d4d4d;
+
+  --color-text: #ffffff;
+  --color-text-muted: #a3a3a3;
+
+  /* primary(표면용)는 흰 텍스트 대비가 배경과 무관하므로 그대로,
+     링크(텍스트용)는 어두운 배경 위에서 읽히도록 밝은 쪽으로 이동한다. */
+  --color-primary-subtle: #43190e;
+  --color-link: #ff8a65;
+  --color-danger: #f87171;
+  --color-danger-subtle: #3c1414;
+  --color-warning: #fbbf24;
+  --color-warning-subtle: #3a2a08;
+  --color-success: #4ade80;
+
+  --color-bubble-assistant: #333333;
+  --color-bubble-assistant-text: #ffffff;
+}
+
+/*
+ * 모션 최소화 선호를 존중한다. 전역에서 한 번 끄면 개별 컴포넌트가 매번 신경 쓰지 않아도 된다.
+ * (5단계의 순차 페이드인도 이 규칙의 영향을 받는다 - 접근성 기본값이 애니메이션보다 우선.)
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

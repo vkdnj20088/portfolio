@@ -1,0 +1,125 @@
+.home {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  width: 100%;
+  max-width: 640px;
+  /* 시각적 무게중심을 살짝 위로 */
+  margin-bottom: 10vh;
+}
+
+/*
+ * 첫 화면 원샷 진입 - 로고/인사/입력창이 60ms 간격으로 떠오른다.
+ * opacity+transform 만 쓰므로 레이아웃 시프트가 없고(CLS 0), backwards 는
+ * 지연 동안 시작 상태(투명)를 유지시킨다. CSS 전용이라 JS 검증 자산과 무관하다.
+ */
+.inner > * {
+  animation: riseIn 240ms var(--ease-out) backwards;
+}
+
+.inner > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.inner > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.inner > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* 전역 규칙(tokens.css)은 duration 만 0 으로 줄이고 delay 는 못 지운다(5단계와 같은
+   제약). 지연까지 걷어내야 모든 요소가 스태거 없이 즉시 나타난다. */
+@media (prefers-reduced-motion: reduce) {
+  .inner > * {
+    animation-delay: 0ms;
+  }
+}
+
+.brandMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-brand);
+  color: #ffffff;
+  box-shadow: var(--shadow-md);
+}
+
+.greeting {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  text-align: center;
+}
+
+/* ── 추천 질문 칩 - 원클릭으로 전체 흐름을 재생하는 데모 진입점 ─────────── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.chip {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  /* 복귀만 이징 - 누르는 순간은 아래에서 transition 0 으로 즉각 반응한다(STEP 9 문법) */
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.chip:hover:not(:disabled) {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: var(--duration-fast), var(--duration-fast), 0s;
+}
+
+.chip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

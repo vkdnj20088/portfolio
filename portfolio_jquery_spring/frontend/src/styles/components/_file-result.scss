@@ -1,0 +1,28 @@
+@use '../mixins' as m;
+
+.file-result {
+    margin-top: 14px;
+    padding: 12px 14px;
+    @include m.control-border;
+    font-size: 14px;
+
+    // 통과/차단 상태색 - 고유 색 조합을 시맨틱 토큰으로 승격(다크 테마에서 어두운 박스로 전환).
+    &--ok {
+        background: var(--result-ok-bg);
+        border-color: var(--result-ok-border);
+        color: var(--result-ok-text);
+    }
+
+    &--block {
+        background: var(--result-block-bg);
+        border-color: var(--result-block-border);
+        color: var(--result-block-text);
+    }
+
+    small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+    }
+}

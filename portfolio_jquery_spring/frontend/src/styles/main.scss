@@ -1,0 +1,21 @@
+// SCSS 엔트리 - 파티션 조립.
+//
+// @use 순서 = 최종 CSS 의 출력 순서다. 토큰(:root)이 가장 먼저 나와야 하고,
+// 같은 특정도끼리 부딪히는 규칙은 순서가 곧 승부이므로 조립 순서를 명시적으로 고정한다.
+//
+// 구형 @import 대신 @use 를 쓰는 이유:
+//   - 중복 출력 없음: 여러 파티션이 tokens 를 불러도 :root 는 한 번만 나온다.
+//   - 네임스페이스: `t.$primary` 처럼 출처가 드러난다(전역 오염 없음).
+//   - @import 는 Dart Sass 에서 폐기 예정이다.
+
+@use 'tokens';
+@use 'base';
+@use 'components/brand-banner';
+@use 'layout';
+@use 'components/card';
+@use 'components/form';
+@use 'components/button';
+@use 'components/chips';
+@use 'components/file-result';
+@use 'components/toast';
+@use 'components/portfolio-home';

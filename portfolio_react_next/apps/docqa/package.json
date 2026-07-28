@@ -1,0 +1,41 @@
+{
+  "name": "@chat/docqa",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3030",
+    "build": "next build",
+    "start": "next start -p 3030",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check:browser-support": "es-check es2021 \".next/static/chunks/**/*.js\""
+  },
+  "dependencies": {
+    "@chat/search-domain": "workspace:*",
+    "@chat/ui": "workspace:*",
+    "next": "15.5.20",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@chat/eslint-config": "workspace:*",
+    "@chat/typescript-config": "workspace:*",
+    "es-check": "^9.6.4",
+    "eslint": "^9.18.0",
+    "jsdom": "^25.0.1",
+    "typescript": "6.0.3",
+    "vitest": "^3.2.7"
+  },
+  "browserslist": [
+    "chrome >= 88",
+    "edge >= 88",
+    "firefox >= 85",
+    "safari >= 14"
+  ]
+}

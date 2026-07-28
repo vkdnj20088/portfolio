@@ -1,0 +1,324 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.item {
+  position: relative;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.link:hover {
+  background-color: var(--color-border);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* 눌린 동안 한 단계 더 깊게 - 버튼과 같은 press 언어를 목록에도 쓴다.
+   a 로 한정해 편집 모드의 래퍼(div.link)에는 걸리지 않게 한다. */
+a.link:active {
+  background-color: var(--color-border-strong);
+}
+
+.active {
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-sm);
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.time {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  transition: opacity var(--duration-fast) ease;
+}
+
+.preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* 수정/삭제는 보조 동작이라 평소엔 숨기고 hover/키보드 포커스에서 드러낸다.
+   드러날 때는 시간이 자리를 비켜 준다(아래 스왑 규칙) - 시간 슬롯(고정 포맷
+   YYYY-MM-DD HH:mm, 약 107px)이 버튼 두 개(52px)보다 넓어 텍스트를 덮지 않고,
+   제목의 말줄임 경계도 시간이 그대로 지켜 준다(겹침이 구조적으로 없다). */
+.actions {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: inline-flex;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.item:hover .actions,
+.item:focus-within .actions {
+  opacity: 1;
+}
+
+/* 스왑의 반대편 - 버튼이 드러나는 동안 시간은 숨는다(레이아웃은 그대로 유지). */
+.item:hover .time,
+.item:focus-within .time {
+  opacity: 0;
+}
+
+/* hover 라는 계기가 없는 입력 환경(터치)에서는 버튼을 항상 드러낸다 -
+   숨김은 정돈이지 기능 제한이 아니어야 한다. 시간은 그 슬롯을 내준다. */
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
+
+  .time {
+    opacity: 0;
+  }
+}
+
+/* ── 방 검색(STEP 10) - 와이어프레임의 돋보기를 목록 필터로 구현 ─────────── */
+.searchRow {
+  /* 스크롤 컨테이너(sidebarBody) 상단 고정 - Chrome 56+ 로 하한 안 */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  background-color: var(--color-surface);
+}
+
+.searchInput {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchInput:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+/* 인라인 제목 편집 - 링크 자리를 그대로 차지해 클릭이 이동으로 새지 않는다 */
+.editInput {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: 600;
+  outline: none;
+}
+
+.editHint {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* iOS 웹뷰의 16px 미만 입력 강제 줌 방지 - 컴포저와 같은 근거(STEP 14).
+   같은 특이성은 소스 순서가 승패를 가르므로 두 입력의 기본 규칙보다 뒤에 둔다. */
+@media (max-width: 640px) {
+  .searchInput,
+  .editInput {
+    font-size: 16px;
+  }
+}
+
+/* 알림형(receive-only) 방 표시 - 채운 칩: primary 위 흰 텍스트는 양 모드에서 4.60:1 AA */
+.badge {
+  display: inline-block;
+  margin-right: var(--space-1);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+/*
+ * ── 스켈레톤 - 최초 로드의 스피너 번쩍임을 레이아웃 미리보기로 교체 ──────
+ * 읽기 지연(150ms)이 짧아 스피너는 나타나자마자 사라지는 번쩍임이 된다.
+ * 방 목록은 행 구조(제목/미리보기)를 미리 알아 스켈레톤이 정확히 그려지는
+ * 드문 자리이고, 스토어가 stale-while-revalidate 라 최초 1회만 노출된다.
+ * (말풍선 폭을 예측할 수 없는 메시지 목록은 반대로 스피너가 맞다.)
+ */
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.skeletonItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.skeletonBar {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-border);
+  animation: skeletonPulse 1.2s ease-in-out infinite;
+}
+
+.skeletonTitle {
+  width: 55%;
+  height: 14px;
+}
+
+/* 폭을 행마다 달리해 실제 목록의 들쭉날쭉함을 흉내낸다 */
+.skeletonItem:nth-child(2) .skeletonTitle {
+  width: 72%;
+}
+
+.skeletonItem:nth-child(3) .skeletonTitle {
+  width: 44%;
+}
+
+.skeletonPreview {
+  width: 86%;
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.muted {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+/*
+ * ── 대화 검색(STEP 16) ────────────────────────────────────────────────
+ * 같은 입력에 대상만 바꾸는 모드 토글과, 방 목록을 대체하는 결과 줄.
+ * 결과 줄은 방 목록 행(.link/.titleRow/.time)을 그대로 재사용하고
+ * 미리보기 자리에만 발췌(.snippet)를 넣는다 - 사이드바의 리듬을 깨지 않는다.
+ */
+.searchModes {
+  display: flex;
+  gap: 2px;
+  margin-top: var(--space-1);
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+}
+
+.searchMode {
+  flex: 1;
+  padding: 3px var(--space-1);
+  border: none;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.searchMode:hover {
+  color: var(--color-text);
+}
+
+.searchMode:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.searchModeOn {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-weight: 600;
+}
+
+.hitCount {
+  margin: 0;
+  padding: var(--space-1) var(--space-2) 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* 발췌는 미리보기와 달리 두 줄까지 보여준다 - 매칭 주변 맥락이 한 줄엔 잘 안 담긴다. */
+.snippet {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* 하이라이트는 배경색만으로는 대비가 낮아(고대비 모드·흑백에서 소멸) 밑줄을 함께 깐다. */
+.hl {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-text);
+  border-radius: 2px;
+  box-shadow: inset 0 -2px 0 var(--color-primary);
+}

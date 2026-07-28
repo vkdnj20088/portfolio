@@ -1,0 +1,60 @@
+import type { ReactNode } from 'react';
+import { NetworkStatusBanner } from '@/components/network/NetworkStatusBanner';
+import { Logo } from './Logo';
+import { PortfolioHomeLink } from './PortfolioHomeLink';
+import { SidebarToggle } from './SidebarToggle';
+import { ThemeToggle } from './ThemeToggle';
+import styles from './AppShell.module.css';
+
+interface AppShellProps {
+  children: ReactNode;
+  /** 사이드바 본문 슬롯. 채팅방 목록이 들어간다. */
+  sidebar?: ReactNode;
+}
+
+/**
+ * 전 페이지 공통 껍데기 - 좌측 사이드바(상단 로고 + 목록)와 본문 영역.
+ *
+ * 사이드바를 각 페이지가 아니라 이 셸이 소유한다. 채팅홈과 채팅방이 같은 목록을
+ * 각자 렌더링하면 페이지를 오갈 때 목록이 언마운트/리마운트되면서 스크롤 위치와
+ * 로딩 상태가 초기화된다. 셸에 두면 라우트가 바뀌어도 목록은 그대로 살아 있다.
+ *
+ * 접힘(STEP 13): html[data-sidebar='collapsed'] 이면 레일 폭으로 접힌다.
+ * 접혀도 언마운트가 아니라 CSS 숨김이다 - 위의 "목록은 그대로 살아 있다"가
+ * 접힘 상태에도 성립하고, 펼치면 스크롤/검색어가 그 자리에 있다.
+ */
+export function AppShell({ children, sidebar }: AppShellProps) {
+  return (
+    <div className={styles.root}>
+      {/* 키보드 사용자가 사이드바(로고+방 목록 전체)를 Tab 으로 통과하지 않고
+          본문으로 직행하는 통로. 포커스가 오기 전에는 시각적으로 숨겨져 있다. */}
+      <a href="#main-content" className={styles.skipLink}>
+        본문으로 건너뛰기
+      </a>
+      <NetworkStatusBanner />
+      <div className={styles.shell}>
+        {/* id 는 토글 버튼의 aria-controls 대상이다 */}
+        <aside id="sidebar" className={styles.sidebar} aria-label="채팅방 목록">
+          <div className={styles.sidebarHeader}>
+            <span className={styles.sidebarLogo}>
+              <Logo />
+            </span>
+            <SidebarToggle />
+          </div>
+          <div className={styles.sidebarBody}>{sidebar}</div>
+          {/* 포트폴리오 식별 표기 - 모든 페이지에서 보이되 채팅 영역을 침범하지 않는 자리 */}
+          <div className={styles.sidebarFooter}>
+            <span>최종은의 React + Next 포트폴리오</span>
+            <ThemeToggle />
+          </div>
+        </aside>
+        {/* 본문 랜드마크 - 스킵 링크의 도착지. tabIndex=-1 은 앵커 이동 시 포커스가
+            실제로 본문으로 옮겨지게 한다(없으면 스크롤만 되고 포커스는 링크에 남는다). */}
+        <main id="main-content" tabIndex={-1} className={styles.main}>
+          {children}
+        </main>
+      </div>
+      <PortfolioHomeLink />
+    </div>
+  );
+}

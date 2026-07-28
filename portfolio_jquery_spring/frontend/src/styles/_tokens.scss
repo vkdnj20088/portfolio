@@ -1,0 +1,89 @@
+// 디자인 토큰 - 팔레트의 단일 진실원(single source of truth).
+//
+// 왜 Sass 변수와 CSS 커스텀 프로퍼티를 "둘 다" 쓰는가:
+//   - CSS 커스텀 프로퍼티(--x)는 **런타임** 계층이다. 캐스케이드를 타고, 상속되고,
+//     나중에 다크모드처럼 런타임에 값을 바꿔 끼울 수 있다. 이걸 Sass 변수로 바꾸면
+//     그 능력을 잃는다(컴파일 시점에 값이 박제된다) -> 다운그레이드다.
+//   - 반대로 Sass 변수는 **빌드 타임**에만 존재하지만, 색 연산(rgba 등)을 할 수 있다.
+//     `rgba(var(--primary), .15)` 는 CSS 에서 동작하지 않기 때문에, 알파 변형을 만들려면
+//     빌드 타임 값이 필요하다.
+//
+// 그래서 여기서: Sass 변수를 원본으로 두고 -> :root 로 방출해 런타임 계층을 만들고,
+// 알파 변형이 필요한 곳만 Sass 원본에서 파생시킨다. 컴포넌트는 평소엔 var(--x) 를 쓴다.
+//
+// 이 구조가 고친 실제 문제: 기존 CSS 에는 `rgba(91, 64, 248, .15)` 처럼 팔레트 색을
+// 손으로 풀어쓴 리터럴이 4곳 있었다. --primary 를 바꿔도 저 숫자는 따라오지 않는다
+// (조용히 어긋나는 종류의 버그). 이제 전부 $primary 등에서 파생된다.
+
+// ── 팔레트 ────────────────────────────────────────────────────────────
+$bg: #f5f4fa;
+$card: #ffffff;
+$border: #e6e3f2;
+$text: #1e1a2e;
+$muted: #6b6880;
+$primary: #4c34c9; // JC 브랜드 바이올렛 - 포트폴리오 accent 톤 정렬(전기적 #5b40f8 -> 정제된 딥 로열 바이올렛). white 대비 7.95, 에디토리얼 톤에 맞춤
+$primary-d: #3f2aa8; // hover/텍스트용 더 진한 바이올렛
+$danger: #e5484d;
+$ok: #2ba24c;
+$chip: #efeafc; // 라벤더 칩
+
+$radius: 10px;
+
+// ── 런타임 계층 방출 ──────────────────────────────────────────────────
+// @use 는 이 모듈을 몇 번 불러오든 아래 :root 를 **한 번만** 출력한다.
+// (구형 @import 였다면 불러온 횟수만큼 중복 출력됐다.)
+:root {
+    // 다크 대응을 UA 에 알린다 - 이게 없으면 CSS 변수만 뒤집힐 뿐 네이티브 위젯(datetime-local
+    // 팝업/스피너, file 선택 버튼, 스크롤바)은 라이트로 렌더돼 다크에서 튄다. 아래 @media dark 토큰과 정합.
+    color-scheme: light dark;
+    --bg: #{$bg};
+    --card: #{$card};
+    --border: #{$border};
+    --text: #{$text};
+    --muted: #{$muted};
+    --primary: #{$primary};
+    --primary-d: #{$primary-d};
+    --danger: #{$danger};
+    --ok: #{$ok};
+    --chip: #{$chip};
+    --radius: #{$radius};
+
+    // 시맨틱 표면/상태 - 다크 테마에서 뒤집을 수 있도록 토큰화(기존 하드코딩 리터럴을 승격).
+    --btn-bg: #ffffff; // 보조 버튼 표면
+    --btn-bg-hover: #f7f8fa;
+    --result-ok-bg: #eafaef;
+    --result-ok-border: #bfe6c9;
+    --result-ok-text: #1c6b34;
+    --result-block-bg: #fdecec;
+    --result-block-border: #f5c2c4;
+    --result-block-text: #a3282c;
+    --status-ok: #1a8a3d;
+    --status-error: #c0392b;
+}
+
+// 다크 테마 패리티 - 다른 3앱(prefers-color-scheme 대응)과 정합. 라이트는 위 :root 그대로,
+// 여기서는 런타임 계층(CSS 변수)만 덮어써 배경/표면/텍스트/보더/상태색을 다크로 전환한다.
+// strict CSP 무관(컴파일 CSS). 대비는 전부 AA 이상으로 검증됨.
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #14121c; // 바이올렛 틴트 다크(브랜드 + 에디토리얼 다크 패밀리 정합)
+        --card: #1c1926;
+        --border: #2e2a3d;
+        --text: #ebe9f2; // 15:1
+        --muted: #a09bb3; // 6.9:1 AA
+        --primary: #6249de; // 다크 어포던스 + white 버튼텍스트 5.95:1(라이트 #4c34c9 는 다크서버 위 너무 어두움)
+        // --primary-d(#3f2aa8) 는 유지: 칩/코드 텍스트가 "라이트 라벤더 칩" 위라 그대로 대비 확보,
+        //   버튼 hover(white 텍스트)도 안전(9.96) -> 이중역할 충돌 없이 단일값 유지.
+        // --chip 은 라이트 라벤더 유지(colored badge 패턴): 칩 톤/텍스트 대비 보존.
+        --btn-bg: #26222f;
+        --btn-bg-hover: #322c40;
+        --result-ok-bg: #14291b;
+        --result-ok-border: #2b5738;
+        --result-ok-text: #6ee29a; // 9.5:1
+        --result-block-bg: #2e1618;
+        --result-block-border: #5e2b2e;
+        --result-block-text: #ff9ea0; // 8.6:1
+        --status-ok: #4ec77a; // 8.0:1
+        --status-error: #ff8a8a; // 7.6:1
+    }
+}

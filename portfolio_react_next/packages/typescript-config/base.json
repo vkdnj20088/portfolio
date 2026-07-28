@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": true,
+    "target": "ES2019",
+    // ES2022.Intl 은 타입 전용 추가다: Intl.Segmenter(런타임 Chrome 87+/Node 16+ - 지원
+    // 하한 안)를 타입체커에 보이게 할 뿐, 산출 문법은 여전히 target(ES2019)이 결정한다.
+    "lib": ["ES2019", "DOM", "DOM.Iterable", "ES2022.Intl"],
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  }
+}

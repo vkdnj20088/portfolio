@@ -1,0 +1,70 @@
+# 프로덕션 프로파일 - MySQL 8 (AWS RDS). 민감정보는 환경변수로 주입.
+# 실행: java -jar app.jar --spring.profiles.active=prod
+#   DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD 환경변수 필요.
+spring:
+  # H2 콘솔은 prod 에서 반드시 끈다. spring.h2.console.enabled 는 데이터소스가 H2 인지와 무관하게
+  # H2 가 클래스패스(runtimeOnly)에 있고 true 면 /h2-console 서블릿을 등록한다 - 기본 프로파일의
+  # true 가 상속되면 MySQL prod 에서도 콘솔이 떠 임의 JDBC URL/JNDI RCE 표면이 열린다(무인증 §0).
+  # Swagger 를 prod 에서 끈 것과 같은 논리로, 더 위험한 이 표면을 확실히 닫는다. 로컬/기본은 유지.
+  h2:
+    console:
+      enabled: false
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:extdb}?serverTimezone=UTC&characterEncoding=UTF-8&rewriteBatchedStatements=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    # 스키마 진실원은 db/migration/*.sql(Flyway 가 소유). 적용 이력은 flyway_schema_history 에 남는다.
+    enabled: true
+    # 기존 데이터가 있는 DB(구 손스키마로 만든)에 도입해도 깨지지 않게 베이스라인을 잡는다.
+    baseline-on-migrate: true
+  jpa:
+    hibernate:
+      # 스키마 생성은 Flyway 가 한다. Hibernate 는 엔티티-스키마 정합만 검증한다(생성/변경 없음).
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          time_zone: UTC   # IP 규칙 시각(Instant)을 UTC 로 정합 - 디바이스 TZ 렌더 요건의 토대
+
+server:
+  port: 8080
+  # 루프백에만 바인딩한다. 외부 트래픽은 반드시 Nginx(80/443)를 거치게 하기 위함.
+  # 보안그룹에서 8080 을 막고 있지만, 그것을 유일한 방어선으로 두지 않는다(심층 방어) -
+  # SG 를 한 번 잘못 열면 TLS/압축/캐시 계층을 우회해 평문으로 앱에 직접 닿게 된다.
+  address: 127.0.0.1
+  # 본인 IP 자동기입(whoami)이 실제 클라이언트 IP 를 얻도록 X-Forwarded-For 를 반영한다.
+  # 앱이 127.0.0.1 루프백 전용이라 XFF 를 세팅하는 주체는 Nginx 로 한정된다(신뢰 경계).
+  forward-headers-strategy: framework
+
+logging:
+  level:
+    com.portfolio.extension: INFO
+
+# 다중 인스턴스 배포 대비 - 커스텀 추가 임계 구역을 공유 MySQL 의 GET_LOCK 으로 클러스터 전역 직렬화.
+# (in-process 는 단일 JVM 만 보장하므로 수평 확장 시 초과 삽입이 다시 열린다.)
+app:
+  distributed-lock:
+    provider: mysql
+    timeout-seconds: 10
+
+# 프로덕션에서는 API 문서/Swagger UI 를 끈다. 이 데모는 인증이 없어(§0 경계), 공개 배포 시 Swagger 가
+# 전체 관리 API 표면(IP 규칙 CRUD, 파일 검증)을 그대로 열람시켜 정찰 이점을 준다 - prod 공격표면 축소.
+# 로컬/데모(기본 프로파일)에서는 그대로 켜 둔다(개발 편의).
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# 프로덕션 actuator 노출 축소(Swagger/H2 off 와 동일 논리). 기본 프로파일은 health,info,metrics 로
+# 관측성을 열지만, 무인증(§0) 공개 배포에서는 metrics 가 이름목록+값(JVM·요청·커스텀 카운터)을
+# 노출해 저강도 정찰 표면이 된다 - prod 는 기동 판정용 health + info 만 남긴다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

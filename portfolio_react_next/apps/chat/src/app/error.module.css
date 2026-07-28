@@ -1,0 +1,39 @@
+.center {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.body {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.homeLink {
+  /* 색이 곧 텍스트인 자리는 표면용 primary 가 아니라 link 토큰을 쓴다(대비 요구가 다름) */
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.homeLink:hover {
+  text-decoration: underline;
+}

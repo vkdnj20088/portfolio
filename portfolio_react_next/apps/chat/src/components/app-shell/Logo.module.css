@@ -1,0 +1,49 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.logo:hover {
+  background-color: var(--color-surface);
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  /* 로고는 텍스트가 아니라 그래픽이라 순수 브랜드 색을 쓴다(내부 W 는 장식 스트로크) */
+  background-color: var(--color-brand);
+  color: var(--color-text-inverse);
+  flex-shrink: 0;
+}
+
+.wordmark {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* 접힌 레일(STEP 14)에서는 워드마크만 접고 마크(홈 링크)는 남긴다 -
+   "모든 페이지 좌측 상단에 로고 존재 + 클릭 시 홈 이동"은 공통 요구사항이라
+   접힘 상태라고 예외가 될 수 없다. 정렬 보정용 음수 마진도 레일에선 푼다. */
+:global(html[data-sidebar='collapsed']) .logo {
+  margin-left: 0;
+  padding: var(--space-1);
+}
+
+:global(html[data-sidebar='collapsed']) .wordmark {
+  display: none;
+}

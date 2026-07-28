@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JC Guard - 최종은의 jQuery + Spring Boot 포트폴리오 (IP 접근 설정)</title>
+    <meta name="description" content="허용 IP 와 사용 시간대를 등록·검색·삭제하는 어드민 데모. 100만 건 키셋 페이지네이션, 디바이스 시간대 렌더, 내용/기간 검색.">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <!-- 이 파일은 webpack(HtmlWebpackPlugin) 템플릿이다. 산출물 static/ip.html 은 직접 수정 금지.
+         <script>/<link> 는 여기 적지 않는다 - 해시 파일명을 HtmlWebpackPlugin 이 주입한다. -->
+</head>
+<body>
+<header class="brand-banner">
+    <div class="brand-banner__brand">
+        <span class="brand-banner__mark" aria-hidden="true"></span>
+        <span class="brand-banner__wordmark">JC Guard</span>
+    </div>
+    <div class="brand-banner__applicant">최종은의 <span class="brand-banner__grad">jQuery + Spring Boot</span> 포트폴리오</div>
+</header>
+
+<main class="app app--wide">
+    <header class="app__header">
+        <h1>IP 접근 설정</h1>
+        <p>허용할 IP 주소와 사용 시간대를 등록·검색·삭제합니다. 조회 시간은 항상 접속한 디바이스의 시간대로 표시됩니다.
+           (데모 - 실제 IP 를 차단하지는 않습니다.)</p>
+    </header>
+
+    <section class="card">
+        <div class="ip-toolbar">
+            <div class="ip-toolbar__filters">
+                <input id="q" type="text" maxlength="20" placeholder="내용 검색..." autocomplete="off">
+                <label class="ip-filter"><span>사용 시작 시간</span><input id="startFrom" type="datetime-local"></label>
+                <label class="ip-filter"><span>사용 끝 시간</span><input id="endTo" type="datetime-local"></label>
+                <button id="searchBtn" type="button" class="btn">검색</button>
+            </div>
+            <button id="openAdd" type="button" class="btn btn--primary">+ IP 추가</button>
+        </div>
+
+        <div id="addPanel" class="ip-add" hidden>
+            <div class="ip-add__grid">
+                <div class="field">
+                    <label class="field__label" for="ipAddress">IP 주소 / 대역(CIDR)</label>
+                    <span class="ip-add__ip">
+                        <input id="ipAddress" type="text" maxlength="45" placeholder="192.168.0.10 또는 10.0.0.0/24 · IPv6 가능" autocomplete="off">
+                        <button id="whoamiBtn" type="button" class="btn">현재 IP 불러오기</button>
+                    </span>
+                    <p id="ipHint" class="ip-hint" aria-live="polite" hidden></p>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="description">설명</label>
+                    <input id="description" type="text" maxlength="20"
+                           placeholder="IP 주소나 설명을 작성해주세요 (최대 20자)" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label class="field__label" for="startAt">사용 시작 시간</label>
+                    <input id="startAt" type="datetime-local">
+                </div>
+                <div class="field">
+                    <label class="field__label" for="endAt">사용 끝 시간</label>
+                    <input id="endAt" type="datetime-local">
+                </div>
+            </div>
+            <div class="ip-add__actions">
+                <button id="saveBtn" type="button" class="btn btn--primary">저장</button>
+                <button id="cancelBtn" type="button" class="btn">취소</button>
+            </div>
+        </div>
+
+        <div class="ip-table-wrap">
+            <table class="ip-table">
+                <thead>
+                    <tr>
+                        <th>IP 주소</th><th>내용</th><th>사용 시작 시간</th><th>사용 끝 시간</th>
+                        <th class="ip-table__act">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="ipTableBody" aria-live="polite"></tbody>
+            </table>
+            <div id="ipEmpty" class="ip-empty" hidden>등록된 규칙이 없습니다.</div>
+            <div class="ip-more"><button id="loadMore" type="button" class="btn" hidden>더 보기</button></div>
+        </div>
+    </section>
+</main>
+
+<a class="portfolio-home" href="/" aria-label="포트폴리오 소개로 돌아가기">
+    <span class="ph-ic" aria-hidden="true">&#8592;</span> 포트폴리오
+</a>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
