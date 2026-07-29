@@ -37,6 +37,7 @@ log "0) 백업: ${BACKUP}"
 mkdir -p "$BACKUP"
 for f in "${CONFD}/portfolio-hardening.conf" \
          "${SNIPPETS}/portfolio-proxy-app.conf" \
+         "${SNIPPETS}/portfolio-static-headers.conf" \
          "${AVAILABLE}/portfolio" \
          "${AVAILABLE}/portfolio-domain"; do
   [[ -f "$f" ]] && cp -a "$f" "${BACKUP}/$(basename "$f")"
@@ -49,8 +50,10 @@ rollback() {
   [[ -f "${BACKUP}/portfolio-hardening.conf" ]] \
     && cp -a "${BACKUP}/portfolio-hardening.conf" "${CONFD}/" \
     || rm -f "${CONFD}/portfolio-hardening.conf"
-  for n in portfolio-proxy-app.conf; do
-    [[ -f "${BACKUP}/${n}" ]] && cp -a "${BACKUP}/${n}" "${SNIPPETS}/"
+  for n in portfolio-proxy-app.conf portfolio-static-headers.conf; do
+    # 백업에 없으면 이번 실행에서 새로 만든 파일이다 - 지운다(설정이 이 파일을 include 하는
+    # 상태로 되돌아가지 않으므로, 남겨 두면 다음 nginx -t 만 헷갈리게 한다).
+    [[ -f "${BACKUP}/${n}" ]] && cp -a "${BACKUP}/${n}" "${SNIPPETS}/" || rm -f "${SNIPPETS}/${n}"
   done
   for n in portfolio portfolio-domain; do
     [[ -f "${BACKUP}/${n}" ]] && cp -a "${BACKUP}/${n}" "${AVAILABLE}/"
@@ -69,6 +72,7 @@ install -d "$CONFD" "$SNIPPETS"
 install -m 0644 -o root -g root "$INFRA/nginx/conf.d/portfolio-hardening.conf" "${CONFD}/portfolio-hardening.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/proxy-app.conf"          "${SNIPPETS}/portfolio-proxy-app.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/hsts.conf"               "${SNIPPETS}/portfolio-hsts.conf"
+install -m 0644 -o root -g root "$INFRA/nginx/snippets/static-headers.conf"     "${SNIPPETS}/portfolio-static-headers.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/portfolio.conf"                   "${AVAILABLE}/portfolio"
 echo "conf.d / snippets / portfolio 배치 완료"
 
@@ -120,6 +124,21 @@ done
 srv="$(curl -skI --max-time 10 "https://127.0.0.1/" | grep -i '^server:' | tr -d '\r' || true)"
 printf '  %-38s %s\n' "Server 헤더" "${srv:-(없음)}"
 [[ "$srv" =~ nginx/[0-9] ]] && { warn "버전이 아직 노출됩니다 - server_tokens off 가 안 먹었습니다."; rc=1; }
+
+# 인트로의 없는 경로가 404 인지(200 이면 SPA 폴백이 남아 실패가 성공으로 위장된다)
+nf="$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 "https://127.0.0.1/__does_not_exist__" || true)"
+printf '  %-38s %s\n' "인트로 없는 경로" "$nf"
+[[ "$nf" == "404" ]] || { warn "404 가 아닙니다($nf) - try_files 폴백이 아직 /index.html 입니다."; rc=1; }
+
+# 인트로에 보안 헤더가 실제로 붙는지. add_header 상속 규칙 때문에 조용히 사라지기 쉬운 자리다.
+hdr="$(curl -skI --max-time 10 "https://127.0.0.1/" | tr -d '\r' || true)"
+for h in content-security-policy x-frame-options x-content-type-options strict-transport-security; do
+  if grep -qi "^${h}:" <<<"$hdr"; then
+    printf '  %-38s %s\n' "인트로 ${h}" "있음"
+  else
+    printf '  %-38s %s\n' "인트로 ${h}" "없음"; rc=1
+  fi
+done
 
 echo
 if [[ $rc -eq 0 ]]; then

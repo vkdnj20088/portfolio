@@ -14,7 +14,10 @@ Thumbs.db
 *.swp
 *.swo
 # 포트폴리오 산출물에 AI 도구 흔적을 남기지 않는다.
+# AGENTS.md 는 Next 스캐폴딩이 자동 생성하므로 지워도 다시 생긴다 - 추적만 끊는다.
 .claude/
+AGENTS.md
+CLAUDE.md
 
 # 로그
 *.log

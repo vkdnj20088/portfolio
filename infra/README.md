@@ -142,9 +142,41 @@ systemd 가 통째로 비웁니다. 데모라 격리본의 영속이 필요 없�
   공격면을 막는다. 로그 기반 밴은 그 위의 한 겹이지 대체가 아니다.
 - **CDN·다중 upstream·mTLS** - 단일 리전 저트래픽이고, 무인증 공개가 의도한 설계라 해당 없음.
 
-데모의 "포트폴리오로 돌아가기" 링크는 리포지토리 변수 **`PUBLIC_HOST`** 를 쓰도록 해 두었습니다
-(GitHub → Settings → Secrets and variables → Actions → Variables). 값을 도메인으로 넣고 재배포하면
-복귀 링크가 도메인을 가리킵니다. 변수가 없으면 예전처럼 `DEPLOY_HOST`(IP)로 떨어집니다.
+### 데모 표본 복구 (portfolio-demo-reseed.timer)
+
+파일 차단과 IP 접근 제어 두 화면은 **쓰기 API 가 무인증**입니다. 평가자가 직접 눌러 봐야
+의미가 있는 데모라 그렇게 열어 두었지만, 되돌릴 길이 없으면 상태가 한 방향으로만 나빠집니다.
+누군가 규칙을 전부 지우면 그 다음 방문자는 빈 화면을 봅니다.
+
+한 시간마다 [`demo-reseed.sql`](demo-reseed.sql) 이 **없어진 표본만** 되살립니다. 초기화가
+아닙니다 - 방문자가 만든 행을 즉시 지우면 지금 화면을 보고 있는 사람의 작업이 눈앞에서
+사라지므로, 방문자 데이터는 24시간이 지난 뒤에 치웁니다. 감사 로그는 append-only 가 요점이라
+내용은 손대지 않고 보존 기간(30일)만 둡니다.
+
+표본 IP 는 RFC 5737 / RFC 3849 의 **문서화 전용 대역**을 씁니다. 실존 호스트를 가리키지
+않으면서 IPv4 / CIDR / IPv6 세 표기를 한 화면에 보여 줍니다.
+
+이 유닛만 배포가 아니라 **root 가 직접 설치**합니다. `sync-units.sh` 는 `User=deploy` 가 없는
+유닛을 거부하는데, 그 방어가 맞습니다 - 배포 계정이 쓸 수 있는 디렉터리에서 root 유닛을 읽어
+오면 배포 계정 탈취가 곧 root 가 됩니다. 뚫는 대신 경로를 나눴습니다.
+
+```bash
+sudo install -d -o root -g root /opt/portfolio/infra
+sudo install -m 0755 -o root -g root infra/demo-reseed.sh  /opt/portfolio/infra/
+sudo install -m 0644 -o root -g root infra/demo-reseed.sql /opt/portfolio/infra/
+sudo install -m 0644 -o root -g root infra/systemd/portfolio-demo-reseed.service /etc/systemd/system/
+sudo install -m 0644 -o root -g root infra/systemd/portfolio-demo-reseed.timer   /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now portfolio-demo-reseed.timer
+sudo systemctl start portfolio-demo-reseed          # 지금 한 번 실행
+journalctl -u portfolio-demo-reseed -n 20 --no-pager
+```
+
+데모의 "포트폴리오로 돌아가기" 링크는 **런타임에 지금 호스트에서 조립**합니다. 서브도메인
+배포면 첫 라벨을 떼고(`ip.example.dev` -> `example.dev`), IP 배포면 포트를 뗍니다. 빌드 타임
+상수로 두었더니 도메인을 붙인 뒤 세 앱이 전부 옛 IP 를 가리켰고, 도메인이 만료되면 이번엔
+IP 로 들어온 방문자에게 죽은 주소를 내미는 문제가 남았습니다. 서버 렌더링 시점에만 리포지토리
+변수 `PUBLIC_HOST` 가 폴백으로 쓰입니다(스크립트가 꺼져 있어도 링크는 살아 있게).
 
 인트로의 데모 링크에는 IP 가 박혀 있지 않습니다. 인트로가 데모들과 같은 호스트에 있으므로
 "지금 페이지의 호스트 + 데모별 포트"로 링크를 조립합니다 - **서버 IP 가 바뀌어도 고칠 곳이 없습니다.**

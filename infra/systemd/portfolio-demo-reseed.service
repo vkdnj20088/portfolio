@@ -1,0 +1,40 @@
+# /etc/systemd/system/portfolio-demo-reseed.service
+# 공개 데모의 표본 데이터 복구(1회 실행). 스케줄은 짝이 되는 .timer 가 쥔다.
+#   sudo systemctl start portfolio-demo-reseed        # 지금 한 번 돌리기
+#
+# 이 유닛은 배포(portfolio-sync-units)로 반영되지 않는다. sync-units 는 User=deploy 가 없는
+# 유닛을 거부하는데, 그것이 맞다 - 배포 계정이 쓸 수 있는 디렉터리에서 root 유닛을 읽어오면
+# 배포 계정 탈취가 곧 root 가 된다. 그 방어를 뚫는 대신 이 유닛만 root 가 직접 설치한다.
+# 설치 절차는 infra/README.md "데모 표본 복구" 참고.
+[Unit]
+Description=Portfolio demo data reseed (idempotent restore)
+After=network.target docker.service portfolio-backend.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+# docker 소켓과 /etc/portfolio/backend.env(600, root:root)를 둘 다 읽어야 해서 root 로 돈다.
+# 대신 아래 하드닝으로 이 유닛이 만질 수 있는 범위를 좁힌다.
+User=root
+ExecStart=/usr/bin/env bash /opt/portfolio/infra/demo-reseed.sh
+
+# 실패해도 서비스가 죽는 일은 아니다. 다음 타이머 주기에 다시 시도한다.
+# (타이머가 한 시간마다 도는데 여기서 재시작까지 걸면 실패 시 두 겹으로 돈다.)
+SuccessExitStatus=0
+
+# 하드닝 - 이 유닛은 SQL 한 벌을 돌리는 것이 전부다. 그 외에는 아무것도 못 하게 둔다.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+# docker CLI 는 유닉스 소켓만 쓴다. AF_INET 은 열어 둘 이유가 없다.
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

@@ -121,27 +121,34 @@ src/test/java/...            정규화, 검증, 동시성, 파일검증, 컨트�
 라이브 데모(https://file.jongeunchoi.dev)의 실제 구성입니다.
 
 ```
-                [인터넷]
-                    │   443 HTTPS (Let's Encrypt)   /   80 -> 301 리다이렉트
-                    ▼
- ┌─────────────────────────────────────────────────────────────┐
- │ EC2 t3.micro (Ubuntu 24.04, RAM 1GB + swap 2GB)             │
+                     [인터넷]
+                         │  443 HTTPS (Let's Encrypt)  /  80 -> 301
+                         ▼
+ ┌──────────────────────────────────────────────────────────────┐
+ │ EC2 t4g.small - Ubuntu 24.04 arm64, RAM 2GB + swap 2GB       │
  │                                                              │
- │   Nginx        0.0.0.0:80, 443    리버스 프록시 / gzip / 캐시 헤더 │
- │      │ proxy_pass                                            │
- │      ▼                                                       │
- │   Spring Boot  127.0.0.1:8080     systemd(extension-block)   │
- │      │ JDBC                        JVM -Xmx320m              │
- │      ▼                                                       │
- │   MySQL 8      127.0.0.1:3306     Docker 컨테이너            │
- └─────────────────────────────────────────────────────────────┘
+ │   Nginx      0.0.0.0:80,443   SNI 로 서브도메인 분기         │
+ │     │ proxy_pass                                             │
+ │     ▼                                                        │
+ │   Spring Boot  127.0.0.1:8080   systemd(portfolio-backend)   │
+ │     │ JDBC                      JVM -Xmx320m, SerialGC       │
+ │     ▼                                                        │
+ │   MySQL 8      127.0.0.1:3306   Docker, buffer pool 96M      │
+ │                                                              │
+ │   (같은 호스트에 Next 데모 3개가 3000/3010/3030 으로 공존)   │
+ └──────────────────────────────────────────────────────────────┘
 
  외부 개방: 80 / 443 뿐 (SSH 22 는 지정 IP 화이트리스트)
  앱(8080) / DB(3306) 는 루프백 전용 -> 외부에서 직접 도달 불가
 ```
 
+이 서비스는 `file.` 과 `ip.` 두 서브도메인으로 노출되지만 **한 프로세스**입니다. nginx 가 TLS
+핸드셰이크의 SNI 로 어느 이름으로 들어왔는지 구분해, `ip.` 의 루트만 `/ip.html` 로 바꿔 넘깁니다.
+
 - **DB 선택**: 프리티어 비용과 단일 인스턴스 규모를 고려해 RDS 대신 **EC2 내 Docker MySQL 8** 을 사용합니다.
   (스키마는 **Flyway**([db/migration](src/main/resources/db/migration))가 기동 시 적용, 애플리케이션 프로파일은 `prod`)
+- 한 대에 JVM 1 + MySQL 1 + Node 3 이 함께 사는 메모리 배분과 그 실측 근거, nginx/systemd 하드닝,
+  배포 파이프라인은 [infra/README.md](../infra/README.md) 에 있습니다.
 - 배포 보안에 대한 판단은 아래 **20번** 참고.
 
 ---

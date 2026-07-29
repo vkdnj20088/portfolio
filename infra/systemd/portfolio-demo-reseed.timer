@@ -1,0 +1,21 @@
+# /etc/systemd/system/portfolio-demo-reseed.timer
+# 표본 복구 주기. 서비스가 아니라 타이머를 enable 한다.
+#   sudo systemctl enable --now portfolio-demo-reseed.timer
+#   systemctl list-timers portfolio-demo-reseed --all
+[Unit]
+Description=Run portfolio demo data reseed hourly
+
+[Timer]
+# 왜 한 시간인가: 누군가 표본을 전부 지웠을 때 다음 방문자가 빈 화면을 보는 시간이 곧
+# 이 주기다. 하루 한 번이면 오전에 지워진 화면이 자정까지 비어 있다. 반대로 더 짧게 잡을
+# 이유도 없다 - 복구는 없어진 것만 되살리므로 자주 돈다고 더 좋아지지 않는다.
+OnCalendar=hourly
+# 기동 직후에도 한 번. 재부팅이나 배포로 내려갔던 동안 비었을 수 있다.
+OnBootSec=5min
+# 매시 정각에 몰리지 않게 흩는다. 이 서버는 같은 시간대에 인증서 갱신 타이머도 돈다.
+RandomizedDelaySec=300
+# 서버가 꺼져 있어 놓친 주기는 다음 부팅 때 한 번 따라잡는다.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
