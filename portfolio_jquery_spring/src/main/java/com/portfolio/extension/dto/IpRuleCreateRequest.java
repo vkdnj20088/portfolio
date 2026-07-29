@@ -10,7 +10,7 @@ import java.time.Instant;
 /**
  * IP 접근 규칙 등록 요청. 원시 계약(빈 값/길이/필수)만 검증하고,
  * 시작 &lt;= 끝 같은 교차 필드 규칙은 아래 {@link #isValidPeriod()} 로 방어한다
- * (과제 예시 데이터가 시작&gt;끝 으로 뒤집혀 있어 의도적으로 막는다).
+ * (초기 예시 데이터가 시작&gt;끝 으로 뒤집혀 있어 의도적으로 막는다).
  * 시각은 프론트가 디바이스 TZ 로 해석해 ISO-8601 UTC 문자열로 보낸다(Jackson -&gt; Instant).
  */
 public record IpRuleCreateRequest(

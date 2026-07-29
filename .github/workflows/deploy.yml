@@ -135,6 +135,11 @@ jobs:
         run: |
           mkdir -p dist/intro
           cp -a intro/. dist/intro/
+          # sitemap 의 lastmod 는 배포 날짜다. 저장소 파일에는 1970-01-01 을 두고 여기서 박는다 -
+          # 손으로 적으면 고치는 것을 잊는 순간부터 크롤러에게 거짓말을 하게 된다.
+          sed -i "s|<lastmod>1970-01-01</lastmod>|<lastmod>$(date -u +%Y-%m-%d)</lastmod>|" dist/intro/sitemap.xml
+          grep -q "<lastmod>1970-01-01</lastmod>" dist/intro/sitemap.xml \
+            && { echo "::error::sitemap lastmod 치환 실패"; exit 1; } || true
           # 인트로만 번들러를 거치지 않아 소스가 그대로 노출된다(설계 주석 58곳 포함). 데모 다섯은
           # 전부 압축·난독화되어 나가는데 정문만 원본이면 일관성이 깨진다. 주석은 저장소에 남기고
           # 배포 산출물에서만 뗀다 - 문서는 소스의 몫이고, 아티팩트의 몫이 아니다.
@@ -159,6 +164,8 @@ jobs:
             // 미리보기 카드 이미지는 메타 태그가 살아 있어도 파일이 없으면 빈 카드가 된다.
             // 크롤러는 절대 URL 로 받아 가므로 배포 뒤에는 확인할 방법이 사실상 없다 - 여기서 막는다.
             if (!fs.existsSync("dist/intro/img/og-cover.jpg")) fail("og-cover.jpg 가 없습니다");
+            for (const f of ["robots.txt", "sitemap.xml"])
+              if (!fs.existsSync("dist/intro/" + f)) fail(f + " 가 없습니다");
             console.log("인트로 압축 OK: " + orig + " -> " + s.length + " bytes");
           '
 

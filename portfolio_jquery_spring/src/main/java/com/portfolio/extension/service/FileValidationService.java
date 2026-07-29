@@ -21,7 +21,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * 파일 첨부 검증 - "확장자 차단만으로는 부족하다"는 과제의 본질을 코드로 보여주는 데모.
+ * 파일 첨부 검증 - "확장자 차단만으로는 부족하다"를 코드로 보여주는 데모.
  *
  * 2단계 방어:
  *  1) 내용 기반(Magic Number): 확장자를 위조(virus.exe -> virus.jpg)해도 파일 시그니처로 실행파일을 잡는다.

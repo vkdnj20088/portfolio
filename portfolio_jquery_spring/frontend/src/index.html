@@ -16,7 +16,7 @@
       파일명(bundle.<hash>.js / style.<hash>.css)이라 손으로 적으면 반드시 어긋난다.
       HtmlWebpackPlugin 이 실제 산출물 이름으로 head 에 주입한다(script 는 defer).
 
-      참고(CSRF): 본 과제 범위에는 인증/Spring Security 가 없어 CSRF 필터도 없다.
+      참고(CSRF): 이 데모에는 인증/Spring Security 가 없어 CSRF 필터도 없다.
       Security 를 도입한다면 토큰을 메타로 노출하고 Ajax 헤더에 실어야 한다.
         <meta name="_csrf" content="${_csrf.token}"/>
         <meta name="_csrf_header" content="${_csrf.headerName}"/>
@@ -28,6 +28,7 @@
     <div class="brand-banner__brand">
         <span class="brand-banner__mark" aria-hidden="true"></span>
         <span class="brand-banner__wordmark">JC Guard</span>
+        <a class="sibling-screen" href="/ip.html"><span class="ss-label">IP 접근 제어</span><span aria-hidden="true">&#8594;</span></a>
     </div>
     <div class="brand-banner__applicant">최종은의 <span class="brand-banner__grad">jQuery + Spring Boot</span> 포트폴리오</div>
 </header>

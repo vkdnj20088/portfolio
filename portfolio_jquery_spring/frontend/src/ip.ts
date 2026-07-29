@@ -11,7 +11,7 @@
  */
 import './styles/ip.scss';
 import $ from 'jquery';
-import { PORTFOLIO_HOME } from './config';
+import { PORTFOLIO_HOME, siblingScreenHref } from './config';
 import { ErrorResponse, IpMatchResponse, IpRuleListResponse, IpRuleResponse, WhoAmIResponse } from './types';
 import { buildQuery as buildQueryParams, localToIso } from './lib/ipQuery';
 
@@ -202,6 +202,8 @@ $('#ipTableBody').on('click', '.ip-del', function (this: HTMLElement) {
 // ---- 초기 로드 ----------------------------------------------------------
 $(() => {
   $('.portfolio-home').attr('href', PORTFOLIO_HOME);
+  // 나머지 한 화면(파일 확장자 차단)의 주소는 배포 형태마다 달라 런타임에 조립한다.
+  $('.sibling-screen').attr('href', siblingScreenHref('ip'));
   // 내 IP 를 미리 캐시(현재 IP 버튼 없이도 "내 IP 포함" 배지가 동작).
   $.getJSON(API.whoami, (res: WhoAmIResponse) => { myIp = res.ipAddress; });
   loadList(true);

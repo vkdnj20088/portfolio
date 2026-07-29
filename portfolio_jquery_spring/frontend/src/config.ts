@@ -38,3 +38,29 @@ export const PORTFOLIO_HOME =
   typeof location === 'undefined'
     ? FALLBACK
     : resolvePortfolioHome(location.hostname, location.protocol);
+
+/**
+ * 나머지 한 화면으로 가는 링크. 두 화면(파일 확장자 차단 / IP 접근 제어)은 **한 애플리케이션**인데
+ * 배포에서 서브도메인으로만 갈라 두어, 화면끼리 오갈 방법이 없었다. 한쪽을 보던 사람은 인트로로
+ * 되돌아가야 나머지를 볼 수 있었다 - README 가 "두 화면은 한 앱"이라고 적어 둔 것을 정작 화면에서는
+ * 확인할 수 없는 상태였다.
+ *
+ * 목적지 규칙은 배포 형태마다 다르다:
+ *   - 서브도메인 배포: 첫 라벨만 바꾼다. file.example.dev <-> ip.example.dev
+ *   - 그 외(로컬, IP 리터럴, guard.): 같은 출처의 다른 경로. "/" <-> "/ip.html"
+ *     IP 배포는 두 화면이 같은 포트(:8443)에 살고, guard. 도 한 서브도메인이 둘을 다 서빙한다.
+ *     origin 을 그대로 두므로 포트가 보존된다 - 여기서 포트를 떨어뜨리면 인트로로 가 버린다.
+ */
+export function resolveSiblingScreen(hostname: string, origin: string, here: 'files' | 'ip'): string {
+  const target = here === 'files' ? 'ip' : 'file';
+  const labels = hostname.split('.');
+  if (labels.length > 2 && (labels[0] === 'file' || labels[0] === 'ip')) {
+    return `https://${[target, ...labels.slice(1)].join('.')}/`;
+  }
+  return `${origin}${here === 'files' ? '/ip.html' : '/'}`;
+}
+
+export const siblingScreenHref = (here: 'files' | 'ip'): string =>
+  typeof location === 'undefined'
+    ? here === 'files' ? '/ip.html' : '/'
+    : resolveSiblingScreen(location.hostname, location.origin, here);

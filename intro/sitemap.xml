@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 색인 대상은 인트로 한 장뿐이다. 데모 다섯은 조작하는 앱이라 robots.txt 로 크롤링을 막았고,
+     막아 둔 주소를 사이트맵에 적으면 서로 모순되는 신호가 된다.
+     lastmod 는 배포 워크플로가 빌드 날짜로 치환한다 - 손으로 적으면 반드시 낡는다. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://jongeunchoi.dev/</loc>
+    <lastmod>1970-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

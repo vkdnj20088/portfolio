@@ -19,7 +19,7 @@ import { createSeedState, type ChatState } from './seed';
 /**
  * 클라이언트 Mock API.
  *
- * 과제 개요가 "클라이언트 Mock API" 를 명시하므로 서버(route handler)가 아니라
+ * 이 데모는 "클라이언트 Mock API" 를 전제하므로 서버(route handler)가 아니라
  * 브라우저 안에서 동작한다. localStorage 로 영속해 새로고침/hard navigation 후에도
  * 데이터가 유지된다.
  *

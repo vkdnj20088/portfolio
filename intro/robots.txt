@@ -1,0 +1,9 @@
+# 인트로(apex)는 이 포트폴리오의 유일한 "문서"다. 전부 열어 둔다.
+User-agent: *
+Allow: /
+
+# 데모 서브도메인(exchange, chat, docqa, file, ip)은 각자의 robots.txt 로 크롤링을 막는다.
+# 문서가 아니라 조작하는 앱이라, 내부 경로(대화방 URL, 검색 결과)가 색인되면 정작 이 페이지
+# 대신 그것들이 검색에 뜬다. 설정은 infra/nginx/snippets/robots-disallow.conf 에 있다.
+
+Sitemap: https://jongeunchoi.dev/sitemap.xml
