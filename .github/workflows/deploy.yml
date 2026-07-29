@@ -148,6 +148,22 @@ jobs:
             --minify-css true --minify-js true \
             --remove-redundant-attributes --remove-script-type-attributes \
             -o dist/intro/index.html intro/index.html
+          # 미리보기 카드만 내용 해시로 URL 을 흔든다.
+          #
+          # 나머지 이미지에는 하지 않는다. 인트로의 CSS/JS 는 전부 인라인이라 "HTML 과 자산의
+          # 버전이 어긋난다"는 사고가 구조적으로 생길 수 없고, HTML 자체는 no-store 라 늘 최신이다.
+          # 이미지는 이름이 고정이라 사라지지도 않는다. 해시를 붙여 얻는 것은 재방문 시 조건부
+          # 요청 열 번을 아끼는 것뿐인데, 포트폴리오 재방문 빈도에서 이건 측정 가능한 이득이 아니다.
+          #
+          # 카드가 예외인 이유는 캐시 주체가 브라우저가 아니라 **크롤러**라서다. 카카오/페이스북/
+          # 링크드인/슬랙은 og:image 를 URL 단위로 자체 캐시하고 Cache-Control 을 대체로 무시한다.
+          # 카드 그림을 고쳐도 링크 미리보기는 옛 이미지 그대로 남고, 헤더로는 지울 방법이 없다 -
+          # URL 이 바뀌어야만 다시 가져간다. 손으로 버전을 올리면 반드시 잊으므로 해시로 묶는다.
+          OG_V="$(sha256sum dist/intro/img/og-cover.jpg | cut -c1-10)"
+          sed -i "s|/img/og-cover\.jpg|/img/og-cover.jpg?v=${OG_V}|g" dist/intro/index.html
+          grep -q "og-cover.jpg?v=${OG_V}" dist/intro/index.html \
+            || { echo "::error::og:image 버전 치환 실패"; exit 1; }
+          echo "og:image 버전: ${OG_V}"
           # 압축이 조용히 실패해 빈 파일이나 반쪽 결과를 배포하는 사고를 막는다.
           # 식별자(DEMO_PORTS 등)는 맹글링되어 사라지므로, 살아남는 것으로만 확인한다:
           # 문자열 리터럴 / 클래스명 / 데이터 속성.

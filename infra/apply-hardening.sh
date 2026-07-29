@@ -39,6 +39,7 @@ for f in "${CONFD}/portfolio-hardening.conf" \
          "${SNIPPETS}/portfolio-proxy-app.conf" \
          "${SNIPPETS}/portfolio-static-headers.conf" \
          "${SNIPPETS}/portfolio-robots-disallow.conf" \
+         "${SNIPPETS}/portfolio-guard-html.conf" \
          "${AVAILABLE}/portfolio" \
          "${AVAILABLE}/portfolio-domain"; do
   [[ -f "$f" ]] && cp -a "$f" "${BACKUP}/$(basename "$f")"
@@ -51,7 +52,8 @@ rollback() {
   [[ -f "${BACKUP}/portfolio-hardening.conf" ]] \
     && cp -a "${BACKUP}/portfolio-hardening.conf" "${CONFD}/" \
     || rm -f "${CONFD}/portfolio-hardening.conf"
-  for n in portfolio-proxy-app.conf portfolio-static-headers.conf portfolio-robots-disallow.conf; do
+  for n in portfolio-proxy-app.conf portfolio-static-headers.conf portfolio-robots-disallow.conf \
+         portfolio-guard-html.conf; do
     # 백업에 없으면 이번 실행에서 새로 만든 파일이다 - 지운다(설정이 이 파일을 include 하는
     # 상태로 되돌아가지 않으므로, 남겨 두면 다음 nginx -t 만 헷갈리게 한다).
     [[ -f "${BACKUP}/${n}" ]] && cp -a "${BACKUP}/${n}" "${SNIPPETS}/" || rm -f "${SNIPPETS}/${n}"
@@ -75,6 +77,7 @@ install -m 0644 -o root -g root "$INFRA/nginx/snippets/proxy-app.conf"          
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/hsts.conf"               "${SNIPPETS}/portfolio-hsts.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/static-headers.conf"     "${SNIPPETS}/portfolio-static-headers.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/robots-disallow.conf"    "${SNIPPETS}/portfolio-robots-disallow.conf"
+install -m 0644 -o root -g root "$INFRA/nginx/snippets/guard-html.conf"        "${SNIPPETS}/portfolio-guard-html.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/portfolio.conf"                   "${AVAILABLE}/portfolio"
 echo "conf.d / snippets / portfolio 배치 완료"
 
@@ -142,26 +145,50 @@ for h in content-security-policy x-frame-options x-content-type-options strict-t
   fi
 done
 
+# 아래 두 검사는 **웹루트의 파일**을 본다. 그 파일들은 이 스크립트가 아니라 인트로 배포가
+# 올린다(robots.txt, sitemap.xml, 스크린샷). 그래서 순서에 따라 아직 없을 수 있고, 없는 것은
+# nginx 설정이 틀린 것과 다른 문제다 - 404 면 실패가 아니라 "건너뜀"으로 보고한다.
+# (이걸 구분하지 않으면 설정이 멀쩡한데도 롤백을 권하게 된다.)
+probe() { curl -sk -o /dev/null -w '%{http_code}' --max-time 10 "$1" || true; }
+
 # 이미지 location 은 add_header 를 쓰므로 상위 보안 헤더가 사라질 수 있는 또 하나의 자리다.
 # 캐시가 걸렸는지와 헤더가 살아 있는지를 함께 본다.
-img="$(curl -skI --max-time 10 "https://127.0.0.1/img/og-cover.jpg" | tr -d '\r' || true)"
-if grep -qi '^cache-control:.*max-age=3600' <<<"$img" && grep -qi '^content-security-policy:' <<<"$img"; then
-  printf '  %-38s %s\n' "인트로 이미지 캐시+헤더" "정상"
+IMG_URL="https://127.0.0.1/img/demo-01-exchange.jpg"
+if [[ "$(probe "$IMG_URL")" == "404" ]]; then
+  printf '  %-38s %s\n' "인트로 이미지 캐시+헤더" "건너뜀(인트로 미배포)"
 else
-  printf '  %-38s %s\n' "인트로 이미지 캐시+헤더" "비정상"; rc=1
+  img="$(curl -skI --max-time 10 "$IMG_URL" | tr -d '\r' || true)"
+  if grep -qi '^cache-control:.*no-cache' <<<"$img" && grep -qi '^content-security-policy:' <<<"$img"; then
+    printf '  %-38s %s\n' "인트로 이미지 캐시+헤더" "정상"
+  else
+    printf '  %-38s %s\n' "인트로 이미지 캐시+헤더" "비정상"; rc=1
+  fi
 fi
 
 # robots.txt: 인트로는 열고(파일), 데모는 닫는다(스니펫). 방향이 뒤집히면 검색 결과에
 # 인트로 대신 앱 내부 경로가 뜨므로, 두 방향을 다 확인한다.
 if [[ -n "${DOM:-}" ]]; then
-  introbots="$(curl -sk --max-time 10 "https://${DOM}/robots.txt" || true)"
-  demobots="$(curl -sk --max-time 10 "https://chat.${DOM}/robots.txt" || true)"
-  if grep -q '^Allow: /' <<<"$introbots" && grep -q 'Sitemap:' <<<"$introbots"; then
+  if [[ "$(probe "https://${DOM}/robots.txt")" == "404" ]]; then
+    printf '  %-38s %s\n' "인트로 robots.txt" "건너뜀(인트로 미배포)"
+  elif introbots="$(curl -sk --max-time 10 "https://${DOM}/robots.txt")" \
+       && grep -q '^Allow: /' <<<"$introbots" && grep -q 'Sitemap:' <<<"$introbots"; then
     printf '  %-38s %s\n' "인트로 robots.txt" "Allow + Sitemap"
   else
     printf '  %-38s %s\n' "인트로 robots.txt" "비정상"; rc=1
   fi
-  if grep -q '^Disallow: /' <<<"$demobots"; then
+
+  # Guard 진입 HTML 은 캐시하면 안 된다. 캐시되면 배포 뒤 재방문자가 옛 HTML 을 꺼내 쓰고,
+  # 그 HTML 이 가리키는 해시 파일명 자산은 이미 지워져 404 가 된다 - 화면이 통째로 깨진다.
+  for u in "https://file.${DOM}/" "https://ip.${DOM}/"; do
+    if curl -skI --max-time 10 "$u" | tr -d '\r' | grep -qi '^cache-control:.*no-store'; then
+      printf '  %-38s %s\n' "Guard HTML no-store (${u#https://})" "정상"
+    else
+      printf '  %-38s %s\n' "Guard HTML no-store (${u#https://})" "비정상"; rc=1
+    fi
+  done
+
+  # 이쪽은 nginx 가 직접 응답하므로 배포와 무관하게 항상 나와야 한다.
+  if curl -sk --max-time 10 "https://chat.${DOM}/robots.txt" | grep -q '^Disallow: /'; then
     printf '  %-38s %s\n' "데모 robots.txt" "Disallow"
   else
     printf '  %-38s %s\n' "데모 robots.txt" "비정상"; rc=1
