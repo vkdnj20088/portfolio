@@ -549,6 +549,10 @@ mark {
   justify-content: space-between;
 }
 .bar {
+  /* span 이라 기본값이 inline 이다. 인라인 박스는 height 를 받지 않아 6px 이 무시되고
+     line-height 만큼(약 19px) 그려졌다 - 막대가 세 배로 두꺼워지고 카드 아래로 2px 넘쳤다.
+     안쪽 i 는 display:block 이라 height:100% 가 그 잘못된 높이를 그대로 따라갔다. */
+  display: block;
   height: 6px;
   margin-top: 4px;
   border-radius: var(--radius-full);

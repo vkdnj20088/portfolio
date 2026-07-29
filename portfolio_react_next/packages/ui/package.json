@@ -20,11 +20,11 @@
     "@chat/eslint-config": "workspace:*",
     "@chat/typescript-config": "workspace:*",
     "eslint": "^9.18.0",
-    "jsdom": "^25.0.1",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
+    "jsdom": "^30.0.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "typescript": "6.0.3",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": "^19.0.0",

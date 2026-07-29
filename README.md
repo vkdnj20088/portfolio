@@ -10,7 +10,7 @@
 검증(QA)과 조율(PM), 구현(개발)을 모두 거친 개발 리더로, IT 경력 12년 넘게
 프론트엔드를 중심으로 화면부터 서버, 인프라와 보안까지 하나의 흐름으로 다뤄 왔습니다.
 
-- 경력 구성(2026-07 기준): 프론트엔드 개발 약 7년 7개월(그중 풀스택 개발 10개월 · 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월
+- 경력 구성(2026-07 기준): 프론트엔드 개발 7년 7개월(그중 풀스택 개발 10개월 · 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월
 - 대표 성과: 거래소 웹 개인 커밋 1,700+ (약 36%), Brotli 전송량 최대 86% 절감, Lighthouse 성능 60 -> 99 / SEO 80 -> 100, 글로벌 앱 다운로드 50만+
 - 인트로 페이지: **[jongeunchoi.dev](https://jongeunchoi.dev/)** - 경력, 기술 스택, 대표 프로젝트와 아래 데모를 한 화면에 모은 랜딩
 
@@ -18,8 +18,8 @@
 
 | 폴더 | 데모 | 스택 | 무게중심 | 라이브 | 테스트 |
 |------|------|------|----------|--------|--------|
-| `portfolio_react_next` | LLM 챗봇 목업 | Next 15 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성 | [chat](https://chat.jongeunchoi.dev/) | 단위 101 + e2e 4 |
-| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 15 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거·인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 51 |
+| `portfolio_react_next` | LLM 챗봇 목업 | Next 16 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성 | [chat](https://chat.jongeunchoi.dev/) | 단위 101 + e2e 4 |
+| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 16 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거·인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 51 |
 | `portfolio_exchange_next` | 가상자산 거래소 목업 | Next 16 / React 19 / TS, lightweight-charts | 매칭엔진, 실시간, 성능, 멀티탭 | [exchange](https://exchange.jongeunchoi.dev/) | 단위 54(RTL 포함) |
 | `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) · [ip](https://ip.jongeunchoi.dev/) | 백엔드 146 + 통합 5종 + 프론트 18 |
 
@@ -48,10 +48,10 @@ React + Next 포트폴리오. 서버 없이 클라이언트 Mock API 와 localSt
 - 스트리밍 전환을 미리 수용한 스키마(ReplyEvent 스트림)로, `/stream` 데모가 같은 소비 코드로 증분 응답을 시연합니다.
 - **대화 검색**: 모든 방의 메시지를 관련도 순으로 찾고, 결과를 누르면 그 메시지가 나올 때까지 과거 페이지를 되짚어 **스크롤 앵커링을 깨지 않고** 그 자리로 데려갑니다. 검색 엔진은 DocuQA 데모에서 만든 `@chat/search-domain` 을 인스턴스로 재사용합니다.
 - 다크 모드, 반응형, 스킵 링크, aria-live, 포커스 복원 등 접근성을 기본값으로 둡니다.
-- 지원 브라우저 Chrome 88+ (ES2021 상한)를 빌드 산출물까지 검증합니다.
+- 지원 브라우저 Chrome 111+ (ES2022 상한)를 빌드 산출물까지 검증합니다.
 - 상세: [portfolio_react_next/README.md](portfolio_react_next/README.md)
 
-로컬 실행 (Node 18.18+, pnpm 은 corepack 으로 준비):
+로컬 실행 (Node 22.22.2+ / 24.15+ / 26+, pnpm 은 corepack 으로 준비):
 
 ```bash
 cd portfolio_react_next

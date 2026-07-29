@@ -227,6 +227,13 @@
   .compo { border: 1px solid var(--line); border-radius: 10px; padding: 1.5rem; background: linear-gradient(180deg, var(--ink-2), var(--ink)); }
   .compo .t { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--paper-faint); margin-bottom: 1.1rem; }
   .compo .bar { display: flex; height: 12px; border-radius: 100px; overflow: hidden; background: var(--line); }
+  /* 이 막대는 장식이 아니라 비율 데이터다. 진입할 때 왼쪽에서 자라면 "이건 눈금"이라는 것이
+     즉시 읽히고, 시선이 QA/PM/개발 분할에 머문다 - 이 이력의 차별점이 있는 자리다.
+     flex 나 width 가 아니라 scaleX 로 그린다. 앞의 둘은 레이아웃을 다시 돌리지만 transform 은
+     합성 단계에서만 처리된다(막대 안 세 조각의 비율은 그대로 유지된다).
+     12px 높이라 스케일 중 끝단 라운드가 살짝 눌리는데 육안으로 구분되지 않는다. */
+  .compo .bar { transform: scaleX(0); transform-origin: left center; }
+  .compo.in .bar { transform: scaleX(1); transition: transform 0.75s var(--ease) 0.18s; }
   .compo .bar i { display: block; height: 100%; }
   .compo .bar .fe { background: var(--acid); flex: 7.75; }
   .compo .bar .qa { background: var(--warn); flex: 3; }
@@ -397,11 +404,13 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; }
     .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    /* 위 규칙은 .reveal 자신만 끈다. 자식의 transition 은 살아 있으므로 따로 끈다. */
+    .compo .bar { transform: none !important; transition: none !important; }
   }
 </style>
 <!-- no-JS 폴백: reveal 은 JS(IntersectionObserver)로 opacity:1 이 되므로, JS 가 없거나 실패하면
      본문이 통째로 opacity:0 로 숨는다. 스크립트 없이도 본문이 보이도록 강제한다. -->
-<noscript><style>.reveal { opacity: 1 !important; transform: none !important; }</style></noscript>
+<noscript><style>.reveal, .compo .bar { opacity: 1 !important; transform: none !important; }</style></noscript>
 </head>
 
 <body>
@@ -461,18 +470,18 @@
           <div>
             <h2 class="sec reveal" id="about-h">검증하고, 조율하고, <span style="color:var(--acid);font-style:italic">직접 만듭니다</span></h2>
             <p class="lead reveal">품질을 <span class="hl">검증(QA)</span>하고 일정을 <span class="hl">조율(PM)</span>하며 제품을 <span class="hl">구현(개발)</span>하는 세 축을 모두 거쳤습니다. 그래서 만들기 전에 어떻게 검증할지와 무엇을 먼저 낼지를 함께 정합니다.</p>
-            <p class="body reveal">System QA로 대규모 라이브 서비스의 품질과 인프라를 검증했고, Tech PM으로 글로벌 고객사의 개발 일정을 조율했습니다. 이후 <span data-career="fe">약 7년 7개월</span>간 프론트엔드를 중심으로 웹 앱 백엔드를 관통해 구현하며, 지금은 개발 조직 안에서 프론트엔드 파트를 리딩하고 있습니다. 아래 여섯 데모는 그 방식을 코드로 옮긴 것으로, 설계 근거와 하지 않은 선택의 이유까지 각 README 에 남겼습니다.</p>
+            <p class="body reveal">System QA로 대규모 라이브 서비스의 품질과 인프라를 검증했고, Tech PM으로 글로벌 고객사의 개발 일정을 조율했습니다. 이후 <span data-career="fe">7년 7개월</span>간 프론트엔드를 중심으로 웹 앱 백엔드를 관통해 구현하며, 지금은 개발 조직 안에서 프론트엔드 파트를 리딩하고 있습니다. 아래 여섯 데모는 그 방식을 코드로 옮긴 것으로, 설계 근거와 하지 않은 선택의 이유까지 각 README 에 남겼습니다.</p>
             <div class="contact-inline reveal">
               <a href="mailto:vkdnj20088@gmail.com">vkdnj20088@gmail.com</a>
             </div>
           </div>
-          <div class="compo reveal" role="img" aria-label="경력 구성: 프론트엔드 약 7년 7개월(그중 풀스택 개발 10개월, 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월">
+          <div class="compo reveal" role="img" aria-label="경력 구성: 프론트엔드 7년 7개월(그중 풀스택 개발 10개월, 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월">
             <p class="t">경력 구성 / <span data-career="total">12년 8개월</span></p>
             <div class="bar" aria-hidden="true">
               <i class="fe"></i><i class="qa"></i><i class="pm"></i>
             </div>
             <ul>
-              <li><span class="sw fe" aria-hidden="true"></span>프론트엔드 개발 <b data-career="fe">약 7년 7개월</b></li>
+              <li><span class="sw fe" aria-hidden="true"></span>프론트엔드 개발 <b data-career="fe">7년 7개월</b></li>
               <!-- 현재 회사(2025.10~) 기간이라 위 7년 7개월 "안"에 있다. 별도 항목으로 세우면
                    총 12년 8개월과 어긋나 중복 계상으로 읽히므로 하위에 "그중"으로 붙인다. -->
               <li class="sub">그중 풀스택 개발 <b data-career="fullstack">10개월</b></li>
@@ -532,7 +541,7 @@
                 <p class="wdesc">실시간 호가 20단, 캔들 차트, 주문 폼, 체결 내역을 갖춘 트레이딩 UI입니다. Mock 스트림으로 시세와 분봉이 함께 갱신되고 한국식 등락색과 다크모드를 지원합니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>lightweight-charts</span><span>zustand</span><span>실시간 Mock</span></div>
               </div>
-              <img class="wthumb" src="img/demo-01-exchange.jpg" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-01-exchange.jpg" srcset="img/demo-01-exchange-400.jpg 400w, img/demo-01-exchange-800.jpg 800w, img/demo-01-exchange.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
@@ -544,9 +553,9 @@
                 <span class="cat">Frontend</span>
                 <h3 class="wtitle">문서 근거 QA (검색 + 추출형 MRC)</h3>
                 <p class="wdesc">사내 문서에서 근거 문장을 그대로 인용해 답합니다. 생성이 아니라 추출이라 없는 말을 지어내지 않고, 근거가 약하면 답하지 않습니다. 골드셋 33문항으로 불응답 정확도 100%를 측정해 화면에 공개합니다.</p>
-                <div class="wstack"><span>Next.js 15</span><span>React 19</span><span>TypeScript</span><span>TF-IDF 검색</span><span>MRC 추출</span><span>SSE 스트리밍</span></div>
+                <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>TF-IDF 검색</span><span>MRC 추출</span><span>SSE 스트리밍</span></div>
               </div>
-              <img class="wthumb" src="img/demo-02-docqa.jpg" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-02-docqa.jpg" srcset="img/demo-02-docqa-400.jpg 400w, img/demo-02-docqa-800.jpg 800w, img/demo-02-docqa.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
@@ -559,9 +568,9 @@
                 <span class="cat">Frontend</span>
                 <h3 class="wtitle">시맨틱 검색</h3>
                 <p class="wdesc">사내 동의어 사전으로 질의를 확장한 어휘 랭킹(TF-IDF)으로 문단을 찾습니다. 키워드 모드와 같은 골드셋으로 나란히 측정해, 질의 확장이 실제로 정확도를 올리는지 숫자로 보여줍니다.</p>
-                <div class="wstack"><span>Next.js 15</span><span>React 19</span><span>TypeScript</span><span>동의어 확장</span><span>결정적 랭킹</span></div>
+                <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>동의어 확장</span><span>결정적 랭킹</span></div>
               </div>
-              <img class="wthumb" src="img/demo-03-search.jpg" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-03-search.jpg" srcset="img/demo-03-search-400.jpg 400w, img/demo-03-search-800.jpg 800w, img/demo-03-search.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
@@ -573,9 +582,9 @@
                 <span class="cat">Frontend</span>
                 <h3 class="wtitle">AI 챗봇 목업</h3>
                 <p class="wdesc">어절 단위 스트리밍 응답, 오프라인 상태관리, 접근성까지 다듬은 대화형 UI입니다. 전송 계층만 바꿔 Mock과 실제 SSE를 오갈 수 있고, 모든 방의 대화를 관련도 순으로 찾아 해당 메시지 위치까지 이동합니다.</p>
-                <div class="wstack"><span>Next.js 15</span><span>React 19</span><span>TypeScript</span><span>SSE</span><span>대화 검색</span><span>접근성</span></div>
+                <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>SSE</span><span>대화 검색</span><span>접근성</span></div>
               </div>
-              <img class="wthumb" src="img/demo-04-chat.jpg" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-04-chat.jpg" srcset="img/demo-04-chat-400.jpg 400w, img/demo-04-chat-800.jpg 800w, img/demo-04-chat.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
@@ -589,7 +598,7 @@
                 <p class="wdesc">확장자가 아니라 내용으로 막습니다. Tika 콘텐츠 판별과 컨테이너 탐지, 웹루트 밖 격리 저장, 분산 락으로 업로드 경계를 지켰습니다.</p>
                 <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>Apache Tika</span><span>분산 락</span></div>
               </div>
-              <img class="wthumb" src="img/demo-05-files.jpg" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-05-files.jpg" srcset="img/demo-05-files-400.jpg 400w, img/demo-05-files-800.jpg 800w, img/demo-05-files.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
@@ -604,7 +613,7 @@
                 <p class="wdesc">허용 IP와 사용 시간대를 등록·검색·삭제하는 접근 제어 어드민입니다. 100만 건 키셋 페이지네이션, 항상 디바이스 시간대로 표시되는 시각, 본인 IP 자동 기입을 지원합니다.</p>
                 <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>키셋 페이지네이션</span><span>디바이스 TZ</span></div>
               </div>
-              <img class="wthumb" src="img/demo-06-ip.jpg" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-06-ip.jpg" srcset="img/demo-06-ip-400.jpg 400w, img/demo-06-ip-800.jpg 800w, img/demo-06-ip.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
@@ -655,7 +664,7 @@
               </article>
             </div>
             <div class="tl-site">
-              <img class="tl-shot" src="img/site-pravang.jpg" alt="" width="640" height="400" loading="lazy" decoding="async">
+              <img class="tl-shot" src="img/site-pravang.jpg" srcset="img/site-pravang-320.jpg 320w, img/site-pravang.jpg 640w" sizes="(min-width: 1024px) 164px, 118px" alt="" width="640" height="400" loading="lazy" decoding="async">
               <a class="tl-link" href="https://www.pravang.com/index" rel="noopener noreferrer">pravang.com 바로가기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
             </div>
           </article>
@@ -684,7 +693,7 @@
               </article>
             </div>
             <div class="tl-site">
-              <img class="tl-shot" src="img/site-twinkple.jpg" alt="" width="640" height="400" loading="lazy" decoding="async">
+              <img class="tl-shot" src="img/site-twinkple.jpg" srcset="img/site-twinkple-320.jpg 320w, img/site-twinkple.jpg 640w" sizes="(min-width: 1024px) 164px, 118px" alt="" width="640" height="400" loading="lazy" decoding="async">
               <a class="tl-link" href="https://twinkple.com/" rel="noopener noreferrer">twinkple.com 바로가기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
             </div>
           </article>
@@ -712,7 +721,7 @@
               </article>
             </div>
             <div class="tl-site">
-              <img class="tl-shot" src="img/site-dreamspoon.jpg" alt="" width="640" height="400" loading="lazy" decoding="async">
+              <img class="tl-shot" src="img/site-dreamspoon.jpg" srcset="img/site-dreamspoon-320.jpg 320w, img/site-dreamspoon.jpg 640w" sizes="(min-width: 1024px) 164px, 118px" alt="" width="640" height="400" loading="lazy" decoding="async">
               <a class="tl-link" href="https://dreamspoon.net/" rel="noopener noreferrer">dreamspoon.net 바로가기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
             </div>
           </article>
@@ -739,7 +748,7 @@
               </article>
             </div>
             <div class="tl-site">
-              <img class="tl-shot" src="img/site-archeage.jpg" alt="" width="640" height="400" loading="lazy" decoding="async">
+              <img class="tl-shot" src="img/site-archeage.jpg" srcset="img/site-archeage-320.jpg 320w, img/site-archeage.jpg 640w" sizes="(min-width: 1024px) 164px, 118px" alt="" width="640" height="400" loading="lazy" decoding="async">
               <a class="tl-link" href="https://www.archeage.com/ko/" rel="noopener noreferrer">archeage.com 바로가기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
             </div>
           </article>
@@ -751,7 +760,7 @@
       <section id="contact" aria-labelledby="contact-h">
         <p class="eyebrow reveal" data-n="05">Contact</p>
         <h2 class="sec reveal" id="contact-h">연락처</h2>
-        <p class="sub reveal" style="max-width:46ch;color:var(--paper-dim)">함께 만들 이야기가 있다면 이메일로 연락 주세요.</p>
+        <p class="sub reveal" style="max-width:46ch;color:var(--paper-dim)">제안이나 문의는 이메일로 주세요. 이 페이지와 데모의 코드는 GitHub 에 열려 있습니다.</p>
         <div class="contact-wrap two reveal">
           <a class="cc" href="mailto:vkdnj20088@gmail.com"><span class="k">Email</span><span class="v">vkdnj20088@gmail.com</span></a>
           <a class="cc" href="https://github.com/vkdnj20088/portfolio" rel="noopener noreferrer"><span class="k">GitHub</span><span class="v">github.com/vkdnj20088/portfolio</span></a>
@@ -797,10 +806,14 @@
         /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
       // IP 리터럴이면 SNI 가 없어 서브도메인을 쓸 수 없다 -> 포트로 가른다.
       // 도메인이면 SNI 가 있으니 443 한 포트에서 서브도메인으로 간다(주소에 포트가 안 붙는다).
-      var IS_IP = /^\d{1,3}(\.\d{1,3}){3}$/.test(location.hostname);
+      //
+      // 판정 기준이 "IPv4 처럼 생겼나"가 아니라 "끝이 알파벳인가"인 이유: 실제 조건은 **앞에
+      // 서브도메인을 붙일 수 있는 이름인가**다. IPv4 만 보면 IPv6 리터럴이 도메인으로 분류돼
+      // `exchange.[2001:db8::1]` 같은 주소가 만들어진다. TLD 는 전부 알파벳으로 끝난다.
+      var IS_IP = !/[a-z]$/i.test(location.hostname) || location.hostname.indexOf(':') >= 0;
 
+      // 로컬에서는 호출되지 않는다 - 아래 호출부가 먼저 걸러낸다.
       function demoUrl(card) {
-        if (IS_LOCAL) return card.getAttribute('data-demo-url');
         var spec = DEMO_PORTS[card.getAttribute('data-demo')];
         if (!spec) return null;
         if (IS_IP) return 'https://' + location.hostname + ':' + spec.port + spec.path;
@@ -829,11 +842,15 @@
         return a;
       }
 
+      // 로컬에서는 승격하지 않는다. 데모가 떠 있다는 보장이 없어 링크로 만들면 죽은 링크가 된다 -
+      // 카드는 "로컬" 배지 상태로 둔다(개발 포트는 각 카드의 data-demo-url 에 적어 두었다).
+      // 조건을 여기 한 곳에만 두어 "로컬이면 아무것도 하지 않는다"를 한 번만 말한다.
       document.querySelectorAll('.work[data-demo]').forEach(function (card) {
+        if (IS_LOCAL) return;
         var url = demoUrl(card);
         if (!url) return;
         if (card.tagName === 'A') { card.setAttribute('href', url); return; }
-        if (!IS_LOCAL) upgradeToLink(card, url);
+        upgradeToLink(card, url);
       });
 
       // scroll reveal
@@ -941,7 +958,7 @@
 
       // 풀스택과 파트 리딩은 둘 다 현재 회사 재직 기간과 같다. 달라지면 여기만 고치면 된다.
       var TEXT = {
-        total: ko(archeage + fe), fe: '약 ' + ko(fe),
+        total: ko(archeage + fe), fe: ko(fe),
         qa: ko(QA_MONTHS), pm: ko(pm),
         fullstack: ko(pravang), lead: ko(pravang)
       };

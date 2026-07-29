@@ -182,6 +182,17 @@ jobs:
             if (!fs.existsSync("dist/intro/img/og-cover.jpg")) fail("og-cover.jpg 가 없습니다");
             for (const f of ["robots.txt", "sitemap.xml"])
               if (!fs.existsSync("dist/intro/" + f)) fail(f + " 가 없습니다");
+            // CSS 최소화가 셀렉터를 합치거나 지울 수 있다. 모션과 그 폴백은 함께 살아야 한다 -
+            // 폴백만 사라지면 JS 가 꺼진 방문자에게 경력 막대가 통째로 안 보인다.
+            for (const k of ["scaleX(0)", "scaleX(1)"])
+              if (!s.includes(k)) fail("경력 막대 애니메이션이 사라졌습니다: " + k);
+            if (!/noscript>?<style>[^<]*compo/.test(s)) fail("noscript 폴백에 compo 가 없습니다");
+            // srcset 후보가 하나라도 없으면 그 폭을 고른 브라우저는 이미지를 못 받는다.
+            // src 로 자동 폴백되지 않으므로(후보 목록이 우선) 배포 전에 전부 있는지 확인한다.
+            const missing = [...s.matchAll(/srcset="([^"]+)"/g)]
+              .flatMap(m => m[1].split(",").map(c => c.trim().split(/\s+/)[0]))
+              .filter(f => !fs.existsSync("dist/intro/" + f));
+            if (missing.length) fail("srcset 후보 파일이 없습니다: " + [...new Set(missing)].join(", "));
             console.log("인트로 압축 OK: " + orig + " -> " + s.length + " bytes");
           '
 

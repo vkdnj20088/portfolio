@@ -17,7 +17,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * (layout 의 export const dynamic = 'force-dynamic').
  */
 export function middleware(request: NextRequest) {
-  // 추측 불가능한 nonce - 암호학적 난수 16바이트 base64 (getRandomValues; randomUUID 는 규칙상 회피).
+  // 추측 불가능한 nonce - 암호학적 난수 16바이트 base64.
+  // getRandomValues 를 쓴다(randomUUID 는 secure context 전용이라 http 로 열면 죽는다).
   const randomBytes = new Uint8Array(16);
   crypto.getRandomValues(randomBytes);
   let binary = "";

@@ -17,7 +17,7 @@ const FOUC_SCRIPT_HASH = "'sha256-iAnkRvpvi9+YujByOPXjtT8CCAqIIOcv9vOCQgVszo0='"
 
 export function middleware(request: NextRequest) {
   // nonce 는 요청마다 추측 불가능해야 하므로 암호학적 난수 16바이트를 base64 로 쓴다
-  // (crypto.randomUUID 는 저장소 규칙상 금지 - getRandomValues 로 대체, Chrome 11+).
+  // (getRandomValues 를 쓴다. randomUUID 는 secure context 전용이라 http 로 열면 죽는다.)
   const randomBytes = new Uint8Array(16);
   crypto.getRandomValues(randomBytes);
   let binary = '';

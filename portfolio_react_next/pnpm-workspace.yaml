@@ -14,3 +14,6 @@ allowBuilds:
   # 이 앱의 유일한 이미지인 로고는 인라인 SVG 라 최적화 대상이 없다.
   # -> 거부해서 네이티브 빌드 단계를 없애고 설치를 가볍게 유지한다.
   sharp: false
+
+minimumReleaseAgeExclude:
+  - jsdom@30.0.1

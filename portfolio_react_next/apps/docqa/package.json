@@ -9,33 +9,33 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check:browser-support": "es-check es2021 \".next/static/chunks/**/*.js\""
+    "check:browser-support": "es-check es2022 \".next/static/chunks/**/*.js\""
   },
   "dependencies": {
     "@chat/search-domain": "workspace:*",
     "@chat/ui": "workspace:*",
-    "next": "15.5.20",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "next": "16.2.12",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@chat/eslint-config": "workspace:*",
     "@chat/typescript-config": "workspace:*",
     "es-check": "^9.6.4",
     "eslint": "^9.18.0",
-    "jsdom": "^25.0.1",
+    "jsdom": "^30.0.1",
     "typescript": "6.0.3",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.10"
   },
   "browserslist": [
-    "chrome >= 88",
-    "edge >= 88",
-    "firefox >= 85",
-    "safari >= 14"
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 111",
+    "safari >= 16.4"
   ]
 }

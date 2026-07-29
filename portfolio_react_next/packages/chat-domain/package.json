@@ -19,6 +19,6 @@
     "@chat/typescript-config": "workspace:*",
     "eslint": "^9.18.0",
     "typescript": "6.0.3",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.10"
   }
 }

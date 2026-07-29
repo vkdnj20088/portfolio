@@ -85,7 +85,9 @@ input, select { font-family: inherit; }
 .theme-toggle { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line2); background: var(--bg-soft); color: var(--text-sub); border-radius: 4px; padding: 6px; }
 .theme-toggle:hover { border-color: var(--brand-orange); color: var(--text); }
 /* 멀티탭 동기 배지(#E8) */
-.sync-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 1.1rem; color: var(--text-sub); border: 1px solid var(--line2); border-radius: 100px; padding: 3px 9px; white-space: nowrap; }
+/* 역할(단독/리더/팔로워)은 하이드레이션 후에 정해진다. 라벨 폭이 66.5~105.4px 로 달라서
+   미리 잡지 않으면 배지가 확정되는 순간 옆 요소가 밀린다. 가장 긴 라벨 기준으로 예약한다. */
+.sync-badge { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-width: 106px; font-size: 1.1rem; color: var(--text-sub); border: 1px solid var(--line2); border-radius: 100px; padding: 3px 9px; white-space: nowrap; }
 .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-mute); }
 .sync-leader .sync-dot { background: #1a8a3d; }
 .sync-follower .sync-dot { background: var(--brand-orange); }
@@ -113,7 +115,10 @@ input, select { font-family: inherit; }
 .cl-tabs { display: flex; border-bottom: 1px solid var(--line); }
 .cl-tabs button { flex: 1; padding: 10px 0; background: none; border: none; color: var(--text-mute); font-size: 1.25rem; }
 .cl-tabs button.on { color: var(--accent-strong); font-weight: 700; box-shadow: inset 0 -2px 0 var(--brand-orange); }
-.coin-list li a { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 2px 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+/* 숫자 열은 폭을 미리 잡는다. 시세가 도착하기 전에는 "–"(9px)만 있어서 auto 열이 좁았다가
+   값이 들어오면 66px 로 벌어졌다 - 우측 정렬이라 글자가 왼쪽으로 튀며 레이아웃이 이동했다.
+   76px 은 100,000,000(73.6px 실측)까지 담는다. tabular-nums 라 자릿수만큼만 늘어난다. */
+.coin-list li a { display: grid; grid-template-columns: 1fr minmax(76px, auto); grid-template-rows: auto auto; gap: 2px 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
 .coin-list li.active a { background: var(--bg-soft2); box-shadow: inset 3px 0 0 var(--brand-orange); }
 .coin-list li a:hover { background: var(--bg-soft); }
 .cl-name { grid-row: 1 / 3; display: flex; flex-direction: column; justify-content: center; }
@@ -145,7 +150,11 @@ input, select { font-family: inherit; }
   width: 100%; appearance: none; border: none; background: transparent; color: inherit; font-family: inherit; text-align: left; cursor: pointer; }
 .ob-row:hover { background: var(--bg-soft); }
 .ob-row:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: -2px; }
-.ob-bar { position: absolute; inset: 0 0 0 auto; opacity: 0.12; }
+/* 누적 깊이 막대. width 로 그리면 시세가 갱신될 때마다 레이아웃이 다시 돌고, 브라우저가
+   그 폭 변화를 레이아웃 이동으로 센다(실측 0.066). transform 은 합성 단계에서만 처리되고
+   레이아웃 이동 계산에서도 제외된다 - 초당 여러 번 갱신되는 요소라 차이가 크다.
+   오른쪽에서 자라던 모습을 유지하려고 원점을 오른쪽에 둔다. */
+.ob-bar { position: absolute; inset: 0; transform-origin: right center; opacity: 0.12; }
 .ob-row.ask .ob-bar { background: var(--down); }
 .ob-row.bid .ob-bar { background: var(--up); }
 .ob-price { position: relative; }

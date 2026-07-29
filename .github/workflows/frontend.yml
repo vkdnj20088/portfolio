@@ -52,7 +52,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-      # 산출물이 지원 하한(Chrome 88 = ES2021)을 넘지 않는지 - 빌드 뒤에만 의미가 있다.
+      # 산출물이 지원 하한(Chrome 111 = ES2022)을 넘지 않는지 - 빌드 뒤에만 의미가 있다.
       - run: pnpm check:browser-support
 
   # 실제 브라우저 계층(Playwright) - jsdom 이 재현 못 하는 규칙만 크로미움에서 실측한다:
