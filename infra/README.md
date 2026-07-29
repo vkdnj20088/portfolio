@@ -1,6 +1,7 @@
-# infra - 통합 EC2 배포 (인트로 + 데모 5개)
+# infra - 통합 EC2 배포 (인트로 + 데모 서브도메인 5개)
 
-한 대의 EC2 에서 인트로 랜딩과 다섯 데모를 함께 서빙하기 위한 코드화된 인프라입니다.
+한 대의 EC2 에서 인트로 랜딩과 데모를 함께 서빙하기 위한 코드화된 인프라입니다.
+화면은 여섯이지만 서브도메인은 다섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트입니다.
 nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 버전관리 파일로 둡니다.
 
 ## 구성
@@ -84,7 +85,8 @@ SNI 가 있는 요청은 도메인 블록이, 없는 요청(IP 리터럴 접속)
 ### 도메인 붙이기 (최초 1회)
 
 ```bash
-# 1) DNS: A 레코드 다섯 개를 서버 공인 IP 로 (apex, www, exchange, chat, docqa, guard)
+# 1) DNS: A 레코드 아홉 개를 서버 공인 IP 로
+#    (apex, www, exchange, chat, docqa, search, guard, file, ip - 인증서 SAN 과 같은 목록)
 # 2) 발급 + 활성화 (DNS 전파 확인 -> 80 도달 확인 -> dry-run -> 발급 -> 검증까지 한 번에)
 cd ~/portfolio && git pull
 sudo -E DOMAIN=example.dev LE_EMAIL=you@example.com bash infra/issue-cert-domain.sh

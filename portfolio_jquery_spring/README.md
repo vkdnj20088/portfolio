@@ -17,7 +17,7 @@
 | **Frontend** | jQuery 4.0 + TypeScript (webpack 번들), REST/Ajax (SSR 아님) |
 | **DB** | 로컬/테스트 H2(무설정) / 프로덕션 MySQL 8 |
 | **Deploy** | AWS EC2 + Nginx(리버스 프록시) + systemd, HTTPS(Let's Encrypt) |
-| **테스트** | 단위/슬라이스 69개(H2, 무설정) + 통합 6개(Testcontainers 실제 MySQL 8, CI 실행) |
+| **테스트** | 단위/슬라이스 146개(H2, 무설정) + 통합 5종 21개(Testcontainers 실제 MySQL 8, CI 실행) |
 
 ---
 

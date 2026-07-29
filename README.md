@@ -7,23 +7,23 @@
 ## 개발자 소개
 
 프론트엔드 파트를 리딩하며 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은입니다.
-검증(QA)과 조율(PM), 구현(개발)을 모두 거친 개발 리더로, IT 경력 12년 8개월 동안
+검증(QA)과 조율(PM), 구현(개발)을 모두 거친 개발 리더로, IT 경력 12년 넘게
 프론트엔드를 중심으로 화면부터 서버, 인프라와 보안까지 하나의 흐름으로 다뤄 왔습니다.
 
-- 경력 구성: 프론트엔드 개발 약 7년 9개월(그중 풀스택 개발 10개월 · 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년
+- 경력 구성(2026-07 기준): 프론트엔드 개발 약 7년 7개월(그중 풀스택 개발 10개월 · 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월
 - 대표 성과: 거래소 웹 개인 커밋 1,700+ (약 36%), Brotli 전송량 최대 86% 절감, Lighthouse 성능 60 -> 99 / SEO 80 -> 100, 글로벌 앱 다운로드 50만+
 - 인트로 페이지: **[jongeunchoi.dev](https://jongeunchoi.dev/)** - 경력, 기술 스택, 대표 프로젝트와 아래 데모를 한 화면에 모은 랜딩
 
-아래 코드 데모들이 이 포트폴리오의 코드 근거입니다(3개 폴더, 5개 데모).
+아래 코드 데모들이 이 포트폴리오의 코드 근거입니다(3개 폴더, 6개 데모).
 
 | 폴더 | 데모 | 스택 | 무게중심 | 라이브 | 테스트 |
 |------|------|------|----------|--------|--------|
-| `portfolio_react_next` | LLM 챗봇 목업 | Next 15 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성 | [chat](https://chat.jongeunchoi.dev/) | 단위 73 + e2e 3 |
-| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 15 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거·인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 45 |
-| `portfolio_exchange_next` | 가상자산 거래소 목업 | Next 16 / React 19 / TS, lightweight-charts | 매칭엔진, 실시간, 성능, 멀티탭 | [exchange](https://exchange.jongeunchoi.dev/) | 단위 48(RTL 포함) |
-| `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) · [ip](https://ip.jongeunchoi.dev/) | 백엔드 138 + 통합 4종 + 프론트 8 |
+| `portfolio_react_next` | LLM 챗봇 목업 | Next 15 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성 | [chat](https://chat.jongeunchoi.dev/) | 단위 101 + e2e 4 |
+| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 15 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거·인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 51 |
+| `portfolio_exchange_next` | 가상자산 거래소 목업 | Next 16 / React 19 / TS, lightweight-charts | 매칭엔진, 실시간, 성능, 멀티탭 | [exchange](https://exchange.jongeunchoi.dev/) | 단위 54(RTL 포함) |
+| `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) · [ip](https://ip.jongeunchoi.dev/) | 백엔드 146 + 통합 5종 + 프론트 18 |
 
-다섯 데모가 한 대의 EC2 에 서브도메인으로 나뉘어 삽니다(인트로는 apex). 각 폴더는 독립적으로 빌드, 실행, 배포됩니다. 상세 설계와 단계별 기록, 각 기능의 "무엇을 왜" 는 각 폴더의 README 에 절 단위로 있습니다. 인트로의 데모 링크는 주소를 적어 두지 않고 **지금 페이지의 호스트에서 조립**합니다 - 도메인이면 서브도메인을, IP 면 포트를 만들어 붙이므로 어느 쪽으로 접속해도 맞고 서버가 바뀌어도 고칠 곳이 없습니다(로컬에서는 각 카드의 개발 포트를 씁니다).
+여섯 데모가 한 대의 EC2 에 삽니다(인트로는 apex, 데모는 서브도메인 다섯 - 문서 QA 와 시맨틱 검색이 한 앱의 두 화면입니다). 각 폴더는 독립적으로 빌드, 실행, 배포됩니다. 상세 설계와 단계별 기록, 각 기능의 "무엇을 왜" 는 각 폴더의 README 에 절 단위로 있습니다. 인트로의 데모 링크는 주소를 적어 두지 않고 **지금 페이지의 호스트에서 조립**합니다 - 도메인이면 서브도메인을, IP 면 포트를 만들어 붙이므로 어느 쪽으로 접속해도 맞고 서버가 바뀌어도 고칠 곳이 없습니다(로컬에서는 각 카드의 개발 포트를 씁니다).
 
 ## 화면
 
@@ -117,7 +117,7 @@ cd portfolio_jquery_spring
 
 ---
 
-## 역량 축 - 다섯 데모를 관통하는 설계 서사
+## 역량 축 - 여섯 데모를 관통하는 설계 서사
 
 개별 기능을 넘어, 여러 데모를 **하나의 표준으로 다스린다**는 관점이 이 포트폴리오의 축입니다.
 각 항목의 코드 근거는 해당 앱 README 의 해당 절에 있습니다.
