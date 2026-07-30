@@ -1,5 +1,6 @@
 import { pickReply } from '@chat/chat-domain';
 import { problemResponse } from '@chat/ui';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 /**
  * 응답 스트리밍 엔드포인트(STEP 12 실증) - text/event-stream(SSE).
@@ -20,6 +21,19 @@ const REPLY_BUDGET_MS = 2000; // mock 명세값과 동일한 총 소요 예산
 const MAX_TEXT_LENGTH = 4000;
 
 export async function POST(req: Request): Promise<Response> {
+  // 레이트리밋은 본문을 읽기 전에 판정한다 - 거절할 요청의 본문을 파싱하는 것은 막으려던
+  // 비용을 그대로 치르는 일이다(본문 크기 상한도 아직 적용되지 않은 시점이다).
+  const limit = checkRateLimit(req);
+  if (!limit.allowed) {
+    return problemResponse(
+      429,
+      'RATE_LIMITED',
+      '요청이 너무 잦습니다',
+      `연속 요청 한도를 넘었습니다. ${limit.retryAfterSeconds}초 후 다시 시도해 주세요.`,
+      { instance: '/api/reply', retryAfterSeconds: limit.retryAfterSeconds },
+    );
+  }
+
   let body: ReplyRequest;
   try {
     body = (await req.json()) as ReplyRequest;

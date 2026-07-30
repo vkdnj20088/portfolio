@@ -30,6 +30,19 @@ body {
     color: #ffffff;
 }
 
+// 포커스 링 기본값. 요소마다 적지 않고 여기서 한 번에 준다 - 열거하는 방식은 지금 맞아도
+// 링크나 버튼을 하나 더 넣는 날 다시 어긋난다(실제로 IP 화면이 그 상태였다).
+//
+// 테두리를 가진 폼 컨트롤(input/select)은 제외한다: 그쪽은 components/_form.scss 의
+// focus-ring mixin 이 테두리색 + 글로우로 처리하고, 거기에 outline 까지 얹으면 링이 두 겹이 된다.
+// 예외가 필요한 곳은 개별 규칙에서 --focus-ring-offset 만 덮어쓴다.
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+}
+
 // 접근성: 모션 축소 선호 시 비필수 전환/애니(토스트 슬라이드, hover 등)를 사실상 제거한다.
 // 전 컴포넌트 공통이라 여기(공유 base)에 둔다. compile CSS 이므로 strict CSP 와 무관.
 @media (prefers-reduced-motion: reduce) {

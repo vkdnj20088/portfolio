@@ -70,8 +70,18 @@ export const RETRIEVAL_FLOOR = 0.05;
 /** 독해 대상 문단 수(리트리벌 -> 리랭크 -> 독해 파이프라인의 마지막 단계 폭). */
 export const MRC_TOP_K = 3;
 
-/** 질의에 대한 추출형 답변. 근거가 약하면 null(정답 없음). */
-export function extractAnswer(query: string, ctx?: FollowUpContext): Answer | null {
+/**
+ * 질의에 대한 추출형 답변. 근거가 약하면 null(정답 없음).
+ *
+ * `threshold` 는 평가 하니스가 임계값을 훑을 때만 넘긴다(#D3). 제품 경로는 인자를 주지 않아
+ * {@link CONFIDENCE_THRESHOLD} 를 그대로 쓴다 - 화면마다 다른 임계로 답하면 같은 질문에 대한
+ * 답이 어디서 물었느냐에 따라 갈린다. 즉 이 인자는 **측정 도구**이고 설정이 아니다.
+ */
+export function extractAnswer(
+  query: string,
+  ctx?: FollowUpContext,
+  threshold: number = CONFIDENCE_THRESHOLD,
+): Answer | null {
   const qTokens = tokenizeQuery(query);
   if (qTokens.length === 0) return null;
   const top = search(query, 'semantic', MRC_TOP_K, ctx);
@@ -85,7 +95,7 @@ export function extractAnswer(query: string, ctx?: FollowUpContext): Answer | nu
       if (!best || s > best.score) best = { sentence, score: s, passageId: r.passage.id };
     }
   }
-  if (!best || best.score < CONFIDENCE_THRESHOLD) return null;
+  if (!best || best.score < threshold) return null;
 
   const found = best;
   const passage = top.find((r) => r.passage.id === found.passageId);

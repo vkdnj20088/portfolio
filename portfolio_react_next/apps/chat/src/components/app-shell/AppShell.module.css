@@ -15,8 +15,10 @@
 
 .skipLink:focus-visible {
   transform: translateY(0);
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
+  /* 직전까지 --color-brand 였다(#M4). 흰 배경 대비가 brand 3.70:1 < primary 4.60:1 이라
+     토큰 기본값이 일관성과 대비를 동시에 올린다. */
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* 포커스 이동용 tabIndex=-1 이 만드는 아웃라인은 시각적 의미가 없다 */

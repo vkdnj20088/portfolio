@@ -179,6 +179,13 @@ async function* streamOnce(
   // 프론트가 문구를 지어내지 않고, cid 가 함께 오면 사용자가 본 오류를 서버 로그에서 찾을 수 있다.
   if (!response.ok || !response.body) {
     const problem = await parseProblem(response);
+    // 429 는 "지금은 안 되지만 언제 되는지 아는" 실패다. 자동 재시도 대상에서 빼는 이유는
+    // 백오프로 다시 두드리면 한도를 더 깎아 회복이 늦어지기 때문이다 - 기다림의 주체는
+    // 사용자여야 하고, 그러려면 남은 시간이 화면에 보여야 한다. retryAfterSeconds 를
+    // 오류에 실어 보내 UI 가 카운트다운할 수 있게 한다(여기서 버리면 화면은 알 수 없다).
+    if (response.status === 429) {
+      throw new ChatApiError('RATE_LIMITED', problem.detail, problem.retryAfterSeconds);
+    }
     if (response.status >= 400 && response.status < 500) {
       throw new ChatApiError('REPLY_FAILED', problem.detail);
     }

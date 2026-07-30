@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     
-<script defer="defer" src="/js/bundle.01aae2da.js"></script><link href="/css/bundle.92a01405.css" rel="stylesheet"></head>
+<script defer="defer" src="/js/bundle.136cdffb.js"></script><link href="/css/bundle.0f3a25d1.css" rel="stylesheet"></head>
 <body>
 <header class="brand-banner">
     <div class="brand-banner__brand">
@@ -54,10 +54,16 @@
                 설정한 차단 목록 + 파일 내용(Magic Number)으로 이중 검증합니다.
                 확장자를 <code>.jpg</code>로 위장한 실행파일도 내용으로 차단됩니다.
             </p>
-            <div class="custom-input">
-                <input id="fileInput" type="file">
-                <button id="fileBtn" type="button" class="btn">검증</button>
+            
+            <div id="dropZone" class="dropzone">
+                <div class="custom-input">
+                    <input id="fileInput" type="file">
+                    <button id="fileBtn" type="button" class="btn">검증</button>
+                </div>
+                <p class="dropzone__hint" aria-hidden="true">여기로 파일을 끌어다 놓아도 됩니다</p>
             </div>
+            
+            <p id="filePicked" class="file-picked" role="status" aria-live="polite"></p>
             <div id="fileResult" class="file-result" hidden></div>
         </div>
     </section>

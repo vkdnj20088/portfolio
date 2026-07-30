@@ -1,4 +1,4 @@
-import { extractAnswer } from '../mrc';
+import { CONFIDENCE_THRESHOLD, extractAnswer } from '../mrc';
 import { search } from '../retrieval';
 import type { SearchMode } from '../types';
 import { GOLDSET, type EvalCase } from './goldset';
@@ -91,7 +91,10 @@ function round(n: number): number {
   return Math.round(n * 1000) / 1000;
 }
 
-export function evaluate(cases: EvalCase[] = GOLDSET): EvalReport {
+export function evaluate(
+  cases: EvalCase[] = GOLDSET,
+  threshold: number = CONFIDENCE_THRESHOLD,
+): EvalReport {
   const rows: EvalRow[] = [];
   const semanticRanks: (number | null)[] = [];
   const keywordRanks: (number | null)[] = [];
@@ -104,7 +107,7 @@ export function evaluate(cases: EvalCase[] = GOLDSET): EvalReport {
   let overAbstained = 0;
 
   for (const c of cases) {
-    const result = extractAnswer(c.q);
+    const result = extractAnswer(c.q, undefined, threshold);
     const answeredId = result ? result.passageId : null;
 
     if (c.gold === null) {

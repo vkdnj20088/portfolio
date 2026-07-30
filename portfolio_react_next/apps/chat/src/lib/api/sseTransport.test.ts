@@ -174,6 +174,54 @@ describe('sseStreamReply - 재연결·이어받기', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1); // 재시도 없음
   });
 
+  /*
+   * #C2 - 429 는 4xx 지만 나머지 4xx 와 다르게 다뤄야 한다. 재시도하지 않는 것은 같고
+   * (백오프로 다시 두드리면 한도를 더 깎는다), 다른 점은 **언제 되는지 아는** 실패라는 것이다.
+   * 그 값이 오류에 실려 오지 않으면 UI 는 카운트다운을 만들 수 없다.
+   */
+  it('429 는 RATE_LIMITED 로 던지고 재시도하지 않는다', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ detail: '3초 후 다시', retryAfterSeconds: 3 }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/problem+json' },
+      }),
+    );
+    try {
+      await collect(
+        sseStreamReply(stubRaw(), 'c1', {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          backoffMs: noBackoff,
+        }),
+      );
+      expect.unreachable('429 는 던져야 한다');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ChatApiError);
+      expect((error as ChatApiError).code).toBe('RATE_LIMITED');
+      expect((error as ChatApiError).retryAfterSeconds).toBe(3);
+    }
+    expect(fetchImpl).toHaveBeenCalledTimes(1); // 재시도 없음
+  });
+
+  it('429 의 대기 초는 Retry-After 헤더에서도 읽는다(본문에 없을 때)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ detail: '잠시 후 다시' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/problem+json', 'Retry-After': '7' },
+      }),
+    );
+    try {
+      await collect(
+        sseStreamReply(stubRaw(), 'c1', {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          backoffMs: noBackoff,
+        }),
+      );
+      expect.unreachable('429 는 던져야 한다');
+    } catch (error) {
+      expect((error as ChatApiError).retryAfterSeconds).toBe(7);
+    }
+  });
+
   it('정상 경로는 한 번의 연결로 완결한다', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       res([

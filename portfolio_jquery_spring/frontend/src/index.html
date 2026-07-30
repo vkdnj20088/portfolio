@@ -69,10 +69,20 @@
                 설정한 차단 목록 + 파일 내용(Magic Number)으로 이중 검증합니다.
                 확장자를 <code>.jpg</code>로 위장한 실행파일도 내용으로 차단됩니다.
             </p>
-            <div class="custom-input">
-                <input id="fileInput" type="file">
-                <button id="fileBtn" type="button" class="btn">검증</button>
+            <!-- 드롭 영역(#G3). 파일 선택 UI 를 그대로 감싸기만 한다 - 드래그가 안 되는 환경
+                 (모바일, 키보드만 쓰는 사용자)에서도 input+버튼이 원래대로 동작해야 하므로
+                 드롭은 추가 경로이지 대체 경로가 아니다. 그래서 이 div 에는 tabindex 를 주지
+                 않는다: 키보드 사용자에게는 파일 선택 input 이 이미 접근 경로다. -->
+            <div id="dropZone" class="dropzone">
+                <div class="custom-input">
+                    <input id="fileInput" type="file">
+                    <button id="fileBtn" type="button" class="btn">검증</button>
+                </div>
+                <p class="dropzone__hint" aria-hidden="true">여기로 파일을 끌어다 놓아도 됩니다</p>
             </div>
+            <!-- 선택된 파일명을 알린다. 드롭은 시각 변화만으로는 성공을 알 수 없어서(파일 선택
+                 대화상자를 거치지 않으므로) 결과를 텍스트로 남긴다. -->
+            <p id="filePicked" class="file-picked" role="status" aria-live="polite"></p>
             <div id="fileResult" class="file-result" hidden></div>
         </div>
     </section>

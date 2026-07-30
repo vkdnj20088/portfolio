@@ -31,6 +31,17 @@ textarea {
   color: inherit;
 }
 
+/* 포커스 링 기본값(#M4) - 요소마다 적지 않고 여기서 한 번에 준다.
+   컴포넌트 CSS 모듈이 대부분 이미 링을 갖고 있지만, 갖지 않은 것(예: 포트폴리오 복귀 링크)은
+   브라우저 기본 링으로 떨어져 두께·색·offset 이 토큰과 달라진다 - 한 화면에서 링이 두 종류가
+   된다. 기본으로 주고 예외만 --focus-ring-offset 을 덮어쓴다. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 a {
   color: inherit;
   text-decoration: none;

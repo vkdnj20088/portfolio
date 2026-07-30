@@ -2,6 +2,7 @@
 // 알파 틴트는 color-mix 대신 Sass rgba(빌드 타임)로 만든다 - 지원 브라우저 하한(Chrome 88)에서
 // color-mix 는 아직 없기 때문(파일 확장자 차단 앱과 동일한 제약).
 @use '../tokens' as t;
+@use '../mixins' as m; // focus-ring - 이 앱의 입력 포커스 표현을 공유한다
 
 .app--wide { max-width: 960px; }
 
@@ -14,23 +15,23 @@
 // 안내문으로 읽히고, 이 줄은 위 문장("접속하신 기기의 시간대")의 실제 값이다.
 // `.app__header p` 보다 클래스 수가 많아 마진 재정의가 순서에 의존하지 않는다.
 .app__header .ip-tz {
-    display: flex;
-    flex-wrap: wrap; // 360px 에서 괄호 문구만 다음 줄로 내려간다
-    align-items: baseline;
-    gap: 6px;
-    margin: -12px 0 20px;
-    font-size: 12px;
+  display: flex;
+  flex-wrap: wrap; // 360px 에서 괄호 문구만 다음 줄로 내려간다
+  align-items: baseline;
+  gap: 6px;
+  margin: -12px 0 20px;
+  font-size: 12px;
 
-    // --chip 은 다크에서도 라이트 라벤더를 유지하는 colored-badge 토큰이다(tokens 주석 참고).
-    // 그래서 글자색은 --text 가 아니라 .chip 과 같은 --primary-d 여야 한다 - --text 를 쓰면
-    // 다크에서 흰 글자가 라이트 칩 위에 얹혀 읽히지 않는다.
-    code {
-        padding: 1px 6px;
-        border-radius: 6px;
-        background: var(--chip);
-        color: var(--primary-d);
-        font-size: 12px;
-    }
+  // --chip 은 다크에서도 라이트 라벤더를 유지하는 colored-badge 토큰이다(tokens 주석 참고).
+  // 그래서 글자색은 --text 가 아니라 .chip 과 같은 --primary-d 여야 한다 - --text 를 쓰면
+  // 다크에서 흰 글자가 라이트 칩 위에 얹혀 읽히지 않는다.
+  code {
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: var(--chip);
+      color: var(--primary-d);
+      font-size: 12px;
+  }
 }
 
 // ── 툴바(검색 + 기간 필터 + 추가) ──────────────────────────────
@@ -56,6 +57,18 @@
     background: var(--card);
     color: var(--text);
     font: inherit;
+
+    // 이 화면의 입력들만 포커스 규칙이 없어 브라우저 기본 링으로 떨어져 있었다 - 같은 앱 안에서
+    // 입력은 mixin(테두리색 + 글로우), 링크·버튼은 outline 링인데 여기만 세 번째 모양이었다.
+    // :focus-visible 이 아니라 :focus 인 것은 이 앱의 다른 입력(_form.scss)과 같은 선택이다 -
+    // 텍스트 필드는 마우스로 눌러 들어가도 활성 표시가 보여야 한다(어디에 타이핑되는지가 정보다).
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-fast) var(--ease-standard);
+
+    &:focus {
+      @include m.focus-ring;
+    }
   }
 }
 .ip-filter {
@@ -72,6 +85,14 @@
     background: var(--card);
     color: var(--text);
     font: inherit;
+
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-fast) var(--ease-standard);
+
+    &:focus {
+      @include m.focus-ring;
+    }
   }
 }
 
@@ -96,6 +117,14 @@
   background: var(--card);
   color: var(--text);
   font: inherit;
+
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+
+  &:focus {
+    @include m.focus-ring;
+  }
 }
 .ip-add__ip {
   display: flex;

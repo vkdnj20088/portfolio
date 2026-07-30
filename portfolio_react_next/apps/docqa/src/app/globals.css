@@ -31,6 +31,17 @@ textarea {
   font-size: inherit;
   color: inherit;
 }
+/* 포커스 링 기본값(#M4) - 요소마다 적지 않고 여기서 한 번에 준다.
+   컴포넌트 CSS 모듈이 대부분 이미 링을 갖고 있지만, 갖지 않은 것(예: 포트폴리오 복귀 링크)은
+   브라우저 기본 링으로 떨어져 두께·색·offset 이 토큰과 달라진다 - 한 화면에서 링이 두 종류가
+   된다. 기본으로 주고 예외만 --focus-ring-offset 을 덮어쓴다. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -126,7 +137,6 @@ mark {
 .nav a:hover,
 .nav a:focus-visible {
   color: var(--color-text);
-  outline: none;
 }
 .nav a[aria-current='page'] {
   /* --color-primary 는 "표면용"(흰 텍스트가 얹히는 색)이라 다크 표면 위 텍스트로 쓰면 대비가 낮다.
@@ -174,7 +184,6 @@ mark {
 .portfolioHome:focus-visible {
   background: rgba(30, 30, 30, 0.96);
   border-color: rgba(255, 255, 255, 0.4);
-  outline: none;
 }
 
 /* ── 히어로/헤딩 ───────────────────────────────────────── */
@@ -232,7 +241,6 @@ mark {
 .sampleChip:focus-visible {
   color: var(--color-text);
   border-color: var(--color-border-strong);
-  outline: none;
 }
 /* 코퍼스에 답이 없는 예시 - 색만으로 구분하지 않도록 점선 테두리로도 구분한다. */
 .sampleChip.negative {
@@ -259,8 +267,11 @@ mark {
   filter: brightness(1.06);
 }
 .primaryBtn:focus-visible {
-  outline: 2px solid var(--color-link);
-  outline-offset: 2px;
+  /* 직전까지 --color-link 였다(#M4). 링은 offset 2px 만큼 떨어져 페이지 배경 위에 그려지므로
+     버튼 채움색과 겹치지 않는다 - 링 색을 따로 둘 이유가 없었고, 라이트에서 두 토큰은 같은
+     값이라 의도된 구분도 아니었다. 토큰 기본값(primary)으로 되돌렸다. */
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* ── QA(A) 답변 카드 ───────────────────────────────────── */
@@ -777,8 +788,8 @@ mark {
   transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .followUp input:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 .followUpNote {
   margin-top: var(--space-2);
@@ -820,8 +831,8 @@ mark {
   transition-duration: 0ms;
 }
 .secondaryBtn:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* ── 카테고리 패싯(#D2) ─────────────────────────────────── */
@@ -858,8 +869,8 @@ mark {
   transition-duration: 0ms;
 }
 .facetChip:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 /* 선택 상태는 aria-pressed 를 근거로 삼는다 - 보조기술용 속성과 시각 상태가 갈리지 않게. */
 .facetChip[aria-pressed='true'] {
@@ -880,4 +891,54 @@ mark {
 .facetActive {
   color: var(--color-text-muted);
   font-weight: 400;
+}
+
+/* ── 임계값 스윕(#D3) ──────────────────────────────────────
+   위 지표 카드와 같은 카드 문법을 재사용하고, 이 패널만 감싸는 테두리를 둬서 "배포된 품질"
+   (위쪽 표)과 "만약 다르게 잡았다면"(이 패널)이 시각적으로 구분되게 한다. */
+.sweep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.sweepRow {
+  display: flex;
+  flex-wrap: wrap; /* 360px 에서 버튼이 다음 줄로 내려간다 */
+  align-items: center;
+  gap: var(--space-3);
+}
+.sweepLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sweepRange {
+  /* 남는 폭을 전부 먹되 flex 기본 min-width(auto)를 풀어 줄바꿈이 가능하게 한다 */
+  flex: 1 1 160px;
+  min-width: 0;
+  accent-color: var(--color-primary);
+}
+/* 전역 기본 규칙은 input 을 제외한다(테두리 있는 텍스트 필드는 border+shadow 로 표시하므로).
+   range 는 그 부류가 아니라 링을 걸 테두리가 없는 컨트롤이라 여기서 명시적으로 준다 -
+   빠뜨리면 이 슬라이더만 브라우저 기본 링이 뜬다(실측으로 발견). */
+.sweepRange:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.sweepValue {
+  /* 값이 바뀔 때 폭이 흔들려 옆 버튼이 움직이지 않게 자리를 고정한다 */
+  min-width: 3.4em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+.sweepNote {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
 }

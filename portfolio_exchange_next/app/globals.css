@@ -32,6 +32,20 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --stagger: 60ms;
+
+  /* ── 포커스 링(#M4) ───────────────────────────────────────────────────
+   * 네 앱이 같은 규칙(2px solid accent + offset 2px)을 쓰고, 값은 여기 한 곳에서 정한다.
+   *
+   * 색이 --brand-orange 가 아니라 --accent-strong 인 이유: 라이트 배경에서 브랜드 오렌지는
+   * 2.33:1 로 포커스 표시에 요구되는 3:1 에 못 미친다(위 --accent-strong 주석과 같은 사정이다).
+   * 직전까지 호가 행의 링이 브랜드 오렌지였고, 라이트 테마에서 링이 흐리게 보였다.
+   * --accent-strong 은 라이트 4.72:1 / 다크 8.05:1 로 양쪽을 넘긴다.
+   *
+   * 링을 안쪽에 그려야 하는 곳(경계에 붙은 행)은 --focus-ring-offset 만 덮어쓴다. */
+  --focus-ring-width: 2px;
+  --focus-ring-color: var(--accent-strong);
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
 }
 /* --font-sans / --font-num 은 next/font 가 <html> 에 주입한다(자기참조 정의 금지) */
 :root[data-theme="dark"] {
@@ -180,7 +194,34 @@ input, select { font-family: inherit; }
 .ob-row { position: relative; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 3px 12px; font-size: 1.2rem;
   width: 100%; appearance: none; border: none; background: transparent; color: inherit; font-family: inherit; text-align: left; cursor: pointer; }
 .ob-row:hover { background: var(--bg-soft); }
-.ob-row:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: -2px; }
+/* 호가 행은 표 안에서 서로 붙어 있어 링을 안쪽에 그린다(밖으로 그리면 위아래 행이 서로 덮는다). */
+.ob-row:focus-visible { --focus-ring-offset: -2px; outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* ── 포커스 링 기본값(#M4) ───────────────────────────────────────────────
+ * 실측해 보니 탭으로 도달하는 26개 중 15개(상단 내비, 마켓 탭, 코인 목록 행, 테마 토글, 시세
+ * 테이프)가 링 규칙 없이 브라우저 기본 링에 의존했다. 기본 링도 보이기는 하지만 두께·색·offset
+ * 이 우리 토큰과 달라서, 탭으로 훑으면 한 화면 안에서 링이 두 종류로 갈린다.
+ *
+ * 요소를 열거해 붙이지 않고 기본으로 주는 이유: 지금 맞춰 놓아도 링크를 하나 더 넣는 날 다시
+ * 어긋난다. 예외는 개별 규칙이 --focus-ring-offset 을 덮어써서 표현한다. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* 주문/입출금 폼의 입력은 테두리가 없는 자식이라(위 `outline: none`) 링을 걸 자리가 없었다 -
+ * 즉 키보드로 금액 칸에 들어가도 아무 표시가 없었다. 링은 눈에 보이는 상자에 준다.
+ *
+ * :focus-within 이 아니라 :has(:focus-visible) 인 이유: focus-within 은 마우스 클릭에도 켜져
+ * 포인터 사용자에게 없던 링이 생긴다. :has 는 Chrome 105+/Safari 15.4+ 로 지원 하한(111) 안이다. */
+.of-row:has(input:focus-visible),
+.wf-row:has(input:focus-visible),
+.wf-row:has(select:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
 /* 누적 깊이 막대. width 로 그리면 시세가 갱신될 때마다 레이아웃이 다시 돌고, 브라우저가
    그 폭 변화를 레이아웃 이동으로 센다(실측 0.066). transform 은 합성 단계에서만 처리되고
    레이아웃 이동 계산에서도 제외된다 - 초당 여러 번 갱신되는 요소라 차이가 크다.
@@ -272,6 +313,12 @@ input, select { font-family: inherit; }
 .tr-head span:not(:first-child), .tape-row span:not(:first-child) { text-align: right; }
 /* 가상화 스크롤 뷰포트: 높이는 인라인, 안쪽 스페이서(padTop/padBottom)가 전체 스크롤 높이를 보존 */
 .tape-scroll { overflow-y: auto; overflow-anchor: none; }
+/* 이 div 는 tabindex 가 없는데도 탭 순서에 들어온다(#M4). Chrome 의 keyboard-focusable
+   scrollers 동작 때문이다 - 실제로 스크롤되는 영역은 키보드로 스크롤할 수 있어야 하므로
+   브라우저가 포커스를 준다(확인: tabindex 속성 없음, scrollHeight 31746 > clientHeight 260).
+   즉 우리가 만든 포커스가 아니라 받은 포커스이고, 그냥 두면 이 영역만 브라우저 기본 링이 뜬다.
+   안쪽에 그리는 이유는 다른 목록 행과 같다 - 패널 경계에 붙어 있어 밖으로 그리면 잘린다. */
+.tape-scroll:focus-visible { --focus-ring-offset: -2px; outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .tape-scroll ul { margin: 0; padding: 0; list-style: none; }
 .tape-row { height: 26px; align-items: center; box-sizing: border-box; } /* ROW_H=26 과 일치(계산 전제) */
 .tape-row:hover { background: var(--bg-soft); }

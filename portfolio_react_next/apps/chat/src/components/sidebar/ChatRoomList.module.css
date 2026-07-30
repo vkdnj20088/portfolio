@@ -24,8 +24,11 @@
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+  /* offset 이 음수다(#M4) - 목록 행은 컨테이너 경계에 붙어 있어 밖으로 그리면 잘린다.
+     안쪽으로 그려야 링 네 변이 모두 보인다. 색·폭은 토큰 그대로다. */
+  --focus-ring-offset: -2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* 눌린 동안 한 단계 더 깊게 - 버튼과 같은 press 언어를 목록에도 쓴다.
@@ -135,8 +138,10 @@ a.link:active {
 }
 
 .searchInput:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -1px;
+  /* 위와 같은 이유로 안쪽에 그린다(#M4). 이 요소는 여백이 더 좁아 1px 이다. */
+  --focus-ring-offset: -1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* 인라인 제목 편집 - 링크 자리를 그대로 차지해 클릭이 이동으로 새지 않는다 */
@@ -287,8 +292,11 @@ a.link:active {
 }
 
 .searchMode:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+  /* offset 이 음수다(#M4) - 목록 행은 컨테이너 경계에 붙어 있어 밖으로 그리면 잘린다.
+     안쪽으로 그려야 링 네 변이 모두 보인다. 색·폭은 토큰 그대로다. */
+  --focus-ring-offset: -2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .searchModeOn {

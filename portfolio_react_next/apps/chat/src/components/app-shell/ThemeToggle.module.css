@@ -23,8 +23,10 @@
 }
 
 .option:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
+  /* offset 만 좁힌다(#M4) - 세그먼티드 컨트롤의 옵션은 서로 붙어 있어 2px 이면 옆 옵션을 덮는다. */
+  --focus-ring-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* 눌림 상태는 aria-pressed 가 진실원 - 시각 상태와 보조기술 상태가 갈라질 수 없다 */

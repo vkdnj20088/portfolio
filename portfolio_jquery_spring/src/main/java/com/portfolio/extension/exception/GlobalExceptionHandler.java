@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -108,13 +110,22 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.UNPROCESSABLE_CONTENT, "LIMIT_EXCEEDED", "허용 개수 초과", e.getMessage());
     }
 
-    /** 파싱/검증 용량 초과 - 동시 파싱 상한(벌크헤드)이나 파싱 타임아웃에 걸린 경우. */
+    /**
+     * 파싱/검증 용량 초과 - 동시 파싱 상한(벌크헤드)이나 파싱 타임아웃에 걸린 경우.
+     *
+     * <p>이 핸들러만 {@link ResponseEntity} 를 돌려주는 이유는 <b>{@code Retry-After} 헤더</b>가
+     * 필요하기 때문이다. 본문 확장 필드({@code retryAfterSeconds})는 우리 프론트만 읽지만,
+     * {@code Retry-After} 는 RFC 9110 표준 헤더라 우리 코드를 모르는 클라이언트(프록시, 재시도
+     * 라이브러리, curl 을 쓰는 사람)도 해석한다. 같은 값을 두 곳에 싣는 것은 중복이 아니라
+     * 대상이 다르다 - 헤더는 규약이고 본문은 화면 문구를 만드는 재료다.
+     */
     @ExceptionHandler(ValidationCapacityException.class)
-    public ProblemDetail handleCapacity(ValidationCapacityException e) {
+    public ResponseEntity<ProblemDetail> handleCapacity(ValidationCapacityException e) {
         ProblemDetail pd = problem(HttpStatus.SERVICE_UNAVAILABLE, "CAPACITY", "검증 용량 초과", e.getMessage());
-        // 클라이언트가 언제 다시 시도할지 판단할 근거를 준다(챗의 레이트리밋 UX 와 같은 관례).
         pd.setProperty("retryAfterSeconds", e.getRetryAfterSeconds());
-        return pd;
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()))
+                .body(pd);
     }
 
     /** 400 - 예: 숫자 id 자리에 문자 */

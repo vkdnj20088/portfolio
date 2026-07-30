@@ -60,8 +60,13 @@
 }
 
 .dismiss:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 1px;
+  /* 색만 토큰에서 벗어난다(#M4): 토스트는 변형(오류/성공)마다 자기 색을 갖고, 그 안의 닫기
+     버튼 링이 앱 accent 를 쓰면 토스트 색과 싸운다. currentColor 는 토스트를 따라간다.
+     offset 이 1px 인 것은 버튼이 작아 2px 이면 토스트 경계를 넘기 때문이다. */
+  --focus-ring-color: currentColor;
+  --focus-ring-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 @keyframes toast-in {

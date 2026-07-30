@@ -58,6 +58,15 @@ tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'integration', 'benchmark'
     }
+    // OpenAPI 스냅샷 갱신 플래그를 테스트 JVM 으로 전달한다(#X3).
+    // Gradle 은 커맨드라인 -D 를 테스트 JVM 에 자동으로 넘기지 않는다 - 데몬 JVM 의 속성이라
+    // 포크된 테스트 프로세스에는 보이지 않는다. 명시적으로 넘겨야 한다.
+    //   ./gradlew test --tests '*OpenApiSnapshotTest*' -Dopenapi.snapshot.update=true
+    if (System.getProperty('openapi.snapshot.update') != null) {
+        systemProperty 'openapi.snapshot.update', System.getProperty('openapi.snapshot.update')
+        // 갱신은 항상 새로 돌아야 한다 - 이전 실행 결과가 UP-TO-DATE 로 캐시되면 스냅샷이 안 써진다.
+        outputs.upToDateWhen { false }
+    }
 }
 
 // OFFSET vs 키셋 페이지네이션 지연 벤치(#I5). 대량 행을 시딩해 측정하므로 별도 태스크로 둔다.

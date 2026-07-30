@@ -95,13 +95,22 @@ export type ChatApiErrorCode =
   | 'INVALID_TITLE'
   | 'RECEIVE_ONLY'
   | 'REPLY_FAILED'
+  | 'RATE_LIMITED'
   | 'STORAGE_FULL';
 
-/** 도메인 오류. UI 는 code 로 분기하고 message 는 로깅/디버깅용이다. */
+/**
+ * 도메인 오류. UI 는 code 로 분기하고 message 는 로깅/디버깅용이다.
+ *
+ * `RATE_LIMITED` 만 {@link retryAfterSeconds} 를 함께 들고 온다. 이 값을 오류에 실어 두는 이유는
+ * "재시도 가능한 실패"와 "영구 실패"가 UI 에서 다른 것이어야 하기 때문이다 - 언제 다시 되는지
+ * 아는 실패는 사용자가 기다리면 되고, 모르는 실패는 사용자가 할 수 있는 게 없다.
+ * 나머지 코드에서는 undefined 다(있는 척하지 않는다).
+ */
 export class ChatApiError extends Error {
   constructor(
     public readonly code: ChatApiErrorCode,
     message: string,
+    public readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = 'ChatApiError';

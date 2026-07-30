@@ -38,8 +38,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       # useJUnitPlatform 로 서비스/컨트롤러/동시성/파일검증 테스트를 돈다(H2, Docker 불필요).
+      # OpenAPI 스냅샷 게이트(OpenApiSnapshotTest)도 이 태스크에 포함된다 - 컨트롤러 시그니처가
+      # 바뀌면 커밋된 스펙과 달라져 여기서 실패한다(의도한 변경이면 스냅샷을 갱신해 커밋).
       # 프론트엔드(webpack) 번들은 커밋되어 있어 이 단계는 Node 툴체인을 건드리지 않는다.
       - run: ./gradlew test --no-daemon
+
+      # 스냅샷이 어긋나 실패했을 때 실제 스펙을 받아 볼 수 있게 남긴다.
+      # 로그의 "다르다"만 보고 로컬에서 재현하는 대신 CI 산출물로 diff 를 뜰 수 있다.
+      # 입력값 보간이 없으므로(정적 경로 + if: failure()) 워크플로 인젝션 표면이 아니다.
+      - name: OpenAPI actual spec on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-actual
+          path: portfolio_jquery_spring/build/openapi-actual.json
+          if-no-files-found: ignore
 
       # 통합 테스트(Testcontainers, 실제 MySQL 8). GitHub 러너에 Docker 가 있어 그대로 돈다.
       # 기본 test 와 태그로 분리돼 있어(@Tag integration) 로컬 클론은 Docker 없이도 test 가 통과한다.

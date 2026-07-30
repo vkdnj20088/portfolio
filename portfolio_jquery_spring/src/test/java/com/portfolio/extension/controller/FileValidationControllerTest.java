@@ -1,6 +1,7 @@
 package com.portfolio.extension.controller;
 
 import com.portfolio.extension.dto.FileValidationResponse;
+import com.portfolio.extension.exception.ValidationCapacityException;
 import com.portfolio.extension.service.FileValidationService;
 import com.portfolio.extension.service.StorageService;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,5 +77,30 @@ class FileValidationControllerTest {
         mvc.perform(multipart("/api/files/validate"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID"));
+    }
+
+    /**
+     * 용량 초과(벌크헤드/타임아웃)는 503 + <b>{@code Retry-After} 헤더</b> + 본문 확장 필드로 나간다(#C2).
+     *
+     * <p>헤더를 함께 확인하는 이유: 본문 필드는 우리 프론트만 읽지만 {@code Retry-After} 는 RFC 9110
+     * 표준이라 우리 코드를 모르는 클라이언트도 해석한다. 둘 중 하나만 있으면 "재시도 가능 시점"을
+     * 아는 클라이언트가 한쪽으로 제한된다.
+     */
+    @Test
+    void validate_capacityExceeded_returns503WithRetryAfter() throws Exception {
+        given(service.validate(eq("big.zip"), any()))
+                .willThrow(new ValidationCapacityException("동시에 처리 중인 검증이 많습니다.", 2));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "big.zip", "application/zip",
+                new byte[] {0x50, 0x4B, 0x03, 0x04}); // "PK"
+
+        mvc.perform(multipart("/api/files/validate").file(file))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "2"))
+                .andExpect(jsonPath("$.code").value("CAPACITY"))
+                .andExpect(jsonPath("$.retryAfterSeconds").value(2));
+
+        verify(storageService, never()).store(any()); // 검증을 못 했으면 저장하지 않는다
     }
 }

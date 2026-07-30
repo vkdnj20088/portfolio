@@ -1,10 +1,32 @@
 @use '../mixins' as m;
 
+// 결과 카드 등장. 클릭에 대한 응답이 "이미 거기 있던 것처럼" 나타나면 무엇이 바뀌었는지 눈이
+// 놓친다 - 특히 같은 파일을 다시 검증할 때 내용이 거의 같아서 갱신됐는지 알기 어렵다.
+//
+// 자리 이동이 없다는 것은 실측했다: 이 카드는 흐름의 마지막 요소라 노출해도 아래로 밀리는 것이
+// 없다(레이아웃 이동 이벤트 0건). 그래서 transform/opacity 만으로 그린다 - 합성 단계에서만
+// 처리되어 레이아웃을 다시 계산하지 않는다.
+//
+// 모션 최소화 선호는 _base.scss 의 전역 리셋이 덮는다(animation-duration 0.01ms).
+@keyframes file-result-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 .file-result {
     margin-top: 14px;
     padding: 12px 14px;
     @include m.control-border;
     font-size: 14px;
+    // 4px 만 움직인다. 화면 폭 규모의 이동은 이 요소의 크기에 비해 과하고, 이 앱에는 지금까지
+    // 등장 애니메이션이 하나도 없었으므로 새 그래머의 기준을 가장 조용한 쪽에 둔다.
+    animation: file-result-in var(--duration-base) var(--ease-out);
 
     // 통과/차단 상태색 - 고유 색 조합을 시맨틱 토큰으로 승격(다크 테마에서 어두운 박스로 전환).
     &--ok {
@@ -24,5 +46,41 @@
         margin-top: 4px;
         color: var(--muted);
         font-size: 12px;
+    }
+}
+
+// ── 드롭 영역(#G3) ─────────────────────────────────────────────
+// 평소에는 거의 보이지 않는 점선 테두리로 두고, 드래그가 들어오면 브랜드색으로 바뀐다.
+// 테두리 두께를 바꾸지 않는 이유: 두께가 바뀌면 안쪽 내용이 밀려 레이아웃이 움직인다
+// (border-color 만 바꾸면 합성/페인트만 다시 한다).
+.dropzone {
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    transition:
+        border-color var(--duration-fast) var(--ease-standard),
+        background-color var(--duration-fast) var(--ease-standard);
+
+    &--over {
+        border-color: var(--primary);
+        background: var(--chip);
+    }
+
+    &__hint {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+    }
+}
+
+// 드롭은 파일 선택 대화상자를 거치지 않아 "무엇이 담겼는지" 확인할 화면이 없다 - 그래서 적는다.
+.file-picked {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+
+    &:empty {
+        display: none; // 빈 문단이 여백을 차지하지 않게
     }
 }

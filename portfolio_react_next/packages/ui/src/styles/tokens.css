@@ -130,6 +130,22 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   /* 연속 등장의 간격. 6개를 넘기면 마지막이 눈에 띄게 늦으므로 사용처에서 idx % 6 로 끊는다. */
   --stagger: 60ms;
+
+  /*
+   * 포커스 링(#M4) - 값 세 개를 스무 곳에 흩는 대신 규칙 하나로 둔다.
+   *
+   * 폭·스타일·색·offset 은 이미 대부분 같은 값이었지만 각 컴포넌트가 자기 파일에 적어 두고 있어서,
+   * 링을 한 번 바꾸려면 전부 찾아야 했다. 값이 우연히 수렴한 상태와 한 곳에서 정해지는 상태는 다르다.
+   *
+   * 예외는 없애지 않고 **토큰을 덮어써서** 표현한다(선언을 다시 쓰지 않는다):
+   *   - 컨테이너 경계에 붙은 행은 offset 을 음수로 - 밖으로 그리면 잘려 보이지 않는다
+   *   - 토스트는 색을 currentColor 로 - 변형(오류/성공)마다 자기 색을 따라야 앱 accent 와 안 싸운다
+   * 그래야 "왜 다른가" 가 그 자리에 남는다.
+   */
+  --focus-ring-width: 2px;
+  --focus-ring-color: var(--color-primary);
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
 }
 
 /*

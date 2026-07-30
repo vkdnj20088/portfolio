@@ -8,7 +8,11 @@ import { MessageBubble } from './MessageBubble';
 import bubbleStyles from './MessageBubble.module.css';
 import styles from './MessageList.module.css';
 
-export type ReplyStatus = 'idle' | 'waiting' | 'error';
+/**
+ * 'rateLimited' 를 'error' 와 나눈 이유: 회복 시점이 정해진 실패는 사용자가 할 일이 있고
+ * (기다린다) 그렇지 않은 실패는 없다. 같은 말풍선으로 보여 주면 그 차이가 사라진다.
+ */
+export type ReplyStatus = 'idle' | 'waiting' | 'error' | 'rateLimited';
 
 /** "하단 근처" 판정 임계(px). 스트리밍 자동 추적과 "맨 아래로" 버튼 노출이 공유한다. */
 const BOTTOM_THRESHOLD_PX = 240;
@@ -24,6 +28,8 @@ interface MessageListProps {
   /** delta 스트리밍이 흐르기 시작하면 대기 말풍선에 누적 표시된다(현재 mock 은 빈 값). */
   streamText: string;
   onRetryReply: () => void;
+  /** 레이트리밋 남은 대기 초(#C2). 0 이면 재시도 가능. replyStatus='rateLimited' 일 때만 쓴다. */
+  cooldownSeconds?: number;
   /** 응답 대기 중 중단(STEP 11). 대기 말풍선 옆 중지 버튼이 부른다. */
   onStopReply: () => void;
   /** 응답 피드백(STEP 11). 안정 참조 계약 하에 모든 말풍선이 공유한다. */
@@ -76,6 +82,7 @@ export const MessageList = memo(function MessageList({
   replyStatus,
   streamText,
   onRetryReply,
+  cooldownSeconds = 0,
   onStopReply,
   onRate,
   onRegenerateReply,
@@ -291,6 +298,38 @@ export const MessageList = memo(function MessageList({
               <div className={styles.errorBubble}>
                 <span>응답을 받지 못했습니다.</span>
                 <Button variant="ghost" size="sm" onClick={onRetryReply}>
+                  재시도
+                </Button>
+              </div>
+            </div>
+          )}
+          {/* 레이트리밋(#C2) - 오류가 아니라 대기다.
+              눈으로 보는 카운트다운과 스크린리더가 듣는 문장을 갈라 둔다. role="status" 안에서
+              숫자가 매 초 바뀌면 보조기술이 1초마다 끼어들어 방해가 되므로, 숫자는 aria-hidden
+              으로 가리고 변하지 않는 한 문장을 따로 읽힌다. */}
+          {replyStatus === 'rateLimited' && (
+            <div className={styles.assistantRow} role="status">
+              <div className={styles.cooldownBubble}>
+                <span aria-hidden="true">
+                  요청이 너무 잦습니다.{' '}
+                  {cooldownSeconds > 0 ? (
+                    <>
+                      <b>{cooldownSeconds}초</b> 후 다시 시도할 수 있습니다.
+                    </>
+                  ) : (
+                    '이제 다시 시도할 수 있습니다.'
+                  )}
+                </span>
+                <span className="srOnly">
+                  요청이 너무 잦아 잠시 기다려야 합니다. 재시도 버튼이 활성화되면 다시 시도할 수
+                  있습니다.
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRetryReply}
+                  disabled={cooldownSeconds > 0}
+                >
                   재시도
                 </Button>
               </div>

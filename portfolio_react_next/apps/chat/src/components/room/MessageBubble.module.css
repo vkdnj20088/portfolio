@@ -200,8 +200,8 @@
  */
 .highlighted {
   border-radius: var(--radius-md);
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
   background-color: var(--color-primary-subtle);
   /* --duration-slow 는 이 줄이 먼저 참조하고 있었으나 토큰이 정의된 적이 없어 폴백(240ms)으로
      떨어져 있었다. 모션 스케일이 생기며 의도대로 slow(360ms)가 적용된다 - 검색 결과로 점프한
@@ -219,8 +219,8 @@
 }
 
 .row:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
   border-radius: var(--radius-md);
 }
 

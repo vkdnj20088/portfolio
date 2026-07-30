@@ -1,0 +1,941 @@
+{
+  "components" : {
+    "schemas" : {
+      "CustomCreatedResponse" : {
+        "properties" : {
+          "count" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CustomExtensionRequest" : {
+        "properties" : {
+          "name" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "CustomItemResponse" : {
+        "properties" : {
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CustomListResponse" : {
+        "properties" : {
+          "count" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "extensions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CustomItemResponse"
+            },
+            "type" : "array"
+          },
+          "limit" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "EvaluatedRule" : {
+        "properties" : {
+          "action" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "ipAddress" : {
+            "type" : "string"
+          },
+          "matched" : {
+            "type" : "boolean"
+          },
+          "prefixLength" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "priority" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "skipReason" : {
+            "type" : "string"
+          },
+          "winner" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "FileValidationResponse" : {
+        "properties" : {
+          "allowed" : {
+            "type" : "boolean"
+          },
+          "detectedSignature" : {
+            "type" : "string"
+          },
+          "extension" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "storedId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "FixedExtensionResponse" : {
+        "properties" : {
+          "blocked" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "FixedToggleRequest" : {
+        "properties" : {
+          "blocked" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "blocked" ],
+        "type" : "object"
+      },
+      "IpAuditListResponse" : {
+        "properties" : {
+          "hasMore" : {
+            "type" : "boolean"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/IpAuditResponse"
+            },
+            "type" : "array"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "IpAuditResponse" : {
+        "properties" : {
+          "action" : {
+            "type" : "string"
+          },
+          "actor" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "ipAddress" : {
+            "type" : "string"
+          },
+          "ruleId" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "IpMatchResponse" : {
+        "properties" : {
+          "family" : {
+            "type" : "string"
+          },
+          "matches" : {
+            "type" : "boolean"
+          },
+          "normalizedRule" : {
+            "type" : "string"
+          },
+          "normalizedTarget" : {
+            "type" : "string"
+          },
+          "rule" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "IpRuleCreateRequest" : {
+        "properties" : {
+          "action" : {
+            "enum" : [ "ALLOW", "DENY" ],
+            "type" : "string"
+          },
+          "description" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "endAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "ipAddress" : {
+            "maxLength" : 45,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "priority" : {
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "startAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "validPeriod" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "description", "endAt", "ipAddress", "startAt" ],
+        "type" : "object"
+      },
+      "IpRuleListResponse" : {
+        "properties" : {
+          "hasMore" : {
+            "type" : "boolean"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/IpRuleResponse"
+            },
+            "type" : "array"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "IpRuleResponse" : {
+        "properties" : {
+          "action" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "endAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "ipAddress" : {
+            "type" : "string"
+          },
+          "priority" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "startAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "IpRuleUpdateRequest" : {
+        "properties" : {
+          "action" : {
+            "enum" : [ "ALLOW", "DENY" ],
+            "type" : "string"
+          },
+          "description" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "endAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "ipAddress" : {
+            "maxLength" : 45,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "priority" : {
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "startAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "validPeriod" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "description", "endAt", "ipAddress", "startAt" ],
+        "type" : "object"
+      },
+      "PolicyEvaluationResponse" : {
+        "properties" : {
+          "decision" : {
+            "type" : "string"
+          },
+          "evaluatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "evaluatedRules" : {
+            "items" : {
+              "$ref" : "#/components/schemas/EvaluatedRule"
+            },
+            "type" : "array"
+          },
+          "family" : {
+            "type" : "string"
+          },
+          "matchedRule" : {
+            "$ref" : "#/components/schemas/EvaluatedRule"
+          },
+          "normalizedTarget" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "StreamingResponseBody" : { },
+      "WhoAmIResponse" : {
+        "properties" : {
+          "ipAddress" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      }
+    }
+  },
+  "info" : {
+    "title" : "OpenAPI definition",
+    "version" : "v0"
+  },
+  "openapi" : "3.1.0",
+  "paths" : {
+    "/api/extensions/custom" : {
+      "get" : {
+        "operationId" : "list_1",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CustomListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "custom-extension-controller" ]
+      },
+      "post" : {
+        "operationId" : "add",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CustomExtensionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CustomCreatedResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "custom-extension-controller" ]
+      }
+    },
+    "/api/extensions/custom/{id}" : {
+      "delete" : {
+        "operationId" : "delete_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "custom-extension-controller" ]
+      }
+    },
+    "/api/extensions/fixed" : {
+      "get" : {
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/FixedExtensionResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "fixed-extension-controller" ]
+      }
+    },
+    "/api/extensions/fixed/{name}" : {
+      "patch" : {
+        "operationId" : "toggle",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FixedToggleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FixedExtensionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "fixed-extension-controller" ]
+      }
+    },
+    "/api/files/validate" : {
+      "post" : {
+        "operationId" : "validate",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FileValidationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "file-validation-controller" ]
+      }
+    },
+    "/api/ip-rules" : {
+      "get" : {
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "startFrom",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "endTo",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 30,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IpRuleListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/IpRuleCreateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IpRuleResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/audit" : {
+      "get" : {
+        "operationId" : "audit",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 30,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "action",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "CREATE", "UPDATE", "DELETE" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "ip",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "actor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IpAuditListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/audit.csv" : {
+      "get" : {
+        "operationId" : "auditCsv",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "action",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "CREATE", "UPDATE", "DELETE" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "ip",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "actor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "maxRows",
+          "required" : false,
+          "schema" : {
+            "default" : 10000,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/csv" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/containing" : {
+      "get" : {
+        "operationId" : "containing",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "ip",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 30,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/IpRuleResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/evaluate" : {
+      "get" : {
+        "operationId" : "evaluate",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "target",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "at",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PolicyEvaluationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/match" : {
+      "get" : {
+        "operationId" : "match",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "rule",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "target",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IpMatchResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/whoami" : {
+      "get" : {
+        "operationId" : "whoami",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhoAmIResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    },
+    "/api/ip-rules/{id}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "IP 접근 규칙" ]
+      },
+      "put" : {
+        "description" : "IP/CIDR·설명·사용 기간을 수정한다. 낙관적 락(@Version)이 동시 수정 충돌을 409 로 막고, 변경은 감사 로그(UPDATE)에 남는다.",
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/IpRuleUpdateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IpRuleResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "IP 규칙 수정",
+        "tags" : [ "IP 접근 규칙" ]
+      }
+    }
+  },
+  "tags" : [ {
+    "description" : "허용 IP/CIDR·사용 시간대 등록·수정·삭제·검색, 포함(containment) 조회, 변경 감사",
+    "name" : "IP 접근 규칙"
+  } ]
+}

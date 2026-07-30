@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { CONFIDENCE_THRESHOLD, evaluate } from '@chat/search-domain';
 import { AppShell } from '@/components/AppShell';
 
@@ -103,6 +104,8 @@ export default function EvalPage() {
           </div>
         </div>
 
+        <ThresholdSweep />
+
         <h2 className="evalH2">문항별 상세</h2>
         <div className="tableWrap">
           <table className="evalTable">
@@ -155,4 +158,116 @@ function outcome(gold: string | null, answered: string | null, ok: boolean): str
   if (gold === null) return ok ? '침묵(정답)' : `지어냄 ${answered}`;
   if (answered === null) return '침묵(과잉)';
   return ok ? '정답' : `오답 ${answered}`;
+}
+
+/** 임계값을 훑을 구간. 0.29 아래는 응답률이 이미 100% 이고, 0.65 위는 거의 다 침묵한다. */
+const SWEEP_MIN = 0.05;
+const SWEEP_MAX = 0.65;
+
+/**
+ * 신뢰도 임계값 스윕(#D3).
+ *
+ * 위 카드가 "임계값을 올리면 오답이 줄고 과잉 불응답이 는다"고 <b>주장</b>한다. 그 문장을 읽고
+ * 믿는 것과, 슬라이더를 밀어 두 수치가 실제로 반대로 움직이는 것을 보는 것은 다르다.
+ * 골드셋과 엔진이 모두 결정적이라 임계값만 바꿔 다시 돌리면 같은 답이 나오므로, 이 화면에서
+ * 그 곡선을 직접 그려 볼 수 있다.
+ *
+ * <b>이것은 설정이 아니라 계측기다.</b> 여기서 민 값은 제품 경로에 영향을 주지 않는다 -
+ * 질문 화면은 항상 기본 임계값으로 답한다(같은 질문의 답이 어느 화면에서 물었느냐에 따라
+ * 갈리면 안 된다). 그래서 위쪽 표들도 슬라이더를 따라 움직이지 않는다: 그 표는 "배포된 품질"
+ * 이고 이 패널은 "만약 다르게 잡았다면" 이다.
+ *
+ * 기본값이 0.29 인 근거도 여기서 읽힌다 - 응답률을 76% 로 유지하면서 "답 없음" 문항을 처음으로
+ * 전부(8/8) 맞히는 지점이다. 더 낮추면 침묵을 놓치고, 더 올리면 답을 버린다.
+ */
+function ThresholdSweep() {
+  const [threshold, setThreshold] = useState(CONFIDENCE_THRESHOLD);
+  // 평가는 결정적이고 수 ms 라 임계값이 바뀔 때만 다시 돈다(드래그 중 매 프레임 재계산 방지).
+  const report = useMemo(() => evaluate(undefined, threshold), [threshold]);
+
+  const { answer, abstention } = report;
+  const answerRate = answer.n ? answer.answered / answer.n : 0;
+  const precision = answer.answered ? answer.correct / answer.answered : 0;
+  const isDefault = Math.abs(threshold - CONFIDENCE_THRESHOLD) < 1e-9;
+
+  return (
+    <>
+      <h2 className="evalH2">임계값을 옮기면 무엇이 바뀌나</h2>
+      <div className="sweep">
+        <div className="sweepRow">
+          <label htmlFor="threshold" className="sweepLabel">
+            신뢰도 임계값
+          </label>
+          <input
+            id="threshold"
+            className="sweepRange"
+            type="range"
+            min={SWEEP_MIN}
+            max={SWEEP_MAX}
+            step={0.01}
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            /* 숫자만 읽히면 "0.29" 가 무엇인지 알 수 없다 - 그 값에서의 결과를 함께 읽힌다. */
+            aria-valuetext={`${threshold.toFixed(2)}, 응답률 ${pct(answerRate)}, 응답 중 정답률 ${pct(precision)}`}
+          />
+          <output htmlFor="threshold" className="sweepValue">
+            {threshold.toFixed(2)}
+          </output>
+          <button
+            type="button"
+            className="secondaryBtn"
+            onClick={() => setThreshold(CONFIDENCE_THRESHOLD)}
+            disabled={isDefault}
+          >
+            기본값
+          </button>
+        </div>
+
+        <div className="evalCards" role="group" aria-label="임계값에 따른 지표">
+          <div className="evalCard">
+            <span className="ev">{pct(answerRate)}</span>
+            <span className="ek">응답률</span>
+            <span className="ed">답이 있는 {answer.n}문항 중 실제로 답한 비율.</span>
+          </div>
+          <div className="evalCard">
+            <span className="ev">{pct(precision)}</span>
+            <span className="ek">응답 중 정답률</span>
+            <span className="ed">답한 것만 세어 맞은 비율. 임계값을 올리면 오른다.</span>
+          </div>
+          <div className="evalCard">
+            <span className="ev">
+              {abstention.abstained}/{abstention.n}
+            </span>
+            <span className="ek">올바른 침묵</span>
+            <span className="ed">코퍼스에 답이 없는 문항을 제대로 거절한 수.</span>
+          </div>
+          <div className="evalCard">
+            <span className="ev">{abstention.overAbstained}건</span>
+            <span className="ek">과잉 불응답</span>
+            <span className="ed">답이 있는데 침묵한 수. 임계값을 올리면 는다.</span>
+          </div>
+        </div>
+
+        <p className="sweepNote" role="status">
+          {isDefault ? (
+            <>
+              <b>기본값 {CONFIDENCE_THRESHOLD}</b> - 응답률을 {pct(answerRate)} 로 유지하면서
+              &ldquo;답 없음&rdquo; 문항을 처음으로 전부 맞히는 지점입니다. 낮추면 침묵을 놓치고,
+              올리면 답을 버립니다.
+            </>
+          ) : threshold < CONFIDENCE_THRESHOLD ? (
+            <>
+              기본값보다 <b>낮습니다</b> - 더 많이 답하지만 근거가 약한 답이 섞이고, 답이 없는
+              문항을 거절하지 못합니다(올바른 침묵 {abstention.abstained}/{abstention.n}).
+            </>
+          ) : (
+            <>
+              기본값보다 <b>높습니다</b> - 답한 것의 정답률은 오르지만 답할 수 있었던{' '}
+              {abstention.overAbstained}문항을 버렸습니다.
+            </>
+          )}
+        </p>
+      </div>
+    </>
+  );
 }

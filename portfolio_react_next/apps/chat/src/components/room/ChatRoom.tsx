@@ -106,6 +106,13 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
     status: 'idle',
     text: '',
   });
+  /**
+   * 429 를 받고 남은 대기 초(#C2). 0 이면 대기 없음.
+   *
+   * 서버가 준 값을 그대로 세는 이유: 남은 시간을 클라이언트가 추정하면 서버의 버킷 상태와
+   * 어긋나 "0 이 됐는데 또 429" 가 난다. 판정의 출처는 서버 하나다.
+   */
+  const [cooldown, setCooldown] = useState(0);
   const [sendError, setSendError] = useState(false);
   const [sending, setSending] = useState(false);
   /** 홈이 남긴 첫 메시지는 정확히 한 번만 전송한다(리렌더 가드 - 저장소 소비는 그 자체로 1회성). */
@@ -198,6 +205,12 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
       }
       // /error 데모(REPLY_FAILED)는 도메인 거절이라 네트워크 배너 관측에서 제외한다.
       reportRequestOutcome({ durationMs: Date.now() - startedAt, ok: !isTransportFailure(error) });
+      // 레이트리밋은 실패가 아니라 "아직"이다 - 회복 시점이 정해져 있으므로 다른 상태로 둔다.
+      if (error instanceof ChatApiError && error.code === 'RATE_LIMITED') {
+        setCooldown(Math.max(1, error.retryAfterSeconds ?? 1));
+        setReply({ status: 'rateLimited', text: '' });
+        return;
+      }
       setReply({ status: 'error', text: '' });
     } finally {
       replyAbortRef.current = null;
@@ -208,6 +221,30 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
   const stopReply = useCallback(() => {
     replyAbortRef.current?.abort();
   }, []);
+
+  const cooling = cooldown > 0;
+
+  /**
+   * 대기 초 카운트다운(#C2). 1초 간격으로 줄이고 0 에서 타이머를 정리한다.
+   *
+   * 의존성이 `cooldown` 이 아니라 `cooling`(0 인지 아닌지)인 것이 요점이다. 남은 초를 의존성에
+   * 넣으면 매 초 타이머를 지우고 다시 걸어 한 주기마다 렌더 시간만큼 드리프트가 쌓인다.
+   * 값은 함수형 갱신으로 줄이므로 이 효과는 대기의 시작과 끝에서만 한 번씩 돈다.
+   */
+  useEffect(() => {
+    if (!cooling) return;
+    const timer = window.setInterval(() => {
+      setCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooling]);
+
+  /** 대기가 끝난 뒤의 재시도. 남은 시간이 있으면 아무 것도 하지 않는다(버튼도 비활성이다). */
+  const retryAfterCooldown = useCallback(() => {
+    if (cooldown > 0) return;
+    setReply({ status: 'idle', text: '' });
+    void runReply();
+  }, [cooldown, runReply]);
 
   /** 응답 피드백(STEP 11) - API 가 돌려준 갱신본으로 그 말풍선 하나만 교체된다. */
   const rate = useCallback(
@@ -289,7 +326,9 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
     if (pending) void send(pending);
   }, [messages.status, room.id, send]);
 
-  const busy = sending || reply.status === 'waiting';
+  // 대기 중에는 입력도 잠근다(#C2) - 보낼 수 없는 상태에서 입력을 받아 두면 사용자는 전송된
+  // 줄 알고, 실제로는 또 429 를 받는다. 잠그는 대상은 남은 시간이 있는 동안뿐이다.
+  const busy = sending || reply.status === 'waiting' || cooling;
 
   return (
     <div className={styles.room}>
@@ -324,7 +363,8 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
           onLoadOlder={loadOlder}
           replyStatus={reply.status}
           streamText={reply.text}
-          onRetryReply={runReply}
+          onRetryReply={reply.status === 'rateLimited' ? retryAfterCooldown : runReply}
+          cooldownSeconds={cooldown}
           onStopReply={stopReply}
           onRate={rate}
           onRegenerateReply={regenerate}
