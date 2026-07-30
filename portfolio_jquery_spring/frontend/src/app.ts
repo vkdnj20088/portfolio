@@ -19,7 +19,7 @@ import {
   CustomCreatedResponse,
   CustomItem,
   CustomListResponse,
-  ErrorResponse,
+  Problem,
   FileValidationResponse,
   FixedExtension,
 } from './types';
@@ -54,9 +54,17 @@ function toast(message: string, kind?: 'ok' | 'error'): void {
   toastTimer = window.setTimeout(() => { $t.removeClass('toast--show'); }, 2200);
 }
 
+/**
+ * 실패 응답에서 사용자에게 보여줄 문장을 뽑는다(problem+json).
+ * detail 이 표준 필드이고 message 는 이전 형태의 폴백이다 - 배포 시점이 갈려도 빈 문구가 나오지 않게.
+ * 던지지 않는다: 에러 처리 경로에서 또 던지면 원래 실패가 파싱 실패로 덮인다.
+ */
 function serverMessage(xhr: JQuery.jqXHR, fallback: string): string {
-  const body = xhr.responseJSON as ErrorResponse | undefined;
-  return (body && body.message) || fallback;
+  const p = xhr.responseJSON as Problem | undefined;
+  const text = p?.detail || p?.message;
+  if (!text) return fallback;
+  // cid 가 오면 함께 보여준다 - 사용자가 이 값을 전달하면 서버 로그를 바로 찾을 수 있다.
+  return p?.cid ? `${text} (요청 ${p.cid})` : text;
 }
 
 // ---- 고정 확장자 --------------------------------------------------------

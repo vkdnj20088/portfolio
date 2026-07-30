@@ -9,6 +9,30 @@
 
 .btn--sm { padding: 4px 10px; font-size: 12px; }
 
+// ── 해석된 표시 시간대 ────────────────────────────────────────
+// 설명 문단의 캡션이라 음수 마진으로 붙여 둔다 - 문단 사이 20px 이 그대로 남으면 별개의
+// 안내문으로 읽히고, 이 줄은 위 문장("접속하신 기기의 시간대")의 실제 값이다.
+// `.app__header p` 보다 클래스 수가 많아 마진 재정의가 순서에 의존하지 않는다.
+.app__header .ip-tz {
+    display: flex;
+    flex-wrap: wrap; // 360px 에서 괄호 문구만 다음 줄로 내려간다
+    align-items: baseline;
+    gap: 6px;
+    margin: -12px 0 20px;
+    font-size: 12px;
+
+    // --chip 은 다크에서도 라이트 라벤더를 유지하는 colored-badge 토큰이다(tokens 주석 참고).
+    // 그래서 글자색은 --text 가 아니라 .chip 과 같은 --primary-d 여야 한다 - --text 를 쓰면
+    // 다크에서 흰 글자가 라이트 칩 위에 얹혀 읽히지 않는다.
+    code {
+        padding: 1px 6px;
+        border-radius: 6px;
+        background: var(--chip);
+        color: var(--primary-d);
+        font-size: 12px;
+    }
+}
+
 // ── 툴바(검색 + 기간 필터 + 추가) ──────────────────────────────
 .ip-toolbar {
   display: flex;

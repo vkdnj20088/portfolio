@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import com.portfolio.extension.domain.IpAccessRule;
 import com.portfolio.extension.net.IpCidr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,12 +75,17 @@ public class IpAccessRuleSeeder implements CommandLineRunner {
                 // 범위 컬럼도 채운다(#O2) - 엔티티 경로와 동일하게 IpCidr 로 16바이트 정규화 시작/끝을 계산해,
                 // 시딩한 행도 /containing(범위 인덱스 조회)에 정확히 잡히게 한다(단일 IP 라 start==end).
                 IpCidr cidr = IpCidr.parse(ip);
+                // action/priority(#G1)를 명시한다. Flyway DDL 에는 DEFAULT 가 있지만 테스트 스키마는
+                // Hibernate 가 생성해 DEFAULT 가 없다 - 컬럼을 생략하면 NOT NULL 위반으로 시딩이 죽는다.
+                // 컬럼을 늘릴 때 raw INSERT 를 함께 고쳐야 한다는 것을 드러내려고 값을 적어 둔다.
                 rows.add(new Object[]{ip, note, UTC.format(start), UTC.format(end), UTC.format(created),
-                        cidr.firstAddress16(), cidr.lastAddress16(), 0L}); // version=0 기준(#Q2 @Version NOT NULL)
+                        cidr.firstAddress16(), cidr.lastAddress16(), 0L, // version=0 기준(#Q2 @Version NOT NULL)
+                        IpAccessRule.Action.ALLOW.name(), IpAccessRule.DEFAULT_PRIORITY});
             }
             jdbc.batchUpdate("INSERT INTO ip_access_rule "
-                    + "(ip_address, description, start_at, end_at, created_at, ip_start, ip_end, version) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", rows);
+                    + "(ip_address, description, start_at, end_at, created_at, ip_start, ip_end, version, "
+                    + "action, priority) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows);
             done += n;
             if (done % (BATCH * 10L) == 0) {
                 log.info("  ...{}/{}", done, toInsert);

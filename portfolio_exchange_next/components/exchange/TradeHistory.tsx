@@ -71,7 +71,9 @@ export default function TradeHistory({ market, initial }: { market: string; init
             -> 스크롤해도 리플로우/재조립 비용이 total 에 비례해 커지지 않는 것이 가상화의 핵심 이득. */}
         <span className="tape-stat num">DOM {win.end - win.start}행 / 전체 {total.toLocaleString("ko-KR")}행</span>
       </h2>
-      <div className="tr-head" aria-hidden="true"><span>시간</span><span>가격(KRW)</span><span>수량</span></div>
+      {/* 시간대를 열 머리에 한 번만 명시한다(#KST). 각 행에 "KST" 를 붙이면 초당 갱신되는
+          목록에서 같은 문자열이 수십 번 반복돼 시선을 먹는다 - 규칙은 한 번 알리면 된다. */}
+      <div className="tr-head" aria-hidden="true"><span>시간(KST)</span><span>가격(KRW)</span><span>수량</span></div>
       {/* 비-live: 초당 다수 갱신을 읽으면 소음이라 aria-live 를 두지 않는다(요약은 가격 헤더가 담당). */}
       <div className="tape-scroll" ref={scrollRef} onScroll={onScroll} style={{ height: VIEWPORT_H }}>
         <div style={{ height: win.padTop }} aria-hidden="true" />

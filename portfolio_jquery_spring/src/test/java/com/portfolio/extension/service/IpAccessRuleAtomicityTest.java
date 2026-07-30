@@ -44,7 +44,7 @@ class IpAccessRuleAtomicityTest {
 
         assertThatThrownBy(() -> service.create(
                 new IpRuleCreateRequest("1.1.1.1", "관리자 IP", Instant.parse("2024-06-01T00:00:00Z"),
-                        Instant.parse("2024-06-02T00:00:00Z"))))
+                        Instant.parse("2024-06-02T00:00:00Z"), null, null)))
                 .isInstanceOf(RuntimeException.class);
 
         // 감사가 던졌으므로 규칙 저장도 함께 롤백 - 테이블은 비어 있어야 한다.

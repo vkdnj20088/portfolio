@@ -15,7 +15,7 @@ import org.hibernate.annotations.CreationTimestamp;
  * IP 접근 규칙 변경 감사 로그 - "누가/언제/무엇을" 을 남긴다. append-only(수정/삭제 없음)라
  * setter 를 두지 않고, 규칙이 삭제돼도 이력은 보존한다.
  *
- * <p>시간은 규칙과 동일하게 절대 시점(UTC {@link Instant})으로 저장한다(디바이스 TZ 렌더의 토대).
+ * <p>시간은 규칙과 동일하게 절대 시점(UTC {@link Instant})으로 저장한다(기기 TZ 렌더의 토대).
  * 규칙의 IP 를 스냅샷으로 함께 남겨(규칙 삭제 후에도 대상이 무엇이었는지 읽을 수 있게) 감사 가독성을
  * 확보한다. 조회는 규칙 목록과 같은 키셋(created_at desc, id desc) 방식을 재사용한다.
  */

@@ -1,4 +1,5 @@
 import { pickReply } from '@chat/chat-domain';
+import { problemResponse } from '@chat/ui';
 
 /**
  * 응답 스트리밍 엔드포인트(STEP 12 실증) - text/event-stream(SSE).
@@ -23,12 +24,14 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as ReplyRequest;
   } catch {
-    return new Response('invalid body', { status: 400 });
+    return problemResponse(400, 'INVALID', '본문 해석 실패',
+      '요청 본문을 해석할 수 없습니다. JSON 형식을 확인해 주세요.', { instance: '/api/reply' });
   }
 
   const text = typeof body.text === 'string' ? body.text : '';
   if (text.length > MAX_TEXT_LENGTH) {
-    return new Response('text too long', { status: 413 });
+    return problemResponse(413, 'PAYLOAD_TOO_LARGE', '메시지 길이 초과',
+      '메시지가 허용 길이를 넘었습니다.', { instance: '/api/reply' });
   }
   const seq = typeof body.seq === 'number' && Number.isFinite(body.seq) ? body.seq : 0;
   const reply = pickReply(text, seq);

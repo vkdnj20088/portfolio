@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { COINS, buildInitialSnapshot } from "@/lib/mock/data";
 import CoinList from "@/components/exchange/CoinList";
 import PriceHeader from "@/components/exchange/PriceHeader";
+import DepthChart from "@/components/exchange/DepthChart";
 import OrderBook from "@/components/exchange/OrderBook";
 import OrderForm from "@/components/exchange/OrderForm";
 import MyOrders from "@/components/exchange/MyOrders";
@@ -20,6 +21,9 @@ export default async function ExchangePage({ params }: { params: Promise<{ marke
       <main className="col-main">
         <PriceHeader market={market} name={meta.name} initial={initial} />
         <div className="chart-wrap"><PriceChart market={market} /></div>
+        {/* 뎁스(#E2)는 캔들 아래에 둔다 - 같은 시장의 두 관점(시간축 / 가격축)이라 붙여 놓아야
+            비교가 된다. 호가창(우측)의 누적 막대와 같은 데이터의 다른 표현이다. */}
+        <DepthChart market={market} initial={initial} />
         {/* key={market}: 시장 전환은 같은 [market] 세그먼트라 클라 네비게이션 시 컴포넌트 인스턴스가
             보존된다. 테이프/가격을 lazy useState 로 초기화하는 이 둘은 그때 재초기화되지 않아 이전
             시장 데이터가 남는다(체결 혼재/이전가 잔존). key 로 이 둘만 remount 해 상태를 리셋한다

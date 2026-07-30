@@ -51,7 +51,7 @@ class IpAuditServiceTest {
     void ruleChange_producesAuditTrail_createThenDelete() {
         // 규칙 생성/삭제가 감사 훅으로 이력을 남긴다(같은 트랜잭션).
         IpRuleResponse created = ruleService.create(new com.portfolio.extension.dto.IpRuleCreateRequest(
-                "10.0.0.9", "감사 대상", S, E), "관리자IP");
+                "10.0.0.9", "감사 대상", S, E, null, null), "관리자IP");
         ruleService.delete(created.id(), "관리자IP");
 
         IpAuditListResponse res = auditService.list(null, 10);

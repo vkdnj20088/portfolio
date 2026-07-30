@@ -1,7 +1,18 @@
 package com.portfolio.extension.controller;
 
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import java.nio.charset.StandardCharsets;
+import java.io.Writer;
+import java.io.UncheckedIOException;
+import java.io.OutputStreamWriter;
+import java.io.IOException;
+import java.io.BufferedWriter;
+import com.portfolio.extension.domain.IpAuditAction;
 import com.portfolio.extension.dto.IpAuditListResponse;
 import com.portfolio.extension.dto.IpMatchResponse;
+import com.portfolio.extension.dto.PolicyEvaluationResponse;
 import com.portfolio.extension.dto.IpRuleCreateRequest;
 import com.portfolio.extension.dto.IpRuleUpdateRequest;
 import com.portfolio.extension.dto.IpRuleListResponse;
@@ -11,6 +22,7 @@ import com.portfolio.extension.exception.InvalidIpException;
 import com.portfolio.extension.net.IpCidr;
 import com.portfolio.extension.observability.IpMetrics;
 import com.portfolio.extension.service.IpAccessRuleService;
+import com.portfolio.extension.service.IpPolicyEvaluator;
 import com.portfolio.extension.service.IpAuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,22 +44,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 허용 IP 접근 규칙 어드민 API.
- * 검색 파라미터의 시각은 애매함을 피하려 epoch millis(long)로 받는다(프론트가 디바이스 TZ 로 계산).
+ * 검색 파라미터의 시각은 애매함을 피하려 epoch millis(long)로 받는다(프론트가 기기 시간대로 계산).
  */
 @Tag(name = "IP 접근 규칙", description = "허용 IP/CIDR·사용 시간대 등록·수정·삭제·검색, 포함(containment) 조회, 변경 감사")
 @RestController
 @RequestMapping("/api/ip-rules")
 public class IpAccessRuleController {
 
+    /** CSV 내보내기 안전 상한. 무제한 내보내기는 실수 한 번이 곧 장시간 부하다. */
+    private static final int AUDIT_EXPORT_MAX = 200_000;
+
     private final IpAccessRuleService service;
     private final IpAuditService auditService;
     private final IpMetrics metrics;
+    private final IpPolicyEvaluator evaluator;
 
     public IpAccessRuleController(IpAccessRuleService service, IpAuditService auditService,
-            IpMetrics metrics) {
+            IpMetrics metrics, IpPolicyEvaluator evaluator) {
         this.service = service;
         this.auditService = auditService;
         this.metrics = metrics;
+        this.evaluator = evaluator;
     }
 
     @GetMapping
@@ -94,12 +111,71 @@ public class IpAccessRuleController {
         return service.findContaining(ip, size);
     }
 
-    /** 변경 감사 로그(누가/언제/무엇). 규칙 목록과 동일한 키셋 페이지네이션을 재사용한다. */
+    /**
+     * 변경 감사 로그(누가/언제/무엇). 규칙 목록과 동일한 키셋 페이지네이션을 재사용한다.
+     *
+     * <p>필터(#G2): 행위·대상 IP·행위자·기간. 감사 로그는 쌓는 것보다 <b>찾는 것</b>이 본질이라
+     * 필터가 없으면 심사에서 쓸 수 없다. 문자열 조건은 접두 일치만 받는다(중간 일치는 인덱스를
+     * 못 타 100만 건에서 풀스캔이 된다 - 자세한 근거는 IpAuditService.filters).
+     */
     @GetMapping("/audit")
     public IpAuditListResponse audit(
             @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "30") int size) {
-        return auditService.list(cursor, size);
+            @RequestParam(defaultValue = "30") int size,
+            @RequestParam(required = false) IpAuditAction action,
+            @RequestParam(required = false) String ip,
+            @RequestParam(required = false) String actor,
+            @RequestParam(required = false) Long from, // epoch millis
+            @RequestParam(required = false) Long to) {
+        return auditService.list(cursor, size, auditFilter(action, ip, actor, from, to));
+    }
+
+    /**
+     * 감사 로그 CSV 내보내기(#G2) - {@link StreamingResponseBody} 로 <b>스트리밍</b>한다.
+     *
+     * <p>String 을 만들어 반환하면 100만 건에서 힙이 먼저 죽는다. 감사 기능이 서비스를 내리는
+     * 형태는 감사가 없는 것보다 나쁘다. 이미 있는 키셋 페이지네이션 위에 반복을 얹어 한 페이지씩
+     * 흘려보내므로 메모리 사용량이 행 수와 무관하다.
+     *
+     * <p>Content-Disposition 의 파일명은 고정 문자열이다 - 사용자 입력을 파일명에 넣으면 헤더
+     * 인젝션 표면이 생긴다.
+     */
+    @GetMapping(value = "/audit.csv", produces = "text/csv")
+    public ResponseEntity<StreamingResponseBody> auditCsv(
+            @RequestParam(required = false) IpAuditAction action,
+            @RequestParam(required = false) String ip,
+            @RequestParam(required = false) String actor,
+            @RequestParam(required = false) Long from,
+            @RequestParam(required = false) Long to,
+            @RequestParam(defaultValue = "10000") int maxRows) {
+        IpAuditService.AuditFilter filter = auditFilter(action, ip, actor, from, to);
+        int cap = Math.min(Math.max(maxRows, 1), AUDIT_EXPORT_MAX);
+        StreamingResponseBody body = out -> {
+            Writer w = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+            // BOM - 엑셀이 UTF-8 CSV 를 로컬 인코딩으로 읽어 한글이 깨지는 것을 막는다.
+            w.write('\uFEFF');
+            auditService.exportCsv(filter, cap, line -> {
+                try {
+                    w.write(line);
+                } catch (IOException e) {
+                    // 클라이언트가 중간에 끊은 경우가 대부분이다. 반복을 멈추기 위해 런타임으로 감싼다.
+                    throw new UncheckedIOException(e);
+                }
+            });
+            w.flush();
+        };
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"ip-audit.csv\"")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store") // 감사 데이터는 중간 캐시에 남기지 않는다
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(body);
+    }
+
+    private static IpAuditService.AuditFilter auditFilter(IpAuditAction action, String ip,
+            String actor, Long from, Long to) {
+        return new IpAuditService.AuditFilter(action, ip, actor,
+                from == null ? null : Instant.ofEpochMilli(from),
+                to == null ? null : Instant.ofEpochMilli(to));
     }
 
     /**
@@ -130,6 +206,28 @@ public class IpAccessRuleController {
         boolean matched = r.contains(t);
         metrics.recordMatch(matched, System.nanoTime() - t0); // 결과 카운터 + 소요 타이머
         return new IpMatchResponse(rule, target, r.canonical(), t.canonical(), t.family().name(), matched);
+    }
+
+    /**
+     * 정책 평가(#G1) - "이 IP 는 지금 허용되나, 그리고 왜 그런가".
+     *
+     * <p>{@code /match} 와의 차이: match 는 <b>규칙 하나</b>와 IP 하나의 포함 관계를 답하는 순수
+     * 계산이고, 여기는 <b>규칙 집합 전체</b>를 평가 순서대로 훑어 최종 판정과 근거를 답한다.
+     * 전자는 입력칸 옆 배지용, 후자는 정책 시뮬레이터용이다.
+     *
+     * <p>{@code at} 을 받는 이유: 시간 창이 판정에 들어가므로 "지금"이 아닌 시점을 물어볼 수 있어야
+     * 한다("다음 주 월요일에 이 IP 가 들어올 수 있나"). 생략하면 현재 시각으로 평가한다.
+     * 이것이 시뮬레이터를 <b>예측 도구</b>로 만드는 지점이다 - 규칙을 고치기 전에 결과를 본다.
+     */
+    @GetMapping("/evaluate")
+    public PolicyEvaluationResponse evaluate(
+            @RequestParam String target,
+            @RequestParam(required = false) Long at) {
+        parseOr400(target, "대상 IP"); // 형식 오류를 400 으로 먼저 거른다(평가기 안에서 터지지 않게)
+        Instant when = at == null ? Instant.now() : Instant.ofEpochMilli(at);
+        // 후보를 범위 인덱스로 좁혀 넘긴다(idx_ip_range). 전체를 넘겨도 결과는 같지만, 규칙이
+        // 100만 건인 데모에서 전량 로드는 평가가 아니라 사고다.
+        return evaluator.evaluate(target, service.findContainingForEvaluation(target), when);
     }
 
     private static IpCidr parseOr400(String value, String label) {

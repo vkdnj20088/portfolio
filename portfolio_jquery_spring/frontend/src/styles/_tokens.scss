@@ -59,6 +59,20 @@ $radius: 10px;
     --result-block-text: #a3282c;
     --status-ok: #1a8a3d;
     --status-error: #c0392b;
+
+    // ── 모션 스케일 ───────────────────────────────────────────────────
+    // 단일 소스는 portfolio_react_next/packages/ui/src/styles/tokens.css 다.
+    // 이 앱은 별도 저장소 + Sass 빌드라 import 가 닿지 않아 같은 값을 복제한다 -
+    // 값을 바꿀 일이 생기면 그쪽을 먼저 고치고 네 앱에 함께 반영한다.
+    // 색과 달리 Sass 변수를 거치지 않는다: 모션 값에는 알파 연산 같은 빌드타임 파생이
+    // 없고, 런타임에 미디어쿼리로 덮어쓸 여지만 남기면 되기 때문이다.
+    --duration-instant: 100ms;
+    --duration-fast: 150ms;
+    --duration-base: 240ms;
+    --duration-slow: 360ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --stagger: 60ms;
 }
 
 // 다크 테마 패리티 - 다른 3앱(prefers-color-scheme 대응)과 정합. 라이트는 위 :root 그대로,

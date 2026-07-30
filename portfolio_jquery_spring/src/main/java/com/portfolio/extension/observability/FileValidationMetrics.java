@@ -50,6 +50,22 @@ public class FileValidationMetrics {
         duration.record(nanos, TimeUnit.NANOSECONDS);
     }
 
+    /**
+     * 콘텐츠 판별 거절 기록 - 벌크헤드 상한 초과 또는 파싱 타임아웃.
+     *
+     * <p>{@code blocked} 와 태그가 아니라 <b>메트릭 이름 자체를 분리</b>한 이유: 차단은
+     * "정책이 의도대로 동작한 것"이고 거절은 "자원이 부족해 판단조차 못 한 것"이다. 둘을 한
+     * 지표에 섞으면 차단율 그래프가 장애 때 함께 치솟아 어느 쪽인지 구분할 수 없다.
+     * 이 값이 오르면 상한을 올릴지 인스턴스를 키울지 결정해야 한다는 신호다.
+     */
+    public void inspectRejected(String reason) {
+        Counter.builder("file.validation.rejected")
+                .tag("reason", reason)
+                .description("콘텐츠 판별 거절 수(bulkhead=동시 상한, timeout=파싱 제한 시간)")
+                .register(registry)
+                .increment();
+    }
+
     /** 차단 기록(총계 + 사유별 차단 + 소요). */
     public void blocked(BlockReason reason, long nanos) {
         total.increment();

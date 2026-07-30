@@ -30,9 +30,9 @@ class IpRangeQueryTest {
     @BeforeEach
     void clean() {
         repository.deleteAll();
-        service.create(new IpRuleCreateRequest("10.0.0.0/24", "사내망", S, E));
-        service.create(new IpRuleCreateRequest("192.168.0.0/16", "사설망", S, E));
-        service.create(new IpRuleCreateRequest("2001:db8::/32", "IPv6 대역", S, E));
+        service.create(new IpRuleCreateRequest("10.0.0.0/24", "사내망", S, E, null, null));
+        service.create(new IpRuleCreateRequest("192.168.0.0/16", "사설망", S, E, null, null));
+        service.create(new IpRuleCreateRequest("2001:db8::/32", "IPv6 대역", S, E, null, null));
     }
 
     @Test

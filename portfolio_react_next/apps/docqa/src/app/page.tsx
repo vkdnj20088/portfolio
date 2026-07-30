@@ -39,9 +39,18 @@ export default function QaPage() {
   const [streamText, setStreamText] = useState('');
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [metrics, setMetrics] = useState<RunMetrics | null>(null);
+  /** 후속질문 입력(#D1). 답변이 사라지면 폼도 사라지므로 별도 초기화가 필요 없다. */
+  const [followUp, setFollowUp] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
-  async function ask(q: string) {
+  /**
+   * 후속질문(#D1). pinned 가 있으면 그 문서 안에서만 근거를 찾는다.
+   *
+   * 이 인자를 ask() 가 받는 이유: 문서 고정은 <b>이 질의에만</b> 적용되는 조건이고, 상태로
+   * 들고 있으면 다음 질의에 의도치 않게 새는 종류의 버그가 생긴다. 컨텍스트는 명시적으로
+   * 넘길 때만 존재한다 - "언제 버리는가"를 코드 구조로 답한 것이다.
+   */
+  async function ask(q: string, pinnedDocId?: string | null) {
     const trimmed = q.trim();
     if (!trimmed) return;
     setQuery(trimmed);
@@ -66,6 +75,7 @@ export default function QaPage() {
     try {
       for await (const ev of docqa.streamAnswer(trimmed, {
         signal: controller.signal,
+        pinnedDocId: pinnedDocId ?? null,
         onTransport: (t, note) => {
           transport = t;
           transportNote = note;
@@ -227,6 +237,38 @@ export default function QaPage() {
                     start={answer.spanStart}
                     end={answer.spanEnd}
                   />
+                </p>
+
+                {/* 후속질문(#D1) - 이 문서 안에서 더 묻는다. 컨텍스트를 상태로 들고 있지 않고
+                    이 폼에서만 넘기므로, 다른 질문으로 넘어가면 자동으로 사라진다. */}
+                <form
+                  className="followUp"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const next = followUp.trim();
+                    if (!next) return;
+                    setFollowUp('');
+                    void ask(next, answer.docId);
+                  }}
+                >
+                  <label className="srOnly" htmlFor="followUpInput">
+                    {answer.docTitle} 문서에서 이어서 질문
+                  </label>
+                  <input
+                    id="followUpInput"
+                    type="text"
+                    value={followUp}
+                    onChange={(e) => setFollowUp(e.target.value)}
+                    placeholder={`${answer.docTitle}에서 더 묻기`}
+                  />
+                  <button type="submit" className="secondaryBtn">
+                    이어서 질문
+                  </button>
+                </form>
+                <p className="followUpNote">
+                  이 문서({answer.docId})로 <b>검색 범위를 좁혀</b> 묻습니다. 골드셋 7문항에서
+                  Recall@1 71.4% → <b>85.7%</b>로 올라 채택했습니다. 직전 질의어를 더하는 방식은
+                  같은 측정에서 28.6%로 <b>떨어져 쓰지 않습니다</b>.
                 </p>
               </div>
             )}

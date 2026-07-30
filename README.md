@@ -33,7 +33,7 @@
 | <img src="intro/img/demo-01-exchange.jpg" alt="거래소 목업 - 실시간 호가와 캔들 차트"> | <img src="intro/img/demo-02-docqa.jpg" alt="문서 근거 QA - 답변과 근거 문장 하이라이트"> |
 | **시맨틱 검색** - 동의어 확장 랭킹 | **AI 챗봇** - 어절 스트리밍, 대화 검색 |
 | <img src="intro/img/demo-03-search.jpg" alt="시맨틱 검색 - 확장 결과와 점수 비교"> | <img src="intro/img/demo-04-chat.jpg" alt="AI 챗봇 - 스트리밍 응답과 대화"> |
-| **파일 확장자 차단** - 내용 기반 이중 검증 | **IP 접근 제어** - 키셋 페이지네이션, 디바이스 TZ |
+| **파일 확장자 차단** - 내용 기반 이중 검증 | **IP 접근 제어** - 키셋 페이지네이션, 정책 평가, 디바이스 TZ |
 | <img src="intro/img/demo-05-files.jpg" alt="파일 확장자 차단 - 고정/커스텀 확장자와 검증"> | <img src="intro/img/demo-06-ip.jpg" alt="IP 접근 제어 - 규칙 목록과 시간대 표시"> |
 
 ---

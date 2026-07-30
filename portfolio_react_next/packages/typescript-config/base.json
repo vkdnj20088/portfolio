@@ -16,10 +16,14 @@
     "declaration": true,
     "declarationMap": true,
     "incremental": true,
-    "target": "ES2019",
-    // ES2022.Intl 은 타입 전용 추가다: Intl.Segmenter(런타임 Chrome 87+/Node 16+ - 지원
-    // 하한 안)를 타입체커에 보이게 할 뿐, 산출 문법은 여전히 target(ES2019)이 결정한다.
-    "lib": ["ES2019", "DOM", "DOM.Iterable", "ES2022.Intl"],
+    // 지원 브라우저 하한(Chrome 111 / Safari 16.4)이 ES2022 를 완전히 지원하므로 target 도 거기에
+    // 맞춘다. 하한이 Chrome 88 이던 시절의 값이 ES2019 로 남아 있었는데, 그 상태에서는 (1) 번들이
+    // 필요 없는 다운레벨을 지고 가고 (2) `String.matchAll`/`Array.at` 같은 ES2020+ 표준을 타입
+    // 레벨에서 못 써서 우회 코드가 생겼다. 산출물이 실제로 이 선을 넘지 않는지는 빌드 후
+    // `check:browser-support`(es-check es2022)로 검사한다 - 선언과 검증이 같은 값을 본다.
+    // ES2022.Intl 은 ES2022 에 포함되므로 따로 적지 않는다.
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler"
   }

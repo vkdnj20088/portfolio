@@ -1,3 +1,4 @@
+import { parseProblem } from '@chat/ui';
 import { ChatApiError, messageText, type ChatApi, type ReplyEvent } from '@chat/chat-domain';
 
 /**
@@ -173,11 +174,15 @@ async function* streamOnce(
     signal,
   });
   // 4xx 는 요청 자체가 틀린 것(재시도 무의미) -> 도메인 오류. 그 외 비정상(5xx/본문없음)은 일시 실패.
+  //
+  // 실패 본문은 parseProblem 으로 정규화한다(problem+json). 서버가 보낸 detail 을 그대로 쓰므로
+  // 프론트가 문구를 지어내지 않고, cid 가 함께 오면 사용자가 본 오류를 서버 로그에서 찾을 수 있다.
   if (!response.ok || !response.body) {
+    const problem = await parseProblem(response);
     if (response.status >= 400 && response.status < 500) {
-      throw new ChatApiError('REPLY_FAILED', '응답 생성에 실패했습니다.');
+      throw new ChatApiError('REPLY_FAILED', problem.detail);
     }
-    throw new TransientTransportError('non-ok response');
+    throw new TransientTransportError(problem.detail);
   }
 
   const reader = response.body.getReader();

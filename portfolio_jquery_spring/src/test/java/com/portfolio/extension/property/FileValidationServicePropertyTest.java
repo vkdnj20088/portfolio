@@ -4,6 +4,7 @@ import com.portfolio.extension.dto.FileValidationResponse;
 import com.portfolio.extension.observability.FileValidationMetrics;
 import com.portfolio.extension.repository.CustomExtensionRepository;
 import com.portfolio.extension.service.BlockedExtensionProvider;
+import com.portfolio.extension.service.ContentInspectionBulkhead;
 import com.portfolio.extension.service.FileValidationService;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Set;
@@ -28,7 +29,11 @@ class FileValidationServicePropertyTest {
         when(provider.current()).thenReturn(Set.of("exe", "bat", "sh"));
         CustomExtensionRepository repo = mock(CustomExtensionRepository.class);
         FileValidationMetrics metrics = new FileValidationMetrics(new SimpleMeterRegistry(), repo);
-        service = new FileValidationService(provider, metrics);
+        // 벌크헤드는 상한을 넉넉히 두고 통과만 시킨다 - 이 프로퍼티 테스트가 재는 것은 "임의
+        // 바이트에도 던지지 않는다"이고, 용량 거절이 섞이면 그 성질을 측정할 수 없다
+        // (벌크헤드 자체는 ContentInspectionBulkheadTest 가 따로 검증한다).
+        ContentInspectionBulkhead bulkhead = new ContentInspectionBulkhead(metrics, 8, 1000, 30_000, 2);
+        service = new FileValidationService(provider, metrics, bulkhead);
     }
 
     @Property(tries = 300)

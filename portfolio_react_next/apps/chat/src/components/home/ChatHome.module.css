@@ -24,7 +24,7 @@
  * 지연 동안 시작 상태(투명)를 유지시킨다. CSS 전용이라 JS 검증 자산과 무관하다.
  */
 .inner > * {
-  animation: riseIn 240ms var(--ease-out) backwards;
+  animation: riseIn var(--duration-base) var(--ease-out) backwards;
 }
 
 .inner > *:nth-child(2) {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JC Guard - 최종은의 jQuery + Spring Boot 포트폴리오 (IP 접근 설정)</title>
-    <meta name="description" content="허용 IP 와 사용 시간대를 등록·검색·삭제하는 어드민 데모. 100만 건 키셋 페이지네이션, 디바이스 시간대 렌더, 내용/기간 검색.">
+    <meta name="description" content="허용 IP 와 사용 시간대를 등록·검색·삭제하는 어드민 데모. 100만 건 키셋 페이지네이션, 정책 우선순위 평가, 접속 기기 시간대 표기, 내용/기간 검색.">
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
@@ -24,8 +24,11 @@
 <main class="app app--wide">
     <header class="app__header">
         <h1>IP 접근 설정</h1>
-        <p>허용할 IP 주소와 사용 시간대를 등록·검색·삭제합니다. 조회 시간은 항상 접속한 디바이스의 시간대로 표시됩니다.
+        <p>허용할 IP 주소와 사용 시간대를 등록·검색·삭제합니다. 저장은 <strong>UTC 절대 시점</strong>이고, 표시와 입력은 모두 <strong>접속하신 기기의 시간대</strong>입니다.
            (데모 - 실제 IP 를 차단하지는 않습니다.)</p>
+        <!-- 해석된 IANA 시간대. 값은 ip.ts 가 Intl.DateTimeFormat().resolvedOptions() 로 채운다 -
+             하드코딩이 아니라 브라우저 설정을 읽었다는 것을 화면에서 보이게 하는 자리다. -->
+        <p class="ip-tz">표시 시간대 <code id="tzNote">-</code> <span>(브라우저 설정에서 읽음)</span></p>
     </header>
 
     <section class="card">

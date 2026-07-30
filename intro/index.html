@@ -75,7 +75,19 @@
 
     --gutter: clamp(1.25rem, 5vw, 5.5rem);
     --maxw:   1180px;
-    --ease:   cubic-bezier(0.22, 1, 0.36, 1);
+    /* ── 모션 스케일 ──────────────────────────────────────────────────
+       단일 소스는 portfolio_react_next/packages/ui/src/styles/tokens.css 다.
+       인트로는 인라인 CSS 라 import 가 닿지 않아 같은 값을 복제한다 - 값을 바꿀 일이
+       생기면 그쪽을 먼저 고치고 네 앱에 함께 반영한다.
+       기존 커브는 (0.22, 1, 0.36, 1) 이었다. 두 값 모두 ease-out-expo 계열이라 눈으로는
+       구분되지 않지만, 앱마다 "거의 같지만 다른" 커브를 두면 값의 출처가 사라진다. */
+    --duration-instant: 100ms;
+    --duration-fast:    150ms;
+    --duration-base:    240ms;
+    --duration-slow:    360ms;
+    --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --stagger: 60ms;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +101,13 @@
     font-weight: 400;
     line-height: 1.6;
     min-height: 100vh;
-    overflow-x: hidden;
+    /* clip 이지 hidden 이 아니다. hidden 은 한 축만 지정해도 반대 축이 auto 로 승격돼 body 가
+       "스크롤 컨테이너"가 된다 - 실제로 스크롤하는 건 문서(html)인데도 그렇다. 그러면 자손의
+       scroll-driven animation 이 view() 로 찾는 스크롤 조상이 body 로 잡히고, 그 body 는
+       영원히 스크롤되지 않으므로 타임라인이 진행하지 않는다(실측: progress null).
+       clip 은 잘라내되 스크롤 컨테이너를 만들지 않아 타임라인이 문서로 올라간다.
+       가로 스크롤 차단이라는 원래 목적은 동일하다. Chrome 90+/Safari 16+ - 하한 안. */
+    overflow-x: clip;
     position: relative;
   }
 
@@ -118,6 +136,11 @@
   .wrap { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
 
   a { color: inherit; }
+
+  /* 텍스트 선택 색. 지정하지 않으면 OS 기본 파랑이 그대로 나와, 문장을 긁는 순간에만
+     팔레트 밖의 색이 뜬다(다크 배경이라 특히 튄다). acid 위 ink 글자 15.22:1 - AAA.
+     네 앱이 같은 규칙(accent 채움 + 최대대비 전경)을 쓰고 색만 각자 accent 를 따른다. */
+  ::selection { background: var(--acid); color: var(--ink); }
 
   /* skip link */
   .skip {
@@ -150,7 +173,7 @@
     font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em;
     text-transform: uppercase; color: var(--paper-dim); text-decoration: none;
     padding: 0.3rem 0; border-bottom: 1px solid transparent;
-    transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+    transition: color var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out);
   }
   nav.top a.link:hover, nav.top a.link:focus-visible { color: var(--acid); border-color: var(--acid); outline: none; }
   @media (max-width: 760px) { nav.top ul { display: none; } }
@@ -221,7 +244,7 @@
   .about p.lead .hl { color: var(--acid); font-style: italic; }
   .about p.body { color: var(--paper-dim); margin-bottom: 1rem; max-width: 56ch; }
   .contact-inline { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 1.6rem; font-family: var(--mono); font-size: 0.8rem; color: var(--paper-dim); }
-  .contact-inline a { color: var(--paper-dim); text-decoration: none; border-bottom: 1px solid var(--line); transition: color 0.3s var(--ease), border-color 0.3s var(--ease); }
+  .contact-inline a { color: var(--paper-dim); text-decoration: none; border-bottom: 1px solid var(--line); transition: color var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out); }
   .contact-inline a:hover { color: var(--acid); border-color: var(--acid); }
 
   .compo { border: 1px solid var(--line); border-radius: 10px; padding: 1.5rem; background: linear-gradient(180deg, var(--ink-2), var(--ink)); }
@@ -233,7 +256,7 @@
      합성 단계에서만 처리된다(막대 안 세 조각의 비율은 그대로 유지된다).
      12px 높이라 스케일 중 끝단 라운드가 살짝 눌리는데 육안으로 구분되지 않는다. */
   .compo .bar { transform: scaleX(0); transform-origin: left center; }
-  .compo.in .bar { transform: scaleX(1); transition: transform 0.75s var(--ease) 0.18s; }
+  .compo.in .bar { transform: scaleX(1); transition: transform 0.75s var(--ease-out) 0.18s; }
   .compo .bar i { display: block; height: 100%; }
   .compo .bar .fe { background: var(--acid); flex: 7.75; }
   .compo .bar .qa { background: var(--warn); flex: 3; }
@@ -257,7 +280,7 @@
   .chips span {
     font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.02em; color: var(--paper-dim);
     border: 1px solid var(--line); padding: 0.32em 0.72em; border-radius: 100px;
-    transition: border-color 0.3s var(--ease), color 0.3s var(--ease);
+    transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
   }
   .chips span:hover { border-color: var(--paper-faint); color: var(--paper); }
 
@@ -270,6 +293,34 @@
     background: var(--ink); border: 2px solid var(--paper-faint);
   }
   .tl-item.live::before { border-color: var(--acid); }
+  /* 타임라인 좌측선이 스크롤을 따라 채워진다. 12년을 네 회사로 훑는 화면이라 "지금 어느 시기를
+     보고 있나"가 필요한데, 정적인 선은 그걸 말해 주지 않는다. 장식이 아니라 위치 표시다.
+
+     기본 border-left 는 그대로 두고 그 위에 accent 선을 얹는다. 그래서 animation-timeline 을
+     모르는 브라우저(우리 하한인 Safari 16.4 를 포함해 25 까지)에서는 이 선이 scaleY(0) 인 채로
+     안 보이고 화면은 지금과 완전히 같다 - 회귀 위험이 0 이다. 지원 브라우저에서만 더 준다.
+
+     scaleY 는 합성 단계에서만 처리되고 스크롤 연동을 CSS 가 직접 하므로 JS 리스너가 없다
+     (스크롤 핸들러는 메인 스레드에서 도는 순간 스크롤 성능을 직접 깎는다). */
+  .tl-item::after {
+    content: ""; position: absolute; left: -1px; top: 0; width: 1px; height: 100%;
+    background: var(--acid-deep); transform: scaleY(0); transform-origin: top center;
+    pointer-events: none;
+  }
+  /* 마지막 항목은 원래 좌측선이 투명하다(타임라인의 끝) - accent 도 그리지 않는다. */
+  .tl-item:last-child::after { display: none; }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .tl-item::after {
+        animation: tlFill linear both;
+        animation-timeline: view();
+        /* 항목이 화면에 들어오기 시작할 때가 아니라 어느 정도 읽히기 시작할 때 차오르고,
+           다 지나가기 전에 채워진다 - 스크롤과 1:1 로 붙이면 눈이 선을 따라가느라 본문을 놓친다. */
+        animation-range: entry 25% cover 55%;
+      }
+    }
+  }
+  @keyframes tlFill { to { transform: scaleY(1); } }
   .tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1rem; margin-bottom: 0.35rem; }
   .tl-head .co { font-family: var(--serif); font-size: clamp(1.35rem, 3.4vw, 1.9rem); color: var(--paper); }
   .tl-head .co .now { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--acid); border: 1px solid var(--acid); border-radius: 100px; padding: 0.2em 0.6em; margin-left: 0.5rem; vertical-align: middle; }
@@ -284,9 +335,9 @@
   }
   .badge b { color: var(--acid); font-weight: 700; }
   .badge.warn b { color: var(--warn); }
-  .tl-link { display: inline-block; margin-top: 1rem; font-family: var(--mono); font-size: 0.74rem; color: var(--paper-dim); text-decoration: none; border-bottom: 1px solid var(--line); transition: color 0.3s var(--ease), border-color 0.3s var(--ease); }
+  .tl-link { display: inline-block; margin-top: 1rem; font-family: var(--mono); font-size: 0.74rem; color: var(--paper-dim); text-decoration: none; border-bottom: 1px solid var(--line); transition: color var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out); }
   .tl-link:hover, .tl-link:focus-visible { color: var(--acid); border-color: var(--acid); outline: none; }
-  .tl-link .arrow { display: inline-block; transition: transform 0.28s var(--ease); }
+  .tl-link .arrow { display: inline-block; transition: transform var(--duration-base) var(--ease-out); }
   .tl-link:hover .arrow { transform: translate(3px, -3px); }
   /* 경력 각 항목의 실제 서비스 첫 화면을 링크 옆에 작게 곁들인다. 데모 썸네일보다 작게 두어
      "내가 만든 데모"와 "실제로 일한 서비스"의 위계를 흐리지 않는다.
@@ -298,14 +349,14 @@
     object-fit: cover; object-position: 50% 0;
     border: 1px solid var(--line); border-radius: 4px; background: var(--ink-2);
     opacity: 0.72; filter: saturate(0.82);
-    transition: opacity 0.32s var(--ease), filter 0.32s var(--ease), border-color 0.32s var(--ease);
+    transition: opacity var(--duration-slow) var(--ease-out), filter var(--duration-slow) var(--ease-out), border-color var(--duration-slow) var(--ease-out);
   }
   .tl-item:hover .tl-shot { opacity: 1; filter: none; border-color: var(--paper-faint); }
 
   /* ---------- 대표 프로젝트 (경력 항목 안에 흡수) ---------- */
   .tl-projects { margin-top: 1.5rem; display: grid; gap: 0.9rem; }
   .tl-projects .lbl { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper-faint); }
-  .tl-proj { border: 1px solid var(--line); border-radius: 10px; padding: clamp(1rem, 2.5vw, 1.4rem); background: var(--ink-2); transition: border-color 0.28s var(--ease); }
+  .tl-proj { border: 1px solid var(--line); border-radius: 10px; padding: clamp(1rem, 2.5vw, 1.4rem); background: var(--ink-2); transition: border-color var(--duration-base) var(--ease-out); }
   .tl-proj:hover { border-color: var(--paper-faint); }
   .tl-proj .ph { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.85rem; }
   .tl-proj .pt { font-family: var(--serif); font-size: clamp(1.1rem, 2.6vw, 1.4rem); line-height: 1.15; color: var(--paper); }
@@ -329,22 +380,22 @@
     align-items: center; gap: clamp(0.75rem, 3vw, 2.5rem);
     padding: clamp(1.3rem, 3vw, 2rem) 0.25rem; border-bottom: 1px solid var(--line);
     text-decoration: none; color: inherit; position: relative;
-    transition: padding-left 0.3s var(--ease);
+    transition: padding-left var(--duration-base) var(--ease-out);
   }
   .idx { grid-area: idx; } .wbody { grid-area: body; } .wthumb { grid-area: thumb; } .wstatus { grid-area: status; }
-  .work::before { content: ""; position: absolute; left: 0; top: 0; bottom: -1px; width: 0; background: linear-gradient(90deg, rgba(201,242,78,0.10), transparent 70%); transition: width 0.3s var(--ease); z-index: -1; }
-  .idx { font-family: var(--mono); font-size: 0.9rem; color: var(--paper-faint); transition: color 0.28s var(--ease), transform 0.3s var(--ease); }
+  .work::before { content: ""; position: absolute; left: 0; top: 0; bottom: -1px; width: 0; background: linear-gradient(90deg, rgba(201,242,78,0.10), transparent 70%); transition: width var(--duration-base) var(--ease-out); z-index: -1; }
+  .idx { font-family: var(--mono); font-size: 0.9rem; color: var(--paper-faint); transition: color var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out); }
   .wbody .cat { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--paper-faint); display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.55rem; }
   .wbody .cat::before { content: ""; width: 16px; height: 1px; background: currentColor; }
   .work[data-track="fe"] .cat { color: var(--acid-deep); }
   .work[data-track="be"] .cat { color: var(--warn); }
-  .wtitle { font-family: var(--serif); font-size: clamp(1.4rem, 3.6vw, 2.1rem); line-height: 1.05; color: var(--paper); transition: transform 0.3s var(--ease); }
+  .wtitle { font-family: var(--serif); font-size: clamp(1.4rem, 3.6vw, 2.1rem); line-height: 1.05; color: var(--paper); transition: transform var(--duration-base) var(--ease-out); }
   .wdesc { margin-top: 0.6rem; font-size: 0.82rem; color: var(--paper-dim); max-width: 54ch; }
   .wstack { margin-top: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; }
-  .wstack span { font-family: var(--mono); font-size: 0.64rem; color: var(--paper-faint); border: 1px solid var(--line); padding: 0.28em 0.7em; border-radius: 100px; transition: border-color 0.28s var(--ease), color 0.28s var(--ease); }
+  .wstack span { font-family: var(--mono); font-size: 0.64rem; color: var(--paper-faint); border: 1px solid var(--line); padding: 0.28em 0.7em; border-radius: 100px; transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out); }
   .wstatus { justify-self: end; text-align: right; white-space: nowrap; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
   .wstatus .live { color: var(--acid); display: inline-flex; align-items: center; gap: 0.5rem; }
-  .wstatus .live .arrow { display: inline-block; transition: transform 0.3s var(--ease); }
+  .wstatus .live .arrow { display: inline-block; transition: transform var(--duration-base) var(--ease-out); }
   .wstatus .soon { color: var(--paper-faint); border: 1px dashed var(--paper-faint); padding: 0.35em 0.8em; border-radius: 100px; font-size: 0.64rem; }
   /* 데모 썸네일 - 실제 배포된 화면을 그대로 찍은 것이라, 목록에서 눈으로 확인하고 들어갈 수 있다.
      이 섹션의 주인공은 타이포라 평소엔 눌러 두고(채도/불투명도) 호버에서만 살린다.
@@ -358,11 +409,17 @@
     /* 스크린샷 자체가 다크라, 여기서 더 눌러 버리면 그냥 검은 사각형으로 보인다.
        읽히는 선까지만 낮추고(0.88) 호버에서 테두리와 함께 또렷해지게 한다. */
     opacity: 0.88; filter: saturate(0.88);
-    transition: opacity 0.35s var(--ease), filter 0.35s var(--ease), transform 0.35s var(--ease), border-color 0.35s var(--ease);
+    transition: opacity var(--duration-slow) var(--ease-out), filter var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out), border-color var(--duration-slow) var(--ease-out);
   }
   a.work:hover .wthumb, a.work:focus-visible .wthumb { opacity: 1; filter: none; transform: translateY(-3px); border-color: var(--acid-deep); }
   .work.pending .wthumb { opacity: 0.5; }
   a.work:hover, a.work:focus-visible { outline: none; padding-left: 1.4rem; }
+  /* 눌림 피드백. 직전까지 hover 만 있어서 터치 기기에서는 데모 카드를 눌러도 아무 반응이
+     없었다(hover 가 없는 환경이라 어포던스가 통째로 사라진다). 챗의 버튼과 같은 그래머 -
+     즉시 눌리고(transition 0) 떼는 순간만 이징으로 복귀한다. 다만 축소 폭은 요소 크기에
+     맞춘다: 버튼의 0.97 을 화면 폭 카드에 그대로 쓰면 몇 px 이 아니라 수십 px 이 움직인다.
+     transform 이라 레이아웃을 건드리지 않아 옆 카드가 밀리지 않는다(CLS 0). */
+  a.work:active { transform: scale(0.995); transition-duration: 0ms; }
   a.work:hover::before, a.work:focus-visible::before { width: 100%; }
   a.work:hover .idx, a.work:focus-visible .idx { color: var(--acid); transform: translateY(-2px); }
   a.work:hover .wtitle, a.work:focus-visible .wtitle { transform: translateX(6px); }
@@ -389,8 +446,9 @@
   .contact-wrap.two { grid-template-columns: repeat(2, 1fr); }
   /* 좁은 화면에서는 한 줄씩. .two 가 더 구체적이라 여기서도 함께 눌러 주지 않으면 안 먹는다. */
   @media (max-width: 720px) { .contact-wrap, .contact-wrap.two { grid-template-columns: 1fr; } }
-  .cc { background: var(--ink); padding: 1.6rem 1.4rem; text-decoration: none; display: block; transition: background 0.35s var(--ease); }
+  .cc { background: var(--ink); padding: 1.6rem 1.4rem; text-decoration: none; display: block; transition: background var(--duration-slow) var(--ease-out); }
   .cc:hover, .cc:focus-visible { background: var(--ink-2); outline: none; }
+  .cc:active { transform: scale(0.99); transition-duration: 0ms; }
   .cc .k { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper-faint); }
   .cc .v { font-family: var(--mono); font-size: 0.95rem; color: var(--paper); margin-top: 0.6rem; word-break: break-all; }
   .cc:hover .v, .cc:focus-visible .v { color: var(--acid); }
@@ -400,12 +458,57 @@
 
   /* ---------- reveal ---------- */
   .reveal { opacity: 0; transform: translateY(14px); }
-  .reveal.in { opacity: 1; transform: none; transition: opacity 0.3s var(--ease), transform 0.3s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out); }
+  /* 현재 섹션 표시(#I1). aria-current 를 시각 표현의 근거로 그대로 쓴다 - 클래스를 따로 두면
+     보조기술용 속성과 눈에 보이는 상태가 갈려 한쪽만 갱신되는 버그가 생긴다. */
+  .top .link { position: relative; }
+  .top .link::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px;
+    background: var(--acid); transform: scaleX(0); transform-origin: left center;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  .top .link[aria-current] { color: var(--acid); }
+  .top .link[aria-current]::after { transform: scaleX(1); }
+
+  /* ── 인쇄/PDF(#I2) ────────────────────────────────────────────────────
+     이 페이지는 면접 자료다. 그대로 인쇄하거나 PDF 로 저장하는 일이 실제로 일어나는데,
+     화면용 다크 팔레트를 그대로 내보내면 잉크를 먹는 검은 배경에 링크 주소가 사라진 문서가 된다.
+     그래서 인쇄에서는 (1) 배경 장식을 걷고 (2) 흰 종이에 검은 글자로 뒤집고
+     (3) 링크 주소를 괄호로 펼치고 (4) 카드가 페이지 경계에서 쪼개지지 않게 한다. */
+  @media print {
+    /* 배경 그리드/글로우는 fixed 라 인쇄에서 첫 페이지에만 얹히고 잉크만 먹는다. */
+    body::before, body::after { display: none !important; }
+    :root {
+      --ink: #ffffff; --ink-2: #ffffff; --ink-3: #ffffff;
+      --paper: #111111; --paper-dim: #333333; --paper-faint: #555555;
+      --line: #cccccc; --line-soft: #dddddd;
+      --acid: #4a6b00; --acid-deep: #4a6b00; --warn: #8a5a00;
+    }
+    body { background: #fff !important; color: #111 !important; }
+    /* 스크롤 연출은 인쇄에 의미가 없고, reveal 이 opacity:0 인 채로 굳으면 본문이 통째로 사라진다. */
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .compo .bar { transform: none !important; }
+    .tl-item::after { display: none !important; }
+    /* 내비/스킵링크는 종이에서 누를 수 없다. */
+    .top, .skip { display: none !important; }
+    /* 링크 주소를 펼친다 - 종이에서는 하이퍼링크가 사라지므로 주소가 유일한 단서다.
+       내부 앵커(#)는 펼치지 않는다(같은 문서 안이라 주소가 의미 없다). */
+    a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.78em; color: #555; word-break: break-all; }
+    /* 카드/타임라인 항목이 페이지 경계에서 반으로 잘리지 않게. */
+    .work, .tl-item, .compo, .cc { break-inside: avoid; }
+    /* 스크린샷은 흐림/채도 조정을 끈다(인쇄에서 흐린 이미지는 정보량이 0 에 가깝다). */
+    .wthumb, .tl-shot { opacity: 1 !important; filter: none !important; }
+    /* 브라우저가 배경색을 지우지 않게(칩/배지가 흰 글자 위 흰 배경이 되는 것을 막는다). */
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; }
     .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
     /* 위 규칙은 .reveal 자신만 끈다. 자식의 transition 은 살아 있으므로 따로 끈다. */
     .compo .bar { transform: none !important; transition: none !important; }
+    /* 섹션 인디케이터도 이동 없이 즉시 표시된다(#I1). */
+    .top .link::after { transition: none !important; }
   }
 </style>
 <!-- no-JS 폴백: reveal 은 JS(IntersectionObserver)로 opacity:1 이 되므로, JS 가 없거나 실패하면
@@ -416,7 +519,7 @@
 <body>
   <a class="skip" href="#main">본문 바로가기</a>
 
-  <nav class="top" aria-label="주요 섹션">
+  <nav class="top" aria-label="주요 섹션" aria-keyshortcuts="BracketLeft BracketRight">
     <div class="row">
       <a class="brand" href="#top">최종<em>은</em></a>
       <ul>
@@ -610,8 +713,8 @@
               <div class="wbody">
                 <span class="cat">Backend</span>
                 <h3 class="wtitle">IP 차단</h3>
-                <p class="wdesc">허용 IP와 사용 시간대를 등록·검색·삭제하는 접근 제어 어드민입니다. 100만 건 키셋 페이지네이션, 항상 디바이스 시간대로 표시되는 시각, 본인 IP 자동 기입을 지원합니다.</p>
-                <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>키셋 페이지네이션</span><span>디바이스 TZ</span></div>
+                <p class="wdesc">허용 IP와 사용 시간대를 등록·검색·삭제하는 접근 제어 어드민입니다. 100만 건 키셋 페이지네이션, 우선순위 기반 정책 평가(허용/차단 충돌 해소), UTC 절대 시점 저장 + 접속 기기 시간대 표기, 본인 IP 자동 기입을 지원합니다.</p>
+                <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>키셋 페이지네이션</span><span>정책 평가</span><span>UTC 저장·기기 TZ 표기</span></div>
               </div>
               <img class="wthumb" src="img/demo-06-ip.jpg" srcset="img/demo-06-ip-400.jpg 400w, img/demo-06-ip-800.jpg 800w, img/demo-06-ip.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
@@ -779,6 +882,11 @@
     (function () {
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+      // 계단 등장 간격은 CSS 토큰(--stagger)에서 읽는다. JS 에 숫자를 또 적으면 CSS 를 고쳤을 때
+      // 조용히 어긋나므로 값의 출처를 한 곳으로 둔다. 초기화 시 1회만 읽는다(요소마다 읽으면
+      // getComputedStyle 이 스타일 재계산을 강제해 스크롤 중 스래시가 난다).
+      var STAGGER = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--stagger'), 10) || 60;
+
       // 데모 링크 단일 소스. 라이브 두 개(chat/files)는 배포 IP 라 <a> 카드의 href 로 세팅한다(no-JS
       // 폴백도 정적 href 로 보유). 로컬 두 개(exchange/ip)는 미배포라 링크가 아닌 상태 카드이며 실행
       // URL 은 카드의 data-demo-url 에 보존한다 - 배포되면 그 카드를 <a href> 로 되살리고 여기서 함께 세팅.
@@ -853,6 +961,56 @@
         upgradeToLink(card, url);
       });
 
+      // ── 스크롤스파이 + 키보드 섹션 이동(#I1) ──────────────────────────────
+      // 섹션 다섯 개짜리 긴 단일 페이지인데 "지금 어디"를 알려 주는 장치가 없었다.
+      // 새 스크롤 리스너를 달지 않는다 - 리빌과 같은 IntersectionObserver 계열을 하나 더 쓴다
+      // (scroll 이벤트는 메인 스레드에서 매 프레임 돌아 스크롤 성능을 직접 깎는다).
+      var navLinks = Array.prototype.slice.call(document.querySelectorAll('.top .link'));
+      var sectionIds = navLinks.map(function (a) { return a.getAttribute('href').slice(1); });
+      var sections = sectionIds.map(function (id) { return document.getElementById(id); });
+
+      function markCurrent(id) {
+        navLinks.forEach(function (a) {
+          var on = a.getAttribute('href') === '#' + id;
+          // aria-current 는 "이것이 현재 위치"를 보조기술에 알리는 표준 방법이다. 시각 표시만
+          // 두면 스크린리더 사용자에게는 다섯 링크가 끝까지 동등하게 읽힌다.
+          if (on) a.setAttribute('aria-current', 'true');
+          else a.removeAttribute('aria-current');
+        });
+      }
+
+      if ('IntersectionObserver' in window && sections.length) {
+        // 화면 상단 35% 지점을 지나는 섹션을 "현재"로 본다. 가시 면적 기준으로 고르면 긴 섹션이
+        // 늘 이겨서, 짧은 섹션(Contact)은 끝까지 도달해도 현재가 되지 않는다.
+        var spy = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) markCurrent(e.target.id);
+          });
+        }, { rootMargin: '-35% 0px -60% 0px', threshold: 0 });
+        sections.forEach(function (el) { if (el) spy.observe(el); });
+      }
+
+      // 단축키: [ / ] 로 섹션 이동. 브라우저 기본 단축키와 겹치지 않고, 한글 입력 상태에서도
+      // 같은 키가 나오는 문자를 골랐다(j/k 는 한글 자판에서 ㅓ/ㅏ 가 되어 keydown.key 가 갈린다).
+      document.addEventListener('keydown', function (e) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        if (e.key !== '[' && e.key !== ']') return;
+        // 입력 요소에 포커스가 있으면 무시한다 - 타이핑을 가로채면 단축키가 버그가 된다.
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        var cur = navLinks.findIndex(function (a) { return a.hasAttribute('aria-current'); });
+        var next = e.key === ']' ? cur + 1 : cur - 1;
+        if (next < 0) next = 0;
+        if (next > sections.length - 1) next = sections.length - 1;
+        var target = sections[next];
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+        // 포커스도 옮긴다 - 스크롤만 하면 다음 Tab 이 이전 위치에서 이어져 순서가 어긋난다.
+        target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      });
+
       // scroll reveal
       var reveals = document.querySelectorAll('.reveal');
       if (reduce || !('IntersectionObserver' in window)) {
@@ -867,7 +1025,7 @@
               // 그룹 원소로 잡아 ol 안 순번으로 계단 효과를 살린다(그 외는 기존대로 자기 순번).
               var group = el.closest('li') || el;
               var siblings = group.parentNode ? group.parentNode.children : [group];
-              var delay = (Array.prototype.indexOf.call(siblings, group) % 6) * 70;
+              var delay = (Array.prototype.indexOf.call(siblings, group) % 6) * STAGGER;
               el.style.transitionDelay = delay + 'ms';
               el.classList.add('in');
               ro.unobserve(el);
@@ -940,10 +1098,22 @@
       // 아키에이지 61개월의 내부 분할. System QA 로 시작해 Tech PM 으로 전향했다.
       var QA_MONTHS = 36;
 
-      var now = new Date();
+      /*
+       * 기준 시각은 **한국 시간(KST)** 이다. new Date() 의 지역 시간을 그대로 쓰면 판정이 보는
+       * 사람의 시간대에 따라 갈린다 - 실측: 한국시간 2026-08-01 00:30 에 로스앤젤레스(UTC-7)
+       * 기기는 아직 2026-07 로 판정해 재직 기간이 한 달 적게 나오고, 오클랜드(UTC+13)는 한국이
+       * 아직 7월 31일일 때 이미 8월로 넘어간다. 이력의 기준은 재직 국가의 달력이어야 한다.
+       *
+       * 고정 오프셋으로 더하는 이유: 대한민국은 서머타임이 없어 UTC+9 가 상시 정확하다.
+       * Intl.DateTimeFormat(timeZone:'Asia/Seoul')로도 되지만, 연/월만 필요한 계산에
+       * 포맷터를 들이고 문자열을 다시 파싱하는 쪽이 더 깨지기 쉽다.
+       */
+      var kst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+      var nowY = kst.getUTCFullYear();
+      var nowM = kst.getUTCMonth() + 1;
       function months(span) {
         var a = span[0].split('-');
-        var b = span[1] ? span[1].split('-') : [now.getFullYear(), now.getMonth() + 1];
+        var b = span[1] ? span[1].split('-') : [nowY, nowM];
         return (b[0] - a[0]) * 12 + (b[1] - a[1]) + 1;
       }
       function ko(n) {

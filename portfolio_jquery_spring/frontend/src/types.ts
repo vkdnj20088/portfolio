@@ -37,10 +37,35 @@ export interface FileValidationResponse {
   detectedSignature: string | null;
 }
 
-/** 모든 예외 응답의 공통 형태 (GlobalExceptionHandler.ErrorResponse) */
-export interface ErrorResponse {
-  code: string;
-  message: string;
+/**
+ * 모든 예외 응답의 공통 형태 - RFC 7807 / RFC 9457 `application/problem+json`.
+ *
+ * 형태의 단일 소스는 서버(`GlobalExceptionHandler`)이고, 이 타입은 그 계약의 클라이언트 측
+ * 선언이다. React 두 앱은 `@chat/ui` 의 `parseProblem()` 을 공유하지만 이 앱은 별도 저장소라
+ * import 가 닿지 않아 같은 규칙을 여기 복제한다(모션 토큰과 같은 구조 - 값을 바꿀 일이
+ * 생기면 서버를 먼저 고치고 네 곳에 함께 반영한다).
+ *
+ * `message` 를 optional 로 남긴 이유: 이전 형태({code, message})와 배포 시점이 갈릴 수 있어
+ * 한쪽만 먼저 올라가도 화면이 빈 문구를 띄우지 않게 한다.
+ */
+export interface Problem {
+  /** 안정 식별자. 이 저장소는 URN(`urn:problem:invalid`)을 쓴다 - 죽은 URL 을 계약에 박지 않기 위해. */
+  type?: string;
+  /** 짧은 요약. 같은 type 이면 같은 title. */
+  title?: string;
+  status?: number;
+  /** 이 발생 건의 사람용 설명. 화면에 그대로 띄울 수 있는 문장. */
+  detail?: string;
+  /** 오류가 난 요청 경로. */
+  instance?: string;
+  /** 도메인 에러 코드 - 분기의 근거는 문장이 아니라 코드여야 한다. */
+  code?: string;
+  /** 요청 상관 id. 서버 로그(MDC cid)와 같은 값이라 사용자가 본 id 로 로그를 찾을 수 있다. */
+  cid?: string;
+  /** 재시도 가능한 실패(503)에서 언제 다시 시도할지. */
+  retryAfterSeconds?: number;
+  /** @deprecated 이전 형태의 문구 필드. detail 로 대체됐고 폴백으로만 읽는다. */
+  message?: string;
 }
 
 /** GET /api/ip-rules 의 각 규칙 (IpRuleResponse). 시각은 ISO-8601 UTC 문자열(...Z). */

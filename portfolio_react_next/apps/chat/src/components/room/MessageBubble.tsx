@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { formatDateTime, messageText, type Message, type MessageRating } from '@chat/chat-domain';
-import { Button, cn, useToast } from '@chat/ui';
+import { Button, cn, Markdown, useToast } from '@chat/ui';
 import { AssistantMeta } from './AssistantMeta';
 import { FadeInText } from './FadeInText';
 import styles from './MessageBubble.module.css';
@@ -93,10 +93,20 @@ export const MessageBubble = memo(function MessageBubble({
       {message.parts.map((part, index) => {
         switch (part.type) {
           case 'text':
-            return (
+            // 스트리밍 중(animate)에는 마크다운을 적용하지 않는다(#C1).
+            //
+            // 토큰이 도착하는 동안 매 프레임 파싱하면 구분자가 완성되는 순간 글자가 스타일 사이를
+            // 튄다: `**bo` -> `**bol` -> `**bold**` 에서 별표가 갑자기 사라지고 굵어진다.
+            // 어절 페이드는 이 앱의 기존 문법이고, 그 위에 스타일 점프를 얹으면 읽기가 더 어려워진다.
+            // 확정된 메시지만 마크다운으로 렌더한다 - 스트리밍은 "도착 중", 확정은 "읽는 중"이다.
+            return animate ? (
               <p key={index} className={styles.text}>
-                {animate ? <FadeInText text={part.text} /> : part.text}
+                <FadeInText text={part.text} />
               </p>
+            ) : (
+              <Markdown key={index} className={styles.text}>
+                {part.text}
+              </Markdown>
             );
           case 'code':
             return (

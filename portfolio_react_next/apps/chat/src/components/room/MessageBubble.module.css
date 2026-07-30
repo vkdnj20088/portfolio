@@ -203,7 +203,10 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   background-color: var(--color-primary-subtle);
-  animation: highlightFade var(--duration-slow, 240ms) ease-out;
+  /* --duration-slow 는 이 줄이 먼저 참조하고 있었으나 토큰이 정의된 적이 없어 폴백(240ms)으로
+     떨어져 있었다. 모션 스케일이 생기며 의도대로 slow(360ms)가 적용된다 - 검색 결과로 점프한
+     위치를 알리는 강조라 base 보다 길어야 눈이 따라온다. */
+  animation: highlightFade var(--duration-slow) ease-out;
 }
 
 /* 포커스가 들어와도(프로그램적 이동) 링이 겹쳐 산만해지지 않게 - 강조 자체가 위치 표시다. */

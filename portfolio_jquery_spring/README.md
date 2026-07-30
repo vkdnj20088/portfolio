@@ -557,6 +557,12 @@ Ubuntu 기본 nginx 는 `gzip on;` 만 켜져 있고 **`gzip_types` 는 주석 �
   중복을 피했습니다.
 - **회귀 경계** - 기존 keyset/Instant/검색 설계는 그대로입니다. `VARCHAR(45)` 는 IPv6+`/128`(43자)까지
   수용해 **스키마 변경이 없습니다**. 잔여 심화(CIDR 인덱스 검색/OFFSET↔keyset 벤치)는 옵션.
+- **시간대는 눈에 보이게 했습니다** - 표시/입력 모두 접속 기기 TZ 이고 저장은 UTC 절대 시점인데,
+  한국에서 열면 KST 고정 구현과 화면이 **똑같아서** 그 사실을 확인할 방법이 없었습니다. 그래서
+  브라우저가 실제로 고른 IANA 이름(`Intl.DateTimeFormat().resolvedOptions().timeZone`)을 화면 상단에
+  한 줄로 적습니다 - 하드코딩이 아니라는 것이 화면에서 증명됩니다. 프론트 단위 테스트는 실행 TZ 를
+  기대값에 넣지 않고 `Intl` 을 **독립 오라클**로 써서 성질만 검증하므로, `TZ=UTC`/`America/Los_Angeles`/
+  `Australia/Adelaide`(30분 오프셋)/`Pacific/Kiritimati`(UTC+14) 어디서 돌려도 같은 결과입니다.
 
 ### 23. IP 감사 로그 - 변경 이력(누가/언제/무엇)
 

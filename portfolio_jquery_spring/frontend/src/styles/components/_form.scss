@@ -58,8 +58,8 @@
         color: var(--text);
         outline: none;
         transition:
-            border-color 0.15s,
-            box-shadow 0.15s;
+            border-color var(--duration-fast) var(--ease-standard),
+            box-shadow var(--duration-fast) var(--ease-standard);
 
         &:focus {
             @include m.focus-ring;

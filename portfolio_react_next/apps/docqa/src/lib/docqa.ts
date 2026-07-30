@@ -28,6 +28,11 @@ export interface AskOptions {
   fetchImpl?: typeof fetch;
   /** 폴백 mock 의 어절 간격(ms). 테스트에서 0 으로 줄인다. */
   stepMs?: number;
+  /**
+   * 후속질문 컨텍스트(#D1) - 직전 답변의 출처 문서. 서버(SSE)와 폴백(mock) 양쪽에 같은 값을
+   * 넘겨 전송이 무엇이든 같은 답이 나오게 한다 - seam 의 조건은 "전송이 바뀌어도 결과가 같다"다.
+   */
+  pinnedDocId?: string | null;
 }
 
 /** NEXT_PUBLIC_TRANSPORT=mock 이면 네트워크를 아예 타지 않는다(정적 호스팅 등에서의 도피구). */
@@ -48,6 +53,7 @@ export const docqa = {
         for await (const event of sseStreamAnswer(query, {
           signal: options?.signal,
           fetchImpl: options?.fetchImpl,
+          pinnedDocId: options?.pinnedDocId ?? null,
         })) {
           if (!announced) {
             options?.onTransport?.('sse');
@@ -70,6 +76,7 @@ export const docqa = {
     for await (const event of mock.streamAnswer(query, {
       signal: options?.signal,
       stepMs: options?.stepMs,
+      pinnedDocId: options?.pinnedDocId ?? null,
     })) {
       if (event.type === 'delta') {
         accumulated += event.text;

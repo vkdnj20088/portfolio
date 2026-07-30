@@ -68,7 +68,7 @@ class IpAccessRuleMySqlIT {
     void storesAndReadsBackUtcInstant() {
         Instant s = Instant.parse("2024-06-01T00:00:00Z");
         Instant e = Instant.parse("2024-06-05T09:00:00Z");
-        service.create(new IpRuleCreateRequest("222.108.193.167", "관리자 접근 IP", s, e));
+        service.create(new IpRuleCreateRequest("222.108.193.167", "관리자 접근 IP", s, e, null, null));
 
         IpRuleResponse read = service.list(null, null, null, null, 10).items().get(0);
         assertThat(read.startAt()).isEqualTo(s); // DATETIME(6) <-> Instant UTC 정합
@@ -79,7 +79,7 @@ class IpAccessRuleMySqlIT {
     void keysetPagination_onMySql_pagesWithoutOverlap() {
         Instant s = Instant.parse("2024-06-01T00:00:00Z");
         for (int i = 0; i < 5; i++) {
-            service.create(new IpRuleCreateRequest("10.0.0." + i, "규칙 " + i, s, s.plusSeconds(3600)));
+            service.create(new IpRuleCreateRequest("10.0.0." + i, "규칙 " + i, s, s.plusSeconds(3600), null, null));
         }
         IpRuleListResponse p1 = service.list(null, null, null, null, 2);
         IpRuleListResponse p2 = service.list(null, null, null, p1.nextCursor(), 2);

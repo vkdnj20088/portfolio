@@ -1,4 +1,5 @@
-import { ANSWER_STEP_MS, answerChunks, extractAnswer } from '@chat/search-domain';
+import { ANSWER_STEP_MS, answerChunks, extractAnswer, CORPUS } from '@chat/search-domain';
+import { problemResponse } from '@chat/ui';
 
 /**
  * 근거 QA 스트리밍 엔드포인트 - text/event-stream(SSE).
@@ -14,6 +15,11 @@ export const dynamic = 'force-dynamic';
 
 interface AnswerRequest {
   query?: unknown;
+  /**
+   * 후속질문 컨텍스트(#D1) - 직전 답변의 출처 문서. 있으면 그 문서 안에서만 근거를 찾는다.
+   * 측정에서 정확도를 올린 유일한 컨텍스트 장치다(질의어 확장은 재 보고 버렸다).
+   */
+  pinnedDocId?: unknown;
 }
 
 /** 입력 상한 - 어떤 실제 질문보다도 크게 두되 무상한은 막는다(경량 DoS 표면 차단). */
@@ -26,22 +32,29 @@ export async function POST(req: Request): Promise<Response> {
   // 지켜주지 못한다(Route Handler 에는 기본 본문 제한이 없다).
   const declared = Number(req.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
-    return new Response('body too large', { status: 413 });
+    return problemResponse(413, 'PAYLOAD_TOO_LARGE', '본문 크기 초과',
+      `요청 본문이 상한(${MAX_BODY_BYTES}바이트)을 넘었습니다.`, { instance: '/api/answer' });
   }
 
   let body: AnswerRequest;
   try {
     body = (await req.json()) as AnswerRequest;
   } catch {
-    return new Response('invalid body', { status: 400 });
+    return problemResponse(400, 'INVALID', '본문 해석 실패',
+      '요청 본문을 해석할 수 없습니다. JSON 형식을 확인해 주세요.', { instance: '/api/answer' });
   }
 
   const query = typeof body.query === 'string' ? body.query : '';
   if (query.length > MAX_QUERY_LENGTH) {
-    return new Response('query too long', { status: 413 });
+    return problemResponse(413, 'PAYLOAD_TOO_LARGE', '질의 길이 초과',
+      `질의가 상한(${MAX_QUERY_LENGTH}자)을 넘었습니다.`, { instance: '/api/answer' });
   }
 
-  const answer = extractAnswer(query);
+  // 문서 id 는 코퍼스에서 온 값이라 화이트리스트로 검증한다 - 임의 문자열을 그대로 넘기면
+  // 검색 범위를 클라이언트가 정하는 셈이고, 존재하지 않는 id 는 조용히 "답 없음"이 된다.
+  const pinnedRaw = typeof body.pinnedDocId === 'string' ? body.pinnedDocId : null;
+  const pinnedDocId = pinnedRaw && CORPUS.some((d) => d.id === pinnedRaw) ? pinnedRaw : null;
+  const answer = extractAnswer(query, pinnedDocId ? { pinnedDocId } : undefined);
   const chunks = answer ? answerChunks(answer.text) : [];
   const encoder = new TextEncoder();
 

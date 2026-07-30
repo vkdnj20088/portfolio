@@ -118,3 +118,92 @@ describe("cancel - 예약 환급", () => {
     expect(cancel(s0, "nope")).toBe(s0);
   });
 });
+
+// ── 스탑 지정가 주문(#E1) ────────────────────────────────────────────────
+// 여기서 고정하는 것은 "트리거 전에는 호가에 없다"와 "예약은 접수 시점에 잡는다"다.
+// 두 성질 중 하나만 깨져도 이중 지출이나 유령 체결이 생긴다.
+describe("스탑 지정가 - 트리거 상태를 가진 주문 생애주기", () => {
+  const book: BookLevels = { asks: [{ price: 100, size: 5 }], bids: [{ price: 99, size: 5 }] };
+
+  function placeStop(side: "buy" | "sell", trigger: string, limit: string, qty: string, s = initialSession("1000000")) {
+    return submit(s, { id: "s1", market: "BTC", side, type: "stopLimit", price: limit, triggerPrice: trigger, qty, ts: 1 }, book);
+  }
+
+  it("트리거 가격이 없으면 거절한다", () => {
+    const { result } = submit(initialSession(), { id: "x", market: "BTC", side: "buy", type: "stopLimit", price: "100", qty: "1", ts: 1 }, book);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toContain("트리거");
+  });
+
+  it("접수 시점에 예약을 잡는다 - 잡지 않으면 같은 잔고로 여러 스탑을 걸 수 있다", () => {
+    const { session, result } = placeStop("buy", "110", "111", "2");
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe("open");
+    // 2 × 111 = 222 가 예약됐다.
+    expect(session.balance.krw).toBe("999778");
+    expect(session.orders).toHaveLength(1);
+    expect(session.orders[0].triggered).toBe(false);
+    expect(session.orders[0].type).toBe("stopLimit");
+  });
+
+  it("예약이 잔고를 넘으면 거절하고 아무것도 바꾸지 않는다", () => {
+    const s0 = initialSession("100");
+    const { session, result } = placeStop("buy", "110", "111", "2", s0);
+    expect(result.ok).toBe(false);
+    expect(session).toBe(s0); // 동일 참조 = 무변경
+  });
+
+  it("트리거 전 시세로는 체결되지 않는다 - 호가에 없는 주문이다", () => {
+    const { session } = placeStop("buy", "110", "111", "1");
+    // 111 은 지정가 매수 조건(p <= 111)을 만족하지만 트리거(110)는 아직 안 닿았다.
+    const { session: after, filledIds, triggeredIds } = evaluateResting(session, "BTC", "105", 10);
+    expect(filledIds).toEqual([]);
+    expect(triggeredIds).toEqual([]);
+    expect(after).toBe(session);
+  });
+
+  it("매수 스탑은 상승 돌파에서 트리거된다", () => {
+    const { session } = placeStop("buy", "110", "120", "1");
+    const { session: after, triggeredIds, filledIds } = evaluateResting(session, "BTC", "110", 10);
+    expect(triggeredIds).toEqual(["s1"]);
+    // 트리거와 동시에 지정가(120) 조건(p <= 120)도 만족 -> 같은 틱에 체결된다(갭 상승 재현).
+    expect(filledIds).toEqual(["s1"]);
+    expect(after.orders).toHaveLength(0);
+    expect(after.balance.positions.BTC).toBe("1");
+  });
+
+  it("매도 스탑은 하락 손절에서 트리거된다", () => {
+    // 보유를 만들고 나서 매도 스탑을 건다.
+    const bought = submit(initialSession("1000000"), { id: "b", market: "BTC", side: "buy", type: "market", qty: "3", ts: 1 }, book);
+    const { session } = submit(bought.session, { id: "s1", market: "BTC", side: "sell", type: "stopLimit", price: "90", triggerPrice: "95", qty: "2", ts: 2 }, book);
+    expect(session.orders[0].triggered).toBe(false);
+
+    // 96 은 트리거(95) 위 -> 아무 일 없음.
+    expect(evaluateResting(session, "BTC", "96", 10).triggeredIds).toEqual([]);
+    // 95 도달 -> 트리거. 지정가 90 조건(p >= 90)도 만족해 같은 틱에 체결.
+    const hit = evaluateResting(session, "BTC", "95", 11);
+    expect(hit.triggeredIds).toEqual(["s1"]);
+    expect(hit.filledIds).toEqual(["s1"]);
+  });
+
+  it("트리거됐지만 지정가에 못 미치면 미체결 지정가로 남는다", () => {
+    const { session } = placeStop("buy", "110", "105", "1");
+    // 110 도달 -> 트리거. 그러나 지정가 105 는 p(110) <= 105 가 아니라 체결되지 않는다.
+    const after = evaluateResting(session, "BTC", "110", 10);
+    expect(after.triggeredIds).toEqual(["s1"]);
+    expect(after.filledIds).toEqual([]);
+    expect(after.session.orders).toHaveLength(1);
+    expect(after.session.orders[0].type).toBe("limit"); // 전환 완료
+    expect(after.session.orders[0].triggered).toBe(true);
+    // 이후 105 로 내려오면 체결된다.
+    expect(evaluateResting(after.session, "BTC", "105", 11).filledIds).toEqual(["s1"]);
+  });
+
+  it("트리거 전에 취소하면 예약이 환급된다", () => {
+    const { session } = placeStop("buy", "110", "111", "2");
+    expect(session.balance.krw).toBe("999778");
+    const canceled = cancel(session, "s1");
+    expect(canceled.balance.krw).toBe("1000000");
+    expect(canceled.orders).toHaveLength(0);
+  });
+});

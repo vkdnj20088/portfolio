@@ -81,7 +81,7 @@ p {
   font-weight: 600;
   text-decoration: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .portfolio-home:hover,
 .portfolio-home:focus-visible {

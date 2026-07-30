@@ -14,7 +14,7 @@ export interface DocQaApi {
   /** A의 스트리밍 - 답변 텍스트를 어절 단위로 흘리고 마지막에 근거 포함 done. 챗 ReplyEvent 와 동형. */
   streamAnswer(
     query: string,
-    options?: { signal?: AbortSignal; stepMs?: number },
+    options?: { signal?: AbortSignal; stepMs?: number; pinnedDocId?: string | null },
   ): AsyncGenerator<AnswerEvent>;
 }
 
@@ -55,7 +55,10 @@ export function createDocQaApi(opts?: { stepMs?: number }): DocQaApi {
     search: (query, mode) => search(query, mode),
     answer: (query) => extractAnswer(query),
     async *streamAnswer(query, options) {
-      const ans = extractAnswer(query);
+      // 후속질문 컨텍스트(#D1)를 서버 경로와 동일하게 적용한다 - mock 과 SSE 가 같은 답을 내야
+      // 전송계층 seam 이 성립한다(폴백이 다른 답을 내면 이어받기 자체가 거짓말이 된다).
+      const pinned = options?.pinnedDocId ?? null;
+      const ans = extractAnswer(query, pinned ? { pinnedDocId: pinned } : undefined);
       if (!ans) {
         yield { type: 'done', answer: null };
         return;

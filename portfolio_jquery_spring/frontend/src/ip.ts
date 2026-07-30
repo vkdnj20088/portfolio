@@ -2,9 +2,10 @@
  * IP 접근 설정 - 어드민 프론트엔드 (TypeScript + jQuery, webpack 별도 엔트리)
  *
  * 설계 메모:
- *  - 시간대 정합(요건 핵심): 서버는 UTC(Instant, ISO ...Z)로 주고받고, 화면은 항상
- *    사용자 디바이스 시간대로 렌더한다(toLocaleString). datetime-local 입력은 브라우저가
- *    디바이스 TZ 로 해석하므로 new Date(value) 로 epoch/UTC 변환하면 서버 TZ 와 무관하게 정확하다.
+ *  - 시간대 정합(요건 핵심): 서버는 UTC(Instant, ISO ...Z)로 주고받고, 화면은 항상 **접속 기기
+ *    시간대**로 렌더한다(toLocaleString). datetime-local 입력도 같은 기기 TZ 로 읽으므로 표시와
+ *    입력이 한 기준이고 왕복이 맞는다. 서버 TZ 와도 무관하다 - 변환이 전부 클라이언트 한 곳에
+ *    모여 있다. 해석된 시간대는 화면 상단에 적어 둔다(아래 showResolvedZone 주석 참고).
  *  - 100만 건: 목록은 키셋 커서(nextCursor)로 "더 보기" 한다(OFFSET 없음).
  *  - 사용자 제어 값(IP/설명)은 textContent 로 렌더해 이스케이프(DOM XSS 방지).
  *  - 정확성 > 반응속도: 변경(등록/삭제) 후 목록을 재조회해 화면을 확정한다.
@@ -12,7 +13,7 @@
 import './styles/ip.scss';
 import $ from 'jquery';
 import { PORTFOLIO_HOME, siblingScreenHref } from './config';
-import { ErrorResponse, IpMatchResponse, IpRuleListResponse, IpRuleResponse, WhoAmIResponse } from './types';
+import { Problem, IpMatchResponse, IpRuleListResponse, IpRuleResponse, WhoAmIResponse } from './types';
 import { buildQuery as buildQueryParams, localToIso } from './lib/ipQuery';
 
 const API = {
@@ -37,17 +38,49 @@ function toast(message: string, kind?: 'ok' | 'error'): void {
   toastTimer = window.setTimeout(() => { $t.removeClass('toast--show'); }, 2200);
 }
 
+/**
+ * 실패 응답에서 사용자에게 보여줄 문장을 뽑는다(problem+json).
+ * detail 이 표준 필드이고 message 는 이전 형태의 폴백이다 - 배포 시점이 갈려도 빈 문구가 나오지 않게.
+ * 던지지 않는다: 에러 처리 경로에서 또 던지면 원래 실패가 파싱 실패로 덮인다.
+ */
 function serverMessage(xhr: JQuery.jqXHR, fallback: string): string {
-  const body = xhr.responseJSON as ErrorResponse | undefined;
-  return (body && body.message) || fallback;
+  const p = xhr.responseJSON as Problem | undefined;
+  const text = p?.detail || p?.message;
+  if (!text) return fallback;
+  // cid 가 오면 함께 보여준다 - 사용자가 이 값을 전달하면 서버 로그를 바로 찾을 수 있다.
+  return p?.cid ? `${text} (요청 ${p.cid})` : text;
 }
 
-/** ISO(UTC) -> 디바이스 시간대 표기(요건: 항상 접속 디바이스 시간대). */
+/**
+ * ISO(UTC) -> 접속 기기 시간대 표기(요건: 항상 접속 디바이스 시간대).
+ *
+ * `timeZone` 을 지정하지 않는 것이 요점이다 - 브라우저가 자기 설정으로 읽는다. 저장은 절대
+ * 시점(UTC `Instant`)이므로 서울에서 09:00 로 보이는 행이 로스앤젤레스에서는 전날 17:00 로
+ * 보인다. 같은 한 행이지 다른 데이터가 아니다.
+ */
 function fmt(iso: string): string {
   return new Date(iso).toLocaleString('ko-KR', {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hour12: false,
   });
+}
+
+/**
+ * 해석된 시간대를 화면에 적는다.
+ *
+ * 없어도 동작은 같지만, 없으면 이 규칙이 <b>보이지 않는다</b> - 한국에서 열면 KST 고정 구현과
+ * 화면이 완전히 같아서, 시각이 절대 시점으로 저장되고 각자의 시계로 렌더된다는 사실을 확인할
+ * 방법이 없다. 브라우저가 실제로 고른 IANA 이름을 그대로 보여 주면 하드코딩이 아니라는 것이
+ * 화면에서 증명된다. 실패해도 화면을 막지 않는다(Intl 이 없는 환경에서는 문장이 빠질 뿐).
+ */
+function showResolvedZone(): void {
+  const el = document.getElementById('tzNote');
+  if (!el) return;
+  try {
+    el.textContent = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    el.closest('.ip-tz')?.remove();
+  }
 }
 
 // 시간 변환(localToMillis/localToIso)/쿼리 조립은 순수 헬퍼(lib/ipQuery)로 분리해 단위 테스트한다(#O4).
@@ -204,6 +237,7 @@ $(() => {
   $('.portfolio-home').attr('href', PORTFOLIO_HOME);
   // 나머지 한 화면(파일 확장자 차단)의 주소는 배포 형태마다 달라 런타임에 조립한다.
   $('.sibling-screen').attr('href', siblingScreenHref('ip'));
+  showResolvedZone();
   // 내 IP 를 미리 캐시(현재 IP 버튼 없이도 "내 IP 포함" 배지가 동작).
   $.getJSON(API.whoami, (res: WhoAmIResponse) => { myIp = res.ipAddress; });
   loadList(true);

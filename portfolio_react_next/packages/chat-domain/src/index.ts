@@ -16,5 +16,5 @@ export {
 } from './types';
 export { buildSnippet } from './messageSearch';
 export { createMockChatApi, pickReply, type ChatApi, type MockChatApiOptions } from './mockChatApi';
-export { formatDateTime } from './formatDateTime';
+export { formatDateTime, KST_OFFSET_MS } from './formatDateTime';
 export { createMemoryStorage, createBrowserStorage, type KVStorage } from './storage';

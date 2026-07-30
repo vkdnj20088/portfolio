@@ -40,7 +40,7 @@ class IpAccessRuleServiceTest {
     }
 
     private IpRuleResponse create(String ip, String desc, Instant s, Instant e) {
-        return service.create(new IpRuleCreateRequest(ip, desc, s, e));
+        return service.create(new IpRuleCreateRequest(ip, desc, s, e, null, null));
     }
 
     @Test
@@ -105,7 +105,7 @@ class IpAccessRuleServiceTest {
     void update_changesFields_recomputesRange_andBumpsVersion() {
         IpRuleResponse created = create("10.0.0.0/24", "원본", S, E);
         IpRuleResponse updated = service.update(created.id(),
-                new IpRuleUpdateRequest("192.168.1.0/24", "수정됨", S, E));
+                new IpRuleUpdateRequest("192.168.1.0/24", "수정됨", S, E, null, null));
 
         assertThat(updated.ipAddress()).isEqualTo("192.168.1.0/24");
         assertThat(updated.description()).isEqualTo("수정됨");
@@ -121,7 +121,7 @@ class IpAccessRuleServiceTest {
     @Test
     void update_missing_throws() {
         assertThatThrownBy(() -> service.update(999L,
-                new IpRuleUpdateRequest("1.1.1.1", "x", S, E)))
+                new IpRuleUpdateRequest("1.1.1.1", "x", S, E, null, null)))
                 .isInstanceOf(IpRuleNotFoundException.class);
     }
 

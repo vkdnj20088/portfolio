@@ -358,9 +358,43 @@ mark {
 
 /* 근거(출처) 블록 - 답변이 코퍼스 어디서 왔는지 하이라이트. */
 .evidence {
+  position: relative;
   border-top: 1px solid var(--color-border);
   padding: var(--space-4);
   background: var(--color-surface);
+}
+
+/* 근거가 도착했음을 알리는 1회 sweep - 상단 경계선이 좌에서 우로 그어진다.
+ *
+ * 이 데모의 주장은 "생성이 아니라 추출이라 근거가 원문에 있다"인데, 근거 블록이 조용히
+ * 나타나면 그 주장이 시각적으로 전달되지 않는다. 선이 지나가면 시선이 근거로 끌린다 -
+ * 장식이 아니라 안내다.
+ *
+ * 왜 근거 문장(.hl) 자체가 아니라 블록 상단인가: .hl 은 mark(인라인)라 문장이 길면 줄바꿈
+ * 된다. 인라인 요소의 ::after 절대배치는 **바운딩 박스 하나**만 덮으므로, 두 줄로 갈린
+ * 하이라이트 위에 한 덩어리 띠가 얹혀 어긋난다(360px 에서는 거의 항상 갈린다).
+ * 블록 경계선은 줄바꿈과 무관하고 기법(::after + scaleX 1회)은 그대로다.
+ * .hl 의 기존 밑줄(inset box-shadow)은 줄바꿈마다 알아서 쪼개지므로 건드리지 않는다.
+ *
+ * scaleX 는 합성 단계에서만 처리돼 레이아웃을 다시 돌리지 않는다 - 인트로 경력 막대,
+ * 거래소 호가 막대, 아래 검색 랭크 막대와 같은 그래머다("비율·범위는 scaleX 로 그린다").
+ */
+.evidence::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: evidenceSweep var(--duration-base) var(--ease-out) forwards;
+}
+@keyframes evidenceSweep {
+  to {
+    transform: scaleX(1);
+  }
 }
 .evidence .cite {
   display: flex;
@@ -559,10 +593,36 @@ mark {
   background: var(--color-surface);
   overflow: hidden;
 }
+/* 점수 막대. width 가 아니라 scaleX 로 그린다.
+ *
+ * 이 화면의 주장은 "시맨틱과 키워드를 같은 골드셋으로 나란히 측정한다"이고, 두 막대의 길이
+ * 차이가 곧 그 주장이다. 정적으로 그려지면 차이를 눈이 한 번에 훑고 지나가지만, 자라나면
+ * 길이 차가 시간축에 펼쳐져 읽힌다. 기능적 모션이지 장식이 아니다.
+ *
+ * width 를 애니메이션하면 매 프레임 레이아웃이 다시 돌고 브라우저가 그 폭 변화를 레이아웃
+ * 이동으로 센다. transform 은 합성 단계에서만 처리되고 이동 계산에서도 빠진다 - 결과가 20개면
+ * 막대가 40개라 차이가 크다. 인트로 경력 막대·거래소 호가 막대·근거 블록 sweep 과 같은 그래머다.
+ *
+ * 끝단 라운드가 스케일 중 미세하게 눌리지만 6px 높이에서는 육안으로 구분되지 않는다
+ * (인트로 경력 막대에서 같은 트레이드오프를 이미 받아들였다).
+ */
 .bar > i {
   display: block;
   height: 100%;
+  width: 100%;
   border-radius: var(--radius-full);
+  transform: scaleX(var(--v, 0));
+  transform-origin: left center;
+  /* backwards - 지연 구간에도 시작 프레임(scaleX 0)을 유지한다. 없으면 delay 동안 최종 길이가
+     먼저 보였다가 0 으로 튄다. 계단 간격은 공유 토큰(--stagger), 6개에서 끊어 마지막 결과가
+     눈에 띄게 늦지 않게 한다(인트로 리빌과 같은 규칙). */
+  animation: barGrow var(--duration-base) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+@keyframes barGrow {
+  from {
+    transform: scaleX(0);
+  }
 }
 .bar.semantic > i {
   background: var(--color-primary);
@@ -696,3 +756,98 @@ mark {
     display: none;
   }
 }
+
+/* ── 후속질문(#D1) ─────────────────────────────────────── */
+/* 문서 고정으로 검색 범위를 좁혀 이어 묻는다. 근거 블록 안에 두는 이유: 컨텍스트가 "이 문서"라는
+   것이 위치로 드러나야 한다 - 별도 영역에 두면 무엇에 이어 묻는지 문구로 설명해야 한다. */
+.followUp {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.followUp input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.followUp input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.followUpNote {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+.followUpNote b { color: var(--color-text); }
+/* 360px 에서는 입력과 버튼을 세로로 - 나란히 두면 버튼 라벨이 줄바꿈되며 폼 높이가 튄다. */
+@media (max-width: 420px) {
+  .followUp { flex-direction: column; }
+}
+
+/* 보조 액션(후속질문 제출). primaryBtn 보다 시각 위계가 낮아야 한다 - 주 질의 입력이 여전히
+   화면의 주 액션이고, 후속질문은 답변 안에서 이어 가는 부수 동작이다. */
+.secondaryBtn {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.secondaryBtn:hover { border-color: var(--color-primary); }
+.secondaryBtn:active { transform: scale(0.97); transition-duration: 0ms; }
+.secondaryBtn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ── 카테고리 패싯(#D2) ─────────────────────────────────── */
+/* 직전까지 카테고리는 결과에 표시만 됐다 - 보이는데 누를 수 없는 정보였다.
+   개수를 함께 주는 이유: "필터가 있다"와 "색인 통계를 안다"는 다르게 읽힌다. */
+.facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.facetChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.facetChip:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+.facetChip:active { transform: scale(0.97); transition-duration: 0ms; }
+.facetChip:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+/* 선택 상태는 aria-pressed 를 근거로 삼는다 - 보조기술용 속성과 시각 상태가 갈리지 않게. */
+.facetChip[aria-pressed='true'] {
+  background: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  font-weight: 600;
+}
+/* 개수는 tabular-nums 로 - 칩을 토글할 때 자릿수가 바뀌며 폭이 튀는 것을 막는다. */
+.facetCount { font-variant-numeric: tabular-nums; color: var(--color-text-muted); font-size: var(--text-xs); }
+.facetChip[aria-pressed='true'] .facetCount { color: var(--color-link); }
+.facetActive { color: var(--color-text-muted); font-weight: 400; }

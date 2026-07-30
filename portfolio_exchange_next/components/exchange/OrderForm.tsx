@@ -4,11 +4,11 @@ import Decimal from "decimal.js";
 import { useMarketFeed } from "@/store/marketStore";
 import { useTradeStore } from "@/store/tradeStore";
 import { useOrderDraftStore } from "@/store/orderDraftStore";
-import { positionOf } from "@/lib/trade/session";
+import { positionOf, type SessionOrderType } from "@/lib/trade/session";
 import { formatKRW, formatQty } from "@/lib/format";
 import { sanitizeDecimalInput, isPositiveDecimal } from "@/lib/inputSanitize";
 import type { MarketSnapshot } from "@/lib/mock/data";
-import type { OrderType, Side } from "@/lib/engine/types";
+import type { Side } from "@/lib/engine/types";
 
 type Result = { kind: "ok" | "error"; text: string } | null;
 
@@ -19,7 +19,9 @@ export default function OrderForm({ market, initial }: { market: string; initial
   const position = useTradeStore((s) => positionOf(s.session, market));
 
   const [side, setSide] = useState<Side>("buy");
-  const [type, setType] = useState<OrderType>("limit");
+  const [type, setType] = useState<SessionOrderType>("limit");
+  /** 스탑 트리거 가격(#E1). 스탑 지정가에서만 쓰인다. */
+  const [trigger, setTrigger] = useState<string>("");
   const [price, setPrice] = useState<string>(String(initial.price));
   const [qty, setQty] = useState<string>("");
   const [shake, setShake] = useState(false);
@@ -55,9 +57,15 @@ export default function OrderForm({ market, initial }: { market: string; initial
   const submit = () => {
     if (!isPositiveDecimal(qty)) { flashError("수량을 입력해 주세요."); return; }
     // 지정가는 가격도 파싱 가능한 양수여야 place() 하위의 Decimal 파싱이 던지지 않는다.
-    if (type === "limit" && !isPositiveDecimal(price)) { flashError("가격을 입력해 주세요."); return; }
+    if (type !== "market" && !isPositiveDecimal(price)) { flashError("가격을 입력해 주세요."); return; }
+    // 스탑은 트리거 가격이 없으면 성립하지 않는다 - place() 하위에서 거절되기 전에 여기서 막아
+    // 사용자가 어느 칸이 비었는지 알 수 있게 한다.
+    if (type === "stopLimit" && !isPositiveDecimal(trigger)) {
+      flashError("트리거 가격을 입력해 주세요."); return;
+    }
     const book = { asks: snap.orderbook.asks, bids: snap.orderbook.bids };
-    const r = place(market, side, type, type === "market" ? undefined : price, qty, book);
+    const r = place(market, side, type, type === "market" ? undefined : price, qty, book,
+      type === "stopLimit" ? trigger : undefined);
     if (!r.ok) { flashError(r.reason ?? "주문이 거절되었습니다."); return; }
     setQty("");
     const filled = new Decimal(r.filledQty);
@@ -65,6 +73,11 @@ export default function OrderForm({ market, initial }: { market: string; initial
       setResult({ kind: "ok", text: `${formatQty(filled.toNumber())} 체결 · 평균 ${formatKRW(r.avgPrice ?? "0")}` });
     } else if (filled.gt(0)) {
       setResult({ kind: "ok", text: `부분 체결 ${formatQty(filled.toNumber())} · 잔량 미체결 등록` });
+    } else if (type === "stopLimit") {
+      setResult({
+        kind: "ok",
+        text: `스탑 주문 대기 (${side === "buy" ? "상승" : "하락"} ${formatKRW(trigger)} 도달 시 지정가 전환)`,
+      });
     } else {
       setResult({ kind: "ok", text: "미체결 주문으로 등록 (시세 도달 시 체결)" });
     }
@@ -82,14 +95,27 @@ export default function OrderForm({ market, initial }: { market: string; initial
 
   return (
     <section className="order-form">
-      <div className="of-tabs" role="group" aria-label="매수/매도">
+      {/* sell 클래스는 인디케이터의 위치·색을 정한다(CSS 의 .of-tabs::before 참고).
+          선택 상태 자체는 각 버튼의 aria-pressed 가 계속 전달하므로 보조기술에는 변화가 없다. */}
+      <div className={`of-tabs${side === "sell" ? " sell" : ""}`} role="group" aria-label="매수/매도">
         <button className={side === "buy" ? "on buy" : ""} aria-pressed={side === "buy"} onClick={() => setSide("buy")}>매수</button>
         <button className={side === "sell" ? "on sell" : ""} aria-pressed={side === "sell"} onClick={() => setSide("sell")}>매도</button>
       </div>
       <div className="of-type" role="group" aria-label="주문 유형">
         <button className={type === "limit" ? "on" : ""} onClick={() => setType("limit")} aria-pressed={type === "limit"}>지정가</button>
         <button className={type === "market" ? "on" : ""} onClick={() => setType("market")} aria-pressed={type === "market"}>시장가</button>
+        <button className={type === "stopLimit" ? "on" : ""} onClick={() => setType("stopLimit")} aria-pressed={type === "stopLimit"}>스탑</button>
       </div>
+      {/* 트리거 칸은 스탑에서만 나타난다. 항상 두고 disabled 로 두면 지정가/시장가 사용자에게
+          쓰지 않는 입력이 계속 보인다 - 조건부 렌더가 자리를 늘리지만 폼 높이는 아래 총액·버튼이
+          흡수하므로 레이아웃 이동이 위쪽으로 번지지 않는다. */}
+      {type === "stopLimit" && (
+        <label className="of-row"><span>트리거</span>
+          <input className="num" inputMode="numeric" value={trigger}
+            aria-label={`트리거 가격 (KRW) - ${side === "buy" ? "이 가격 이상" : "이 가격 이하"}에서 발동`}
+            placeholder={String(snap.price)}
+            onChange={(e) => setTrigger(sanitizeDecimalInput(e.target.value))} /></label>
+      )}
       <label className="of-row"><span>가격</span>
         <input className="num" inputMode="numeric" value={type === "market" ? "" : price}
           aria-label={type === "market" ? "가격(시장가)" : "주문 가격 (KRW)"}

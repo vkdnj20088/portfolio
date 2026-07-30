@@ -27,7 +27,7 @@
   transition-duration: 0ms;
 }
 
-/* :focus-visible 은 Chrome 86+ - 지원 하한(88)에서 안전하다.
+/* :focus-visible 은 Chrome 86+ - 지원 하한(111)에서 안전하다.
    마우스 클릭에는 링이 뜨지 않고 키보드 이동에만 나타난다. */
 .button:focus-visible {
   outline: 2px solid var(--color-primary);

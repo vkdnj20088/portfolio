@@ -2,6 +2,8 @@ package com.portfolio.extension.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,6 +25,11 @@ import org.hibernate.annotations.CreationTimestamp;
 @Entity
 @Table(name = "ip_access_rule")
 public class IpAccessRule {
+
+    /** 규칙의 판정. 목록에 있으면 허용이던 모델을 명시적 판정으로 승격한 것(#G1). */
+    public enum Action { ALLOW, DENY }
+
+    public static final int DEFAULT_PRIORITY = 100;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +59,23 @@ public class IpAccessRule {
     @Column(name = "ip_end", length = 16)
     private byte[] ipEnd;
 
+    /**
+     * 판정 결과(#G1). ALLOW 만 있던 시절에는 규칙이 겹쳐도 결과가 같아 우선순위가 무의미했다 -
+     * DENY 가 있어야 "넓은 허용 안에서 좁은 예외를 파낸다"가 표현되고 평가 순서가 실제 문제가 된다.
+     * 문자열로 저장한다(ordinal 은 enum 순서를 바꾸면 기존 행의 의미가 조용히 뒤집힌다).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 8)
+    private Action action = Action.ALLOW;
+
+    /**
+     * 평가 우선순위 - <b>작은 값이 먼저</b> 평가되고 첫 매치가 이긴다(iptables/ACL 관례).
+     * 기본 100 은 앞뒤로 여유를 남긴 값이다: 예외 규칙은 더 작은 값(예: 10), 포괄 규칙은
+     * 더 큰 값(예: 900)으로 두면 중간에 새 규칙을 끼울 자리가 남는다.
+     */
+    @Column(nullable = false)
+    private int priority = DEFAULT_PRIORITY;
+
     // 낙관적 락(#Q2) - 부분수정(PUT) 시 로스트 업데이트를 차단한다. nullable 이라 레거시/시더 행과도
     // 정합하며, Hibernate 가 null 을 초기 버전으로 취급한다.
     @Version
@@ -62,19 +86,38 @@ public class IpAccessRule {
     }
 
     public IpAccessRule(String ipAddress, String description, Instant startAt, Instant endAt) {
+        this(ipAddress, description, startAt, endAt, Action.ALLOW, DEFAULT_PRIORITY);
+    }
+
+    public IpAccessRule(String ipAddress, String description, Instant startAt, Instant endAt,
+            Action action, int priority) {
         this.ipAddress = ipAddress;
         this.description = description;
         this.startAt = startAt;
         this.endAt = endAt;
+        this.action = action == null ? Action.ALLOW : action;
+        this.priority = priority;
         recomputeRange();
     }
 
     /** 부분수정(#Q2) - 가변 필드를 갱신하고 IP 가 바뀌면 정규화 범위를 다시 계산한다. */
     public void applyUpdate(String ipAddress, String description, Instant startAt, Instant endAt) {
+        applyUpdate(ipAddress, description, startAt, endAt, this.action, this.priority);
+    }
+
+    /** 부분수정 - 판정/우선순위까지 포함(#G1). null/미지정은 기존 값을 유지한다. */
+    public void applyUpdate(String ipAddress, String description, Instant startAt, Instant endAt,
+            Action action, Integer priority) {
         this.ipAddress = ipAddress;
         this.description = description;
         this.startAt = startAt;
         this.endAt = endAt;
+        if (action != null) {
+            this.action = action;
+        }
+        if (priority != null) {
+            this.priority = priority;
+        }
         recomputeRange();
     }
 
@@ -119,5 +162,13 @@ public class IpAccessRule {
 
     public Long getVersion() {
         return version;
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
+    public int getPriority() {
+        return priority;
     }
 }

@@ -1,3 +1,4 @@
+import { parseProblem } from '@chat/ui';
 import type { Answer, AnswerEvent } from '@chat/search-domain';
 
 /**
@@ -72,6 +73,8 @@ export interface SseAnswerOptions {
   signal?: AbortSignal;
   /** 주입용(테스트). 기본 전역 fetch. */
   fetchImpl?: typeof fetch;
+  /** 후속질문 컨텍스트(#D1) - 직전 답변의 출처 문서로 근거 검색 범위를 좁힌다. */
+  pinnedDocId?: string | null;
 }
 
 /** POST /api/answer 를 SSE 로 소비해 mock 과 동일한 이벤트 흐름을 낸다. 실패는 던져서 상위가 폴백한다. */
@@ -83,15 +86,20 @@ export async function* sseStreamAnswer(
   const response = await fetchImpl('/api/answer', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, pinnedDocId: options?.pinnedDocId ?? null }),
     signal: options?.signal,
   });
   // 4xx 는 요청 자체가 틀린 것(재시도 무의미) -> 프로토콜 오류. 그 외 비정상(5xx/본문없음)은 회선 실패로 본다.
+  //
+  // 실패 본문은 parseProblem 으로 정규화한다(problem+json). 직전까지는 상태코드만 보고 문구를
+  // 프론트에서 지어냈는데, 그러면 서버가 "왜" 거절했는지가 사용자에게 닿지 않는다 - 라우트
+  // 핸들러가 상한값까지 담아 보내므로 그 detail 을 그대로 쓰는 편이 정확하다.
   if (!response.ok || !response.body) {
+    const problem = await parseProblem(response);
     if (response.status >= 400 && response.status < 500) {
-      throw new AnswerProtocolError(`서버가 요청을 거절했습니다(${response.status}).`);
+      throw new AnswerProtocolError(problem.detail);
     }
-    throw new Error(`SSE 응답이 올바르지 않습니다(${response.status}).`);
+    throw new Error(problem.detail);
   }
 
   const reader = response.body.getReader();

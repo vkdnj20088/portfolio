@@ -59,7 +59,9 @@ public class IpAccessRuleService {
         // 이미 형식을 검증(@ValidIpOrCidr)했으므로 여기 parse 는 실패하지 않는다.
         String normalizedIp = IpCidr.parse(req.ipAddress()).canonical();
         IpAccessRule saved = repository.save(new IpAccessRule(
-                normalizedIp, req.description().strip(), req.startAt(), req.endAt()));
+                normalizedIp, req.description().strip(), req.startAt(), req.endAt(),
+                // 생략은 기존 의미(ALLOW / 기본 우선순위)로 - 계약을 넓힐 때 기본값이 곧 하위 호환이다.
+                req.action(), req.priority() == null ? IpAccessRule.DEFAULT_PRIORITY : req.priority()));
         // 감사 기록은 같은 트랜잭션에 참여 - 저장이 롤백되면 이력도 남지 않는다.
         auditService.record(IpAuditAction.CREATE, saved.getId(), saved.getIpAddress(), actor);
         metrics.ruleCreated();
@@ -80,7 +82,8 @@ public class IpAccessRuleService {
         // 생성과 동일하게 canonical 정규화 후 갱신(IP 가 바뀌면 범위 컬럼도 재계산). @Version 이
         // 동시 수정 충돌을 잡으면 OptimisticLockingFailureException -> 409(GlobalExceptionHandler).
         String normalizedIp = IpCidr.parse(req.ipAddress()).canonical();
-        rule.applyUpdate(normalizedIp, req.description().strip(), req.startAt(), req.endAt());
+        rule.applyUpdate(normalizedIp, req.description().strip(), req.startAt(), req.endAt(),
+                req.action(), req.priority());
         IpAccessRule saved = repository.save(rule);
         auditService.record(IpAuditAction.UPDATE, saved.getId(), saved.getIpAddress(), actor);
         log.info("event=ip.rule.updated ruleId={} ip={} actor={}", saved.getId(), saved.getIpAddress(), actor);
@@ -138,9 +141,26 @@ public class IpAccessRuleService {
                 .map(IpAccessRuleService::toResponse).toList();
     }
 
+    /**
+     * 정책 평가용 후보 조회(#G1) - DTO 가 아니라 <b>엔티티</b>를 돌려준다.
+     *
+     * <p>{@link #findContaining(String, int)} 과 질의는 같지만 반환 타입이 다르다. 평가기는
+     * action·priority·시간 창을 모두 봐야 하고, 그걸 위해 목록 DTO 를 평가용 필드까지 담도록
+     * 늘리면 화면용 계약이 내부 평가 사정에 끌려간다. 평가 후보는 별도 경로로 둔다.
+     *
+     * <p>상한(MAX_PAGE_SIZE)을 그대로 쓴다 - 한 IP 를 포함하는 규칙이 그보다 많다면 정책 자체가
+     * 설계 오류이고, 전량 로드로 대응할 문제가 아니다.
+     */
+    @Transactional(readOnly = true)
+    public List<IpAccessRule> findContainingForEvaluation(String ip) {
+        byte[] key = IpCidr.parse(ip).firstAddress16();
+        return repository.findContaining(key, MAX_PAGE_SIZE);
+    }
+
     private static IpRuleResponse toResponse(IpAccessRule r) {
         return new IpRuleResponse(r.getId(), r.getIpAddress(), r.getDescription(),
-                r.getStartAt(), r.getEndAt(), r.getCreatedAt());
+                r.getStartAt(), r.getEndAt(), r.getCreatedAt(),
+                r.getAction().name(), r.getPriority());
     }
 
     /**

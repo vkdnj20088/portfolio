@@ -15,11 +15,20 @@
     white-space: nowrap;
     color: var(--text);
     transition:
-        background 0.15s,
-        border-color 0.15s;
+        background var(--duration-fast) var(--ease-standard),
+        border-color var(--duration-fast) var(--ease-standard);
 
     &:hover {
         background: var(--btn-bg-hover);
+    }
+
+    // 눌림 피드백. 직전까지 hover 만 있어 터치 기기에서는 버튼을 눌러도 반응이 없었다
+    // (hover 가 없는 환경이라 어포던스가 통째로 사라진다). 챗의 버튼과 같은 그래머 -
+    // 즉시 눌리고(transition 0) 떼는 순간만 이징으로 복귀한다. transform 이라 레이아웃을
+    // 건드리지 않아 옆 버튼이 밀리지 않는다.
+    &:active:not(:disabled) {
+        transform: scale(0.97);
+        transition-duration: 0ms;
     }
 
     // 기존에는 텍스트 입력에만 포커스 링이 있었다. mixin 으로 뽑고 나니 같은 디자인 언어를

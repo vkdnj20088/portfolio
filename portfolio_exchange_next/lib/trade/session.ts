@@ -16,12 +16,33 @@ export interface Balance {
   positions: Record<string, string>; // market -> 보유 수량
 }
 
+/**
+ * 세션 계층의 주문 타입. 엔진의 OrderType(limit|market)에 **스탑 지정가**를 더한 것이다.
+ *
+ * 엔진 타입을 늘리지 않은 이유: 스탑은 매칭 규칙이 아니라 <b>주문 생애주기</b>의 문제다.
+ * 트리거 전에는 호가에 존재하지도 않으므로 엔진이 알 필요가 없고, 트리거되면 평범한 지정가가
+ * 되어 기존 매칭 경로를 그대로 탄다. 엔진에 상태를 하나 더 넣는 대신 세션이 트리거를 관리한다 -
+ * 매칭 엔진은 "가격-시간 우선"만 알면 되는 상태로 남는다.
+ *
+ * 스탑 **시장가**는 의도적으로 넣지 않았다. 트리거 시점의 체결 가격을 알 수 없어 예약 금액을
+ * 결정론적으로 잡을 수 없고(슬리피지 무제한), 그걸 다루려면 증거금 모델이 필요하다.
+ * 이 데모의 회계는 예약 방식이라 "얼마를 잡아 둘지 모르는 주문"은 불변식을 깬다.
+ */
+export type SessionOrderType = OrderType | "stopLimit";
+
 export interface SessionOrder {
   id: string;
   market: string;
   side: Side;
-  type: OrderType;
+  type: SessionOrderType;
   price: string | null;
+  /**
+   * 스탑 트리거 가격(스탑 주문만). 시세가 이 값을 가로지르면 지정가로 전환된다.
+   * 매수는 <b>상승 돌파</b>(price >= trigger), 매도는 <b>하락 손절</b>(price <= trigger) - 업계 관례.
+   */
+  triggerPrice: string | null;
+  /** 트리거됐는가. false 면 호가에 존재하지 않는 대기 상태다(취소는 가능). */
+  triggered: boolean;
   qty: string;
   filled: string;
   remaining: string;
@@ -48,8 +69,10 @@ export interface SubmitReq {
   id: string;
   market: string;
   side: Side;
-  type: OrderType;
+  type: SessionOrderType;
   price?: string;
+  /** stopLimit 필수 - 트리거 가격. 다른 타입에서는 무시된다. */
+  triggerPrice?: string;
   qty: string;
   ts: number;
 }
@@ -86,10 +109,18 @@ export function submit(s: TradeSession, req: SubmitReq, book: BookLevels): {
   const qty = new Decimal(req.qty || 0);
   if (!qty.isFinite() || qty.lte(0)) return rejected(s, "수량을 확인해 주세요.");
   let limit: Decimal | null = null;
-  if (req.type === "limit") {
+  if (req.type === "limit" || req.type === "stopLimit") {
     if (req.price == null || req.price === "") return rejected(s, "지정가에는 가격이 필요합니다.");
     limit = new Decimal(req.price);
     if (!limit.isFinite() || limit.lte(0)) return rejected(s, "가격을 확인해 주세요.");
+  }
+
+  // 스탑 주문은 엔진으로 보내지 않는다. 트리거 전에는 호가에 존재하지 않는 대기 주문이므로
+  // 예약만 잡고 세션에 파킹한다 - 트리거되면 evaluateResting 이 지정가로 전환해 기존 경로로 넘긴다.
+  if (req.type === "stopLimit") {
+    const trigger = new Decimal(req.triggerPrice ?? 0);
+    if (!trigger.isFinite() || trigger.lte(0)) return rejected(s, "스탑 주문에는 트리거 가격이 필요합니다.");
+    return submitStop(s, req, qty, limit!, trigger);
   }
 
   // 현재 목업 호가를 유동성으로 삼아 엔진에 시딩하고 내 주문을 매칭한다.
@@ -141,20 +172,73 @@ export function submit(s: TradeSession, req: SubmitReq, book: BookLevels): {
   };
 }
 
-// 시세가 미체결 지정가를 가로지르면 체결시킨다(open -> filled). 예약분은 이미 잡혀 있으므로
-// 반대 자산만 지급한다. 반환: 새 세션 + 이번에 체결된 주문 id 들.
+/**
+ * 스탑 주문 접수 - 예약만 잡고 트리거를 기다린다.
+ *
+ * 예약은 지정가와 동일하게 계산한다(매수=현금 qty×limit, 매도=코인 qty). 트리거 전이라도 예약을
+ * 잡는 이유: 잡지 않으면 같은 잔고로 스탑을 여러 개 걸어 두고 동시에 트리거될 때 이중 지출이
+ * 된다. "아직 주문이 아니니 돈은 안 잡는다"가 직관적이지만 회계 불변식을 깬다.
+ */
+function submitStop(s: TradeSession, req: SubmitReq, qty: Decimal, limit: Decimal, trigger: Decimal): {
+  session: TradeSession;
+  result: SubmitResult;
+} {
+  const krw = new Decimal(s.balance.krw);
+  const pos = new Decimal(positionOf(s, req.market));
+  let newKrw = krw;
+  let newPos = pos;
+  if (req.side === "buy") {
+    const reserve = qty.mul(limit);
+    if (reserve.gt(krw)) return rejected(s, "주문가능 금액을 초과했습니다.");
+    newKrw = krw.minus(reserve);
+  } else {
+    if (qty.gt(pos)) return rejected(s, "보유 수량을 초과했습니다.");
+    newPos = pos.minus(qty);
+  }
+  const parked: SessionOrder = {
+    id: req.id, market: req.market, side: req.side, type: "stopLimit",
+    price: limit.toString(), triggerPrice: trigger.toString(), triggered: false,
+    qty: qty.toString(), filled: "0", remaining: qty.toString(), status: "open", ts: req.ts,
+  };
+  return {
+    session: { balance: setBalance(s.balance, req.market, newKrw, newPos), orders: [parked, ...s.orders], fills: s.fills },
+    result: { ok: true, status: "open", filledQty: "0", avgPrice: null },
+  };
+}
+
+/**
+ * 시세가 미체결 지정가를 가로지르면 체결시킨다(open -> filled). 예약분은 이미 잡혀 있으므로
+ * 반대 자산만 지급한다. 반환: 새 세션 + 이번에 체결된 주문 id 들.
+ *
+ * <b>2단계</b>다. (1) 아직 트리거되지 않은 스탑 주문 중 트리거 조건을 만족한 것을 지정가로
+ * 전환하고, (2) 전환된 것을 포함해 지정가 교차를 평가한다. 같은 틱에서 트리거와 체결이 함께
+ * 일어날 수 있다 - 갭 상승/하락에서 실제로 그렇게 되므로 한 틱 늦추지 않는다.
+ */
 export function evaluateResting(s: TradeSession, market: string, price: string, ts: number): {
   session: TradeSession;
   filledIds: string[];
+  triggeredIds: string[];
 } {
   const p = new Decimal(price);
   const filledIds: string[] = [];
+  const triggeredIds: string[] = [];
   let balance = s.balance;
   const newFills: SessionFill[] = [];
   const remaining: SessionOrder[] = [];
 
-  for (const o of s.orders) {
-    const crosses = o.market === market && o.price != null && (
+  // 1단계: 스탑 트리거 판정. 매수는 상승 돌파, 매도는 하락 손절(업계 관례).
+  const staged = s.orders.map((o) => {
+    if (o.type !== "stopLimit" || o.triggered || o.market !== market || o.triggerPrice == null) return o;
+    const hit = o.side === "buy" ? p.gte(o.triggerPrice) : p.lte(o.triggerPrice);
+    if (!hit) return o;
+    triggeredIds.push(o.id);
+    // 전환 후에는 평범한 지정가다 - 예약은 이미 같은 방식으로 잡혀 있어 회계 변화가 없다.
+    return { ...o, type: "limit" as SessionOrderType, triggered: true };
+  });
+
+  for (const o of staged) {
+    // 아직 트리거되지 않은 스탑은 교차 평가 대상이 아니다(호가에 없는 주문이다).
+    const crosses = o.market === market && o.price != null && o.type !== "stopLimit" && (
       o.side === "buy" ? p.lte(o.price) : p.gte(o.price)
     );
     if (!crosses) { remaining.push(o); continue; }
@@ -171,8 +255,13 @@ export function evaluateResting(s: TradeSession, market: string, price: string, 
     filledIds.push(o.id);
   }
 
-  if (filledIds.length === 0) return { session: s, filledIds };
-  return { session: { balance, orders: remaining, fills: pushFills(s.fills, newFills) }, filledIds };
+  if (filledIds.length === 0 && triggeredIds.length === 0) {
+    return { session: s, filledIds, triggeredIds };
+  }
+  return {
+    session: { balance, orders: remaining, fills: pushFills(s.fills, newFills) },
+    filledIds, triggeredIds,
+  };
 }
 
 // 미체결 주문 취소 - 예약분을 환급하고 목록에서 제거.
@@ -201,7 +290,10 @@ function rejected(s: TradeSession, reason: string): { session: TradeSession; res
 function restingOrder(req: SubmitReq, remaining: string, filledQty: Decimal): SessionOrder {
   return {
     id: req.id, market: req.market, side: req.side, type: req.type,
-    price: req.price ?? null, qty: req.qty, filled: filledQty.toString(), remaining,
+    price: req.price ?? null,
+    // 이 경로는 스탑을 타지 않는다(스탑은 submitStop 이 만든다) - 트리거 필드는 비운다.
+    triggerPrice: null, triggered: false,
+    qty: req.qty, filled: filledQty.toString(), remaining,
     status: filledQty.gt(ZERO) ? "partially_filled" : "open", ts: req.ts,
   };
 }

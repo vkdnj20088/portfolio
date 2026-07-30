@@ -1,4 +1,4 @@
-import { expansionsOf, idfOf, search, tokenize, tokenizeQuery } from './retrieval';
+import { expansionsOf, idfOf, search, tokenize, tokenizeQuery, type FollowUpContext } from './retrieval';
 import type { Answer } from './types';
 
 /**
@@ -64,10 +64,10 @@ export const RETRIEVAL_FLOOR = 0.05;
 export const MRC_TOP_K = 3;
 
 /** 질의에 대한 추출형 답변. 근거가 약하면 null(정답 없음). */
-export function extractAnswer(query: string): Answer | null {
+export function extractAnswer(query: string, ctx?: FollowUpContext): Answer | null {
   const qTokens = tokenizeQuery(query);
   if (qTokens.length === 0) return null;
-  const top = search(query, 'semantic', MRC_TOP_K);
+  const top = search(query, 'semantic', MRC_TOP_K, ctx);
   const best0 = top[0];
   if (!best0 || best0.semantic < RETRIEVAL_FLOOR) return null;
 

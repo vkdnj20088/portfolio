@@ -67,13 +67,15 @@ public class FileValidationService {
 
     private final BlockedExtensionProvider blockedExtensionProvider;
     private final FileValidationMetrics metrics;
+    private final ContentInspectionBulkhead bulkhead;
     /** Tika 기본 판별기(내용 기반). 무상태라 재사용 안전. */
     private final Detector detector = new DefaultDetector();
 
     public FileValidationService(BlockedExtensionProvider blockedExtensionProvider,
-            FileValidationMetrics metrics) {
+            FileValidationMetrics metrics, ContentInspectionBulkhead bulkhead) {
         this.blockedExtensionProvider = blockedExtensionProvider;
         this.metrics = metrics;
+        this.bulkhead = bulkhead;
     }
 
     /**
@@ -107,19 +109,25 @@ public class FileValidationService {
                     extension, signature), FileValidationMetrics.BlockReason.MAGIC);
         }
 
-        // 1-b) 내용 기반(심층) - Tika 가 매직넘버로 실제 콘텐츠 타입을 판별한다. 손코딩 4시그니처가
-        //      놓치는 위험 콘텐츠(RPM 설치 패키지, 셸 등)를 확장자와 무관하게 차단한다.
-        String dangerousType = detectDangerousMediaType(content);
+        // 1-b/1-c) 심층 판별(Tika 매직 + 컨테이너 스캔)은 CPU 바운드라 벌크헤드 안에서 실행한다.
+        //     두 단계를 한 번의 호출로 묶는 이유: permit 을 두 번 잡으면 "동시 4건"이 실제로는
+        //     단계별 4건이 되어 상한 계산이 흐려지고, 두 단계 사이에서 다른 요청이 끼어들 수 있다.
+        //     빠른 경로(1: 손코딩 시그니처)는 상수 시간이라 격리 대상이 아니다 - 오히려 격리하면
+        //     스레드 전환 비용이 판별 비용보다 커진다.
+        DeepInspection deep = bulkhead.call("deep-inspect", () -> new DeepInspection(
+                detectDangerousMediaType(content), detectDangerousArchive(content)));
+
+        String dangerousType = deep.mediaType();
         if (dangerousType != null) {
             return new Result(FileValidationResponse.block(
                     "파일 내용이 위험한 형식(" + dangerousType + ")으로 판별됐습니다. 확장자와 무관하게 차단됩니다.",
                     extension, dangerousType), FileValidationMetrics.BlockReason.CONTENT);
         }
 
-        // 1-c) 컨테이너 내용 검사 - JAR/APK/DEB 는 앞바이트만으론 평범한 zip/ar 과 구분되지 않아
-        //      매직 판별(1-b)로는 도달할 수 없다. 아카이브 안의 시그니처 엔트리로만 판별해
-        //      평범한 zip(docx 등)은 오차단하지 않으면서 실행 가능한 아카이브를 잡는다.
-        String archiveType = detectDangerousArchive(content);
+        // 컨테이너 내용 검사 결과 - JAR/APK/DEB 는 앞바이트만으론 평범한 zip/ar 과 구분되지 않아
+        // 매직 판별로는 도달할 수 없다. 아카이브 안의 시그니처 엔트리로만 판별해 평범한 zip(docx 등)은
+        // 오차단하지 않으면서 실행 가능한 아카이브를 잡는다(위 벌크헤드 호출에서 함께 계산했다).
+        String archiveType = deep.archiveType();
         if (archiveType != null) {
             return new Result(FileValidationResponse.block(
                     "파일 내용이 실행 가능한 아카이브(" + archiveType + ")로 판별됐습니다. 확장자와 무관하게 차단됩니다.",
@@ -138,6 +146,10 @@ public class FileValidationService {
 
     /** 분류 결과 + 계량 사유(통과면 reason=null). */
     private record Result(FileValidationResponse response, FileValidationMetrics.BlockReason reason) {
+    }
+
+    /** 벌크헤드 안에서 한 번에 계산하는 심층 판별 결과(둘 다 null 이면 위험 신호 없음). */
+    private record DeepInspection(String mediaType, String archiveType) {
     }
 
     private String extractExtension(String filename) {

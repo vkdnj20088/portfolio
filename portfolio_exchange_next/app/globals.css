@@ -19,6 +19,19 @@
   --bg-soft: #f9f9f9;
   --bg-soft2: #f2f4f7;
   --panel: #fff;
+
+  /* ── 모션 스케일 ──────────────────────────────────────────────────────
+   * 단일 소스는 portfolio_react_next/packages/ui/src/styles/tokens.css 다.
+   * 이 앱은 별도 저장소라 import 가 닿지 않아 같은 값을 복제한다 - 값을 바꿀 일이
+   * 생기면 그쪽을 먼저 고치고 네 앱(인트로·거래소·챗/문서QA·Guard)에 함께 반영한다.
+   * 등급 기준과 커브가 둘인 이유는 원본 주석 참조. */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 240ms;
+  --duration-slow: 360ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --stagger: 60ms;
 }
 /* --font-sans / --font-num 은 next/font 가 <html> 에 주입한다(자기참조 정의 금지) */
 :root[data-theme="dark"] {
@@ -44,9 +57,27 @@ body {
   font-family: var(--font-sans, system-ui);
   font-size: 1.4rem;
   line-height: 1.45;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard);
 }
 a { color: inherit; text-decoration: none; }
+
+/* 텍스트 선택 색. 지정하지 않으면 OS 기본 파랑이 나와, 문장을 긁는 순간에만 팔레트 밖의 색이
+   뜬다. 전경을 var(--bg) 로 두지 않는 이유: 라이트 테마의 흰색은 오렌지 위에서 2.33:1 로 AA
+   미달이다. 두 테마 모두에서 통하는 고정 근사흑(#121212 - 다크 테마 배경과 같은 값)을 쓴다
+   -> 8.05:1 AAA. 네 앱이 같은 규칙(accent 채움 + 최대대비 전경)을 쓰고 색만 각자 accent 를 따른다. */
+::selection { background: var(--brand-orange); color: #121212; }
+
+/* 눌림 피드백. 직전까지 hover 만 있어 터치 기기에서는 호가 행·탭·버튼을 눌러도 반응이 없었다.
+   챗의 버튼과 같은 그래머 - 즉시 눌리고(transition 0) 떼는 순간만 이징으로 복귀한다.
+   transform 이라 레이아웃을 건드리지 않는다(CLS 0). 호가 행은 초당 여러 번 갱신되는 격자라
+   축소 폭을 작게 잡아 갱신과 눌림이 섞여 보이지 않게 한다. */
+.of-submit:active:not(:disabled),
+.of-pcts button:active,
+.wf-pcts button:active,
+.theme-toggle:active,
+.cl-tabs button:active { transform: scale(0.97); transition-duration: 0ms; }
+.ob-row:active,
+.coin-list li a:active { transform: scale(0.995); transition-duration: 0ms; }
 ul { list-style: none; margin: 0; padding: 0; }
 button { font-family: inherit; cursor: pointer; }
 input, select { font-family: inherit; }
@@ -160,17 +191,38 @@ input, select { font-family: inherit; }
 .ob-price { position: relative; }
 .ob-row.ask .ob-price { color: var(--down); }
 .ob-row.bid .ob-price { color: var(--up); }
-.ob-size { position: relative; text-align: right; color: var(--text-sub); animation: obFlash 0.3s ease; }
+.ob-size { position: relative; text-align: right; color: var(--text-sub); animation: obFlash var(--duration-base) var(--ease-out); }
 @keyframes obFlash { from { background: color-mix(in srgb, var(--brand-orange) 45%, transparent); } to { background: transparent; } }
 .ob-center { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; font-size: 1.5rem; font-weight: 700; background: var(--bg-soft2); border-block: 1px solid var(--line); }
 .ob-center em { font-style: normal; font-size: 1.05rem; color: var(--text-mute); font-weight: 400; }
 
 /* 주문 폼 */
 .order-form { padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
-.of-tabs { display: flex; gap: 6px; }
-.of-tabs button { flex: 1; padding: 9px 0; border: 1px solid var(--line2); background: var(--bg); color: var(--text-sub); border-radius: 4px; font-size: 1.35rem; }
-.of-tabs button.on.buy { background: var(--up); border-color: var(--up); color: #fff; font-weight: 700; }
-.of-tabs button.on.sell { background: var(--down); border-color: var(--down); color: #fff; font-weight: 700; }
+/* 매수/매도 토글. 선택 표시를 각 버튼의 배경이 아니라 **하나의 인디케이터**가 옮겨 다니는
+   방식으로 바꿨다. 버튼마다 칠하면 사용자에게는 "빨간 면이 사라지고 파란 면이 생긴" 것으로
+   보이지만, 하나가 움직이면 "같은 선택이 옮겨갔다"로 읽힌다 - 후자가 실제 모델에 맞다.
+   (이 앱에서 실제로 상태가 바뀌는 탭은 여기뿐이다. 코인목록 탭은 목업이고 상단 내비는
+   라우트 전환이라 in-place 토글이 아니다.)
+
+   폭 계산: gap 6px 이라 각 버튼은 calc(50% - 3px) 다. 인디케이터 폭을 같게 잡으면 그 100% 가
+   곧 버튼 하나 폭이므로, 오른쪽 자리는 translateX(100% + 6px) - gap 을 더한 값이다.
+   이동은 transform 이라 합성 단계에서 처리되고 레이아웃을 다시 돌리지 않는다.
+   색 전환은 페인트지만 요소 하나 · instant(100ms) 라 비용이 눈에 띄지 않는다. */
+.of-tabs { position: relative; display: flex; gap: 6px; }
+.of-tabs::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0;
+  width: calc(50% - 3px); border-radius: 4px;
+  background: var(--up); border: 1px solid var(--up);
+  transition:
+    transform var(--duration-instant) var(--ease-standard),
+    background-color var(--duration-instant) var(--ease-standard),
+    border-color var(--duration-instant) var(--ease-standard);
+}
+.of-tabs.sell::before { transform: translateX(calc(100% + 6px)); background: var(--down); border-color: var(--down); }
+/* 버튼은 인디케이터 위에 얹힌다(z-index 1). 배경을 비워 인디케이터가 곧 선택 표시가 된다. */
+.of-tabs button { position: relative; z-index: 1; flex: 1; padding: 9px 0; border: 1px solid var(--line2); background: transparent; color: var(--text-sub); border-radius: 4px; font-size: 1.35rem; transition: color var(--duration-instant) var(--ease-standard); }
+/* 선택된 쪽은 자기 테두리를 지운다 - 남겨 두면 인디케이터 위에 겹쳐 두 겹으로 보인다. */
+.of-tabs button.on { border-color: transparent; color: #fff; font-weight: 700; }
 .of-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line2); border-radius: 4px; padding: 6px 10px; }
 .of-row span { font-size: 1.15rem; color: var(--text-mute); min-width: 32px; }
 .of-row input { flex: 1; border: none; background: none; color: var(--text); text-align: right; font-size: 1.45rem; outline: none; min-width: 0; }
@@ -183,7 +235,7 @@ input, select { font-family: inherit; }
 .of-submit.buy { background: var(--up); }
 .of-submit.sell { background: var(--down); }
 .of-balance { font-size: 1.15rem; color: var(--text-mute); text-align: right; margin: 0; }
-.shake { animation: shake 0.35s; border-color: var(--up); }
+.shake { animation: shake var(--duration-slow); border-color: var(--up); }
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
 
 /* 주문 유형(지정가/시장가) */
@@ -322,7 +374,7 @@ input, select { font-family: inherit; }
   font-family: var(--font-sans, system-ui);
   font-size: 12.5px; font-weight: 600; text-decoration: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .portfolio-home:hover, .portfolio-home:focus-visible {
   background: var(--bg-soft2); border-color: var(--brand-orange); color: var(--text);
@@ -337,10 +389,42 @@ input, select { font-family: inherit; }
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-/* 모션 최소화 선호 존중: 시세 플래시/흔들림/전환을 끈다(정보는 텍스트로 남음) */
+/* 모션 최소화 선호 존중: 시세 플래시/흔들림/전환을 끈다(정보는 텍스트로 남음).
+ *
+ * 선택자를 나열하지 않고 전역으로 끄는 이유: 나열식은 새 애니메이션을 추가할 때마다
+ * 여기에 등록해야 하고, 등록을 잊는 것이 기본값이 된다. 실제로 직전까지 이 블록은
+ * .ob-size / .shake / .portfolio-home 셋만 담고 있어서 이후 추가되는 모션은 전부
+ * 무방비였다. 전역으로 끄고 필요한 예외만 되살리는 쪽이 안전한 기본값이다.
+ * (나머지 세 앱 - 인트로 · 챗/문서QA · Guard - 이 이미 이 방식이라 정책도 통일된다.)
+ *
+ * none 이 아니라 0.01ms 인 이유: none 은 transitionend/animationend 를 발생시키지
+ * 않아 그 이벤트로 상태를 정리하는 코드가 조용히 멈춘다. 0.01ms 는 사람 눈에는 즉시지만
+ * 이벤트는 정상적으로 발생한다.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .ob-size { animation: none; }
-  .shake { animation: none; }
-  .portfolio-home { transition: none; }
-  .portfolio-home:hover, .portfolio-home:focus-visible { transform: none; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
+
+/* ============ 뎁스 차트(#E2) ============ */
+/* 누적 호가를 계단 면적으로 그린다. 캔버스 대신 SVG path 두 개 - 점이 40개뿐이라
+   라이브러리 인스턴스를 하나 더 띄울 이유가 없다(자세한 근거는 DepthChart.tsx). */
+.depth { border-bottom: 1px solid var(--line); }
+.depth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-right: 12px; }
+.depth-head .panel-title { border-bottom: none; }
+.depth-skew { margin: 0; font-size: 1.15rem; color: var(--text-sub); text-align: right; }
+.depth-skew b { color: var(--text); }
+.depth-sub { display: block; font-size: 1.05rem; color: var(--text-mute); }
+/* 높이를 고정한다 - 데이터에 따라 늘어나면 시세가 갱신될 때마다 아래 요소가 밀린다(CLS). */
+.depth-svg { display: block; width: 100%; height: 110px; }
+.depth-bid { fill: color-mix(in srgb, var(--up) 22%, transparent); stroke: var(--up); stroke-width: 0.6; }
+.depth-ask { fill: color-mix(in srgb, var(--down) 22%, transparent); stroke: var(--down); stroke-width: 0.6; }
+.depth-mid { stroke: var(--line2); stroke-width: 0.5; stroke-dasharray: 2 2; }
+.depth-axis { display: flex; justify-content: space-between; padding: 4px 12px 10px; font-size: 1.05rem; color: var(--text-mute); }
+@media (max-width: 1024px) { .depth-svg { height: 88px; } }

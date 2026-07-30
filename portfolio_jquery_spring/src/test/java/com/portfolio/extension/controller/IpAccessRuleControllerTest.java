@@ -6,12 +6,15 @@ import com.portfolio.extension.dto.IpRuleResponse;
 import com.portfolio.extension.exception.IpRuleNotFoundException;
 import com.portfolio.extension.observability.IpMetrics;
 import com.portfolio.extension.service.IpAccessRuleService;
+import com.portfolio.extension.service.IpPolicyEvaluator;
 import com.portfolio.extension.service.IpAuditService;
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +31,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.mockito.Mockito.doAnswer;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +42,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 상태코드 <-> Bean Validation(설명 20자, 시작<=끝 @AssertTrue)/도메인 예외 매핑, 응답 형태.
  */
 @WebMvcTest(IpAccessRuleController.class)
+// 평가기는 의존성 없는 순수 계산기다. 목으로 두면 판정 규칙(#G1)이 검증되지 않으므로 실물을 넣는다 -
+// 슬라이스 테스트에서도 "계산은 실물, I/O 는 목"이 기본이다.
+@Import(IpPolicyEvaluator.class)
 class IpAccessRuleControllerTest {
 
     @Autowired
@@ -55,7 +64,7 @@ class IpAccessRuleControllerTest {
     void create_valid_returns201() throws Exception {
         given(service.create(any(), any())).willReturn(new IpRuleResponse(1L, "1.2.3.4", "관리자",
                 Instant.parse("2024-06-01T00:00:00Z"), Instant.parse("2024-06-02T00:00:00Z"),
-                Instant.parse("2026-01-01T00:00:00Z")));
+                Instant.parse("2026-01-01T00:00:00Z"), "ALLOW", 100));
 
         mvc.perform(post("/api/ip-rules").contentType(MediaType.APPLICATION_JSON).content(VALID))
                 .andExpect(status().isCreated())
@@ -93,7 +102,7 @@ class IpAccessRuleControllerTest {
     void update_valid_returns200() throws Exception {
         given(service.update(eq(1L), any(), any())).willReturn(new IpRuleResponse(1L, "1.2.3.4", "수정됨",
                 Instant.parse("2024-06-01T00:00:00Z"), Instant.parse("2024-06-02T00:00:00Z"),
-                Instant.parse("2026-01-01T00:00:00Z")));
+                Instant.parse("2026-01-01T00:00:00Z"), "ALLOW", 100));
 
         mvc.perform(put("/api/ip-rules/1").contentType(MediaType.APPLICATION_JSON).content(VALID))
                 .andExpect(status().isOk())
@@ -181,11 +190,54 @@ class IpAccessRuleControllerTest {
 
     @Test
     void audit_returns200_keysetShape() throws Exception {
-        given(auditService.list(any(), anyInt()))
+        // 필터 오버로드(#G2)를 스텁한다. 컨트롤러가 3-인자 쪽을 부르므로 2-인자 스텁은 매치하지 않는다.
+        given(auditService.list(any(), anyInt(), any()))
                 .willReturn(new IpAuditListResponse(List.of(), null, false));
 
         mvc.perform(get("/api/ip-rules/audit"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hasMore").value(false));
+    }
+
+    @Test
+    @DisplayName("정책 평가(#G1) - 매치 규칙이 없으면 기본 정책(거부)과 근거를 돌려준다")
+    void evaluate_noRules_returnsDenyWithReason() throws Exception {
+        given(service.findContainingForEvaluation(any())).willReturn(List.of());
+
+        mvc.perform(get("/api/ip-rules/evaluate").param("target", "203.0.113.9"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.decision").value("DENY"))
+                .andExpect(jsonPath("$.matchedRule").doesNotExist())
+                .andExpect(jsonPath("$.evaluatedRules").isArray())
+                .andExpect(jsonPath("$.reason").value(org.hamcrest.Matchers.containsString("기본 정책")));
+    }
+
+    @Test
+    @DisplayName("정책 평가 - 잘못된 IP 는 400(problem+json)")
+    void evaluate_malformed_returns400() throws Exception {
+        mvc.perform(get("/api/ip-rules/evaluate").param("target", "999.1.1.1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID"))
+                .andExpect(jsonPath("$.title").exists())
+                .andExpect(jsonPath("$.detail").exists());
+    }
+
+    @Test
+    @DisplayName("감사 CSV(#G2) - 스트리밍 응답에 헤더와 다운로드 지시가 실린다")
+    void auditCsv_streamsWithDownloadHeaders() throws Exception {
+        // 서비스가 sink 로 두 줄을 흘리는 것을 흉내낸다(컨트롤러가 그걸 그대로 흘리는지 본다).
+        doAnswer(inv -> {
+            java.util.function.Consumer<String> sink = inv.getArgument(2);
+            sink.accept("id,action,ruleId,ipAddress,actor,createdAt\n");
+            sink.accept("\"1\",\"CREATE\",\"7\",\"1.2.3.4\",\"admin\",\"2026-07-30T00:00:00Z\"\n");
+            return null;
+        }).when(auditService).exportCsv(any(), anyInt(), any());
+
+        mvc.perform(get("/api/ip-rules/audit.csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"ip-audit.csv\""))
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id,action,ruleId")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("CREATE")));
     }
 }
