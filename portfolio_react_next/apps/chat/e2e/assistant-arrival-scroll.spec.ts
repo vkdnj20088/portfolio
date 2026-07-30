@@ -26,7 +26,10 @@ test('위로 올려 읽는 중에 응답이 도착해도 최하단으로 끌려�
   // 응답이 오기 전(2초 창)에 위로 올린다. scrollTop=120: 최상단 로딩(<=1) 은 피하되 바닥에서 멀다.
   const afterScrollUp = await scroller.evaluate((el) => {
     el.scrollTop = 120;
-    return { scrollTop: el.scrollTop, distFromBottom: el.scrollHeight - el.scrollTop - el.clientHeight };
+    return {
+      scrollTop: el.scrollTop,
+      distFromBottom: el.scrollHeight - el.scrollTop - el.clientHeight,
+    };
   });
   // 사전조건: 실제로 바닥에서 충분히 멀어졌다(하단 근처 임계 240px 훨씬 초과).
   expect(afterScrollUp.distFromBottom).toBeGreaterThan(240);

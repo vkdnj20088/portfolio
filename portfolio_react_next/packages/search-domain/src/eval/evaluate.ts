@@ -131,7 +131,15 @@ export function evaluate(cases: EvalCase[] = GOLDSET): EvalReport {
     else answered += 1;
     const ok = answeredId === c.gold;
     if (ok) correct += 1;
-    rows.push({ q: c.q, split: c.split, gold: c.gold, semanticRank, keywordRank, answered: answeredId, ok });
+    rows.push({
+      q: c.q,
+      split: c.split,
+      gold: c.gold,
+      semanticRank,
+      keywordRank,
+      answered: answeredId,
+      ok,
+    });
   }
 
   return {

@@ -89,7 +89,11 @@ describe('sseStreamReply - 재연결·이어받기', () => {
       },
     });
   }
-  function res(events: { type: 'delta' | 'done'; text: string }[], errorAfter?: number, status = 200) {
+  function res(
+    events: { type: 'delta' | 'done'; text: string }[],
+    errorAfter?: number,
+    status = 200,
+  ) {
     if (status >= 400) return new Response(null, { status });
     return new Response(sseStream(events, errorAfter), { status });
   }
@@ -102,7 +106,10 @@ describe('sseStreamReply - 재연결·이어받기', () => {
       })),
       getReplySeq: vi.fn(async () => 0),
       appendAssistantReply: vi.fn(async (_c: string, text: string) => ({
-        id: 'a1', role: 'assistant', parts: [{ type: 'text', text }], createdAt: 0,
+        id: 'a1',
+        role: 'assistant',
+        parts: [{ type: 'text', text }],
+        createdAt: 0,
       })),
     } as unknown as ChatApi;
   }
@@ -129,7 +136,10 @@ describe('sseStreamReply - 재연결·이어받기', () => {
       .mockResolvedValueOnce(res(full, 2)) // 1차: "Hello ","wor" 후 끊김
       .mockResolvedValueOnce(res(full)); // 2차: 전체 재생
     const { deltas, done } = await collect(
-      sseStreamReply(stubRaw(), 'c1', { fetchImpl: fetchImpl as unknown as typeof fetch, backoffMs: noBackoff }),
+      sseStreamReply(stubRaw(), 'c1', {
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+        backoffMs: noBackoff,
+      }),
     );
     expect(deltas.join('')).toBe('Hello world'); // 중복 없이 정확히 전체
     expect(deltas).toEqual(['Hello ', 'wor', 'ld']); // 재생분의 접두는 건너뜀
@@ -140,9 +150,13 @@ describe('sseStreamReply - 재연결·이어받기', () => {
   it('재시도 한도를 넘기면 REPLY_FAILED 로 종료한다', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(res([{ type: 'delta', text: 'x' }], 0)); // 항상 즉시 끊김
     await expect(
-      collect(sseStreamReply(stubRaw(), 'c1', {
-        fetchImpl: fetchImpl as unknown as typeof fetch, backoffMs: noBackoff, maxRetries: 2,
-      })),
+      collect(
+        sseStreamReply(stubRaw(), 'c1', {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          backoffMs: noBackoff,
+          maxRetries: 2,
+        }),
+      ),
     ).rejects.toMatchObject({ code: 'REPLY_FAILED' });
     expect(fetchImpl).toHaveBeenCalledTimes(3); // 최초 1 + 재시도 2
   });
@@ -150,19 +164,28 @@ describe('sseStreamReply - 재연결·이어받기', () => {
   it('4xx 는 재시도하지 않고 즉시 도메인 오류', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(res([], undefined, 400));
     await expect(
-      collect(sseStreamReply(stubRaw(), 'c1', {
-        fetchImpl: fetchImpl as unknown as typeof fetch, backoffMs: noBackoff,
-      })),
+      collect(
+        sseStreamReply(stubRaw(), 'c1', {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          backoffMs: noBackoff,
+        }),
+      ),
     ).rejects.toBeInstanceOf(ChatApiError);
     expect(fetchImpl).toHaveBeenCalledTimes(1); // 재시도 없음
   });
 
   it('정상 경로는 한 번의 연결로 완결한다', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      res([{ type: 'delta', text: '안녕' }, { type: 'done', text: '안녕' }]),
+      res([
+        { type: 'delta', text: '안녕' },
+        { type: 'done', text: '안녕' },
+      ]),
     );
     const { deltas, done } = await collect(
-      sseStreamReply(stubRaw(), 'c1', { fetchImpl: fetchImpl as unknown as typeof fetch, backoffMs: noBackoff }),
+      sseStreamReply(stubRaw(), 'c1', {
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+        backoffMs: noBackoff,
+      }),
     );
     expect(deltas).toEqual(['안녕']);
     expect(done).not.toBeNull();

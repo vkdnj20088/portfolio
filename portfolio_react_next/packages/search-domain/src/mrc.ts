@@ -1,4 +1,11 @@
-import { expansionsOf, idfOf, search, tokenize, tokenizeQuery, type FollowUpContext } from './retrieval';
+import {
+  expansionsOf,
+  idfOf,
+  search,
+  tokenize,
+  tokenizeQuery,
+  type FollowUpContext,
+} from './retrieval';
 import type { Answer } from './types';
 
 /**

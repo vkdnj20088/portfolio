@@ -32,22 +32,37 @@ export async function POST(req: Request): Promise<Response> {
   // 지켜주지 못한다(Route Handler 에는 기본 본문 제한이 없다).
   const declared = Number(req.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
-    return problemResponse(413, 'PAYLOAD_TOO_LARGE', '본문 크기 초과',
-      `요청 본문이 상한(${MAX_BODY_BYTES}바이트)을 넘었습니다.`, { instance: '/api/answer' });
+    return problemResponse(
+      413,
+      'PAYLOAD_TOO_LARGE',
+      '본문 크기 초과',
+      `요청 본문이 상한(${MAX_BODY_BYTES}바이트)을 넘었습니다.`,
+      { instance: '/api/answer' },
+    );
   }
 
   let body: AnswerRequest;
   try {
     body = (await req.json()) as AnswerRequest;
   } catch {
-    return problemResponse(400, 'INVALID', '본문 해석 실패',
-      '요청 본문을 해석할 수 없습니다. JSON 형식을 확인해 주세요.', { instance: '/api/answer' });
+    return problemResponse(
+      400,
+      'INVALID',
+      '본문 해석 실패',
+      '요청 본문을 해석할 수 없습니다. JSON 형식을 확인해 주세요.',
+      { instance: '/api/answer' },
+    );
   }
 
   const query = typeof body.query === 'string' ? body.query : '';
   if (query.length > MAX_QUERY_LENGTH) {
-    return problemResponse(413, 'PAYLOAD_TOO_LARGE', '질의 길이 초과',
-      `질의가 상한(${MAX_QUERY_LENGTH}자)을 넘었습니다.`, { instance: '/api/answer' });
+    return problemResponse(
+      413,
+      'PAYLOAD_TOO_LARGE',
+      '질의 길이 초과',
+      `질의가 상한(${MAX_QUERY_LENGTH}자)을 넘었습니다.`,
+      { instance: '/api/answer' },
+    );
   }
 
   // 문서 id 는 코퍼스에서 온 값이라 화이트리스트로 검증한다 - 임의 문자열을 그대로 넘기면

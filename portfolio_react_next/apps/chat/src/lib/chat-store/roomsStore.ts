@@ -68,7 +68,11 @@ export async function deleteRoom(chatId: string): Promise<void> {
 }
 
 export function useRooms(): RoomsState {
-  const snapshot = useSyncExternalStore(subscribe, () => state, () => INITIAL);
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    () => state,
+    () => INITIAL,
+  );
 
   useEffect(() => {
     if (snapshot.status === 'idle') void refreshRooms();

@@ -15,7 +15,10 @@ export function PortfolioHomeLink() {
   const href = usePortfolioHome(PORTFOLIO_FALLBACK);
   return (
     <a className="portfolio-home" href={href} aria-label="포트폴리오 소개로 돌아가기">
-      <span className="ph-ic" aria-hidden="true">&#8592;</span> 포트폴리오
+      <span className="ph-ic" aria-hidden="true">
+        &#8592;
+      </span>{' '}
+      포트폴리오
     </a>
   );
 }

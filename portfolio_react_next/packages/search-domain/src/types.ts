@@ -52,8 +52,6 @@ export interface Answer {
 }
 
 /** 스트리밍 답변 이벤트 - 챗의 ReplyEvent 와 같은 형태(delta 누적 후 done). 전송계층 교체 seam 공유. */
-export type AnswerEvent =
-  | { type: 'delta'; text: string }
-  | { type: 'done'; answer: Answer | null };
+export type AnswerEvent = { type: 'delta'; text: string } | { type: 'done'; answer: Answer | null };
 
 export type SearchMode = 'semantic' | 'keyword';

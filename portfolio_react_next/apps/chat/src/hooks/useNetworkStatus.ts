@@ -1,7 +1,11 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { isDegraded, resetNetworkQuality, subscribeNetworkQuality } from '@/lib/network/networkQuality';
+import {
+  isDegraded,
+  resetNetworkQuality,
+  subscribeNetworkQuality,
+} from '@/lib/network/networkQuality';
 
 export type NetworkStatus = 'online' | 'unstable' | 'offline';
 

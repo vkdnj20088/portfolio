@@ -131,7 +131,9 @@ export function useMessages(chatId: string) {
 
   /** 전송/응답으로 생긴 새 메시지를 목록 끝에 붙인다(재조회 없이 - 이미 확정된 값이다). */
   const append = useCallback((message: Message) => {
-    setState((prev) => (prev.status === 'ready' ? { ...prev, items: [...prev.items, message] } : prev));
+    setState((prev) =>
+      prev.status === 'ready' ? { ...prev, items: [...prev.items, message] } : prev,
+    );
   }, []);
 
   /** API 가 돌려준 갱신본으로 한 건을 교체한다(피드백, STEP 11). 참조가 바뀌므로

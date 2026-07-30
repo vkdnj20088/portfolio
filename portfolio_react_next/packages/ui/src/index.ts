@@ -1,4 +1,9 @@
-export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './components/Button/Button';
+export {
+  Button,
+  type ButtonProps,
+  type ButtonVariant,
+  type ButtonSize,
+} from './components/Button/Button';
 export { Spinner, type SpinnerProps } from './components/Spinner/Spinner';
 export { Dialog, type DialogProps } from './components/Dialog/Dialog';
 export {
@@ -13,9 +18,4 @@ export { cn, type ClassValue } from './lib/cn';
 export { splitByTerms, type TextSegment } from './lib/splitByTerms';
 export { portfolioHomeHref } from './lib/portfolioHome';
 export { usePortfolioHome } from './lib/usePortfolioHome';
-export {
-  parseProblem,
-  problemResponse,
-  PROBLEM_CONTENT_TYPE,
-  type Problem,
-} from './lib/problem';
+export { parseProblem, problemResponse, PROBLEM_CONTENT_TYPE, type Problem } from './lib/problem';

@@ -55,7 +55,11 @@ describe('miniMarkdown - 링크 스킴 화이트리스트', () => {
 
   it('링크 문구가 비면 주소를 문구로 쓴다', () => {
     const t = parseInline('[](https://example.com)');
-    expect(t[0]).toEqual({ kind: 'link', text: 'https://example.com', href: 'https://example.com' });
+    expect(t[0]).toEqual({
+      kind: 'link',
+      text: 'https://example.com',
+      href: 'https://example.com',
+    });
   });
 });
 

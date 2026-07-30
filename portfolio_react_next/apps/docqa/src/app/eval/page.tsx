@@ -27,9 +27,9 @@ export default function EvalPage() {
         <div className="pageHead">
           <h1>품질 지표</h1>
           <p>
-            직접 라벨링한 <b>골드셋 {report.cases}문항</b>(문서 어휘 그대로 / 동의어로만 / 코퍼스에 답
-            없음)으로 검색·독해·불응답을 측정합니다. 엔진이 결정적이라 같은 코드는 늘 같은 표를 냅니다 -
-            그래서 이 수치는 테스트에서 <b>회귀 게이트</b>로도 씁니다.
+            직접 라벨링한 <b>골드셋 {report.cases}문항</b>(문서 어휘 그대로 / 동의어로만 / 코퍼스에
+            답 없음)으로 검색·독해·불응답을 측정합니다. 엔진이 결정적이라 같은 코드는 늘 같은 표를
+            냅니다 - 그래서 이 수치는 테스트에서 <b>회귀 게이트</b>로도 씁니다.
           </p>
         </div>
 
@@ -74,8 +74,8 @@ export default function EvalPage() {
             <span className="ev">{pct(report.abstention.rate)}</span>
             <span className="ek">불응답 정확도</span>
             <span className="ed">
-              답이 없어야 하는 {report.abstention.n}문항 중 실제로 침묵한 비율. 이 데모가 파는 지표라
-              100% 아래로 내려가면 테스트가 깨집니다.
+              답이 없어야 하는 {report.abstention.n}문항 중 실제로 침묵한 비율. 이 데모가 파는
+              지표라 100% 아래로 내려가면 테스트가 깨집니다.
             </span>
           </div>
           <div className="evalCard">

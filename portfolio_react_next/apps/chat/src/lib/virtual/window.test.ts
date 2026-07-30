@@ -6,22 +6,38 @@ const uniform = toOffsets(Array<number>(20).fill(40));
 
 describe('computeVariableWindow - 가변 높이 가상화', () => {
   it('빈 목록은 0 구간', () => {
-    expect(computeVariableWindow({ scrollTop: 0, viewportH: 100, offsets: [], overscan: 2 })).toEqual({
-      start: 0, end: 0, padTop: 0, padBottom: 0,
+    expect(
+      computeVariableWindow({ scrollTop: 0, viewportH: 100, offsets: [], overscan: 2 }),
+    ).toEqual({
+      start: 0,
+      end: 0,
+      padTop: 0,
+      padBottom: 0,
     });
   });
 
   it('맨 위: start 0, 스페이서가 전체 높이를 보존', () => {
-    const w = computeVariableWindow({ scrollTop: 0, viewportH: 100, offsets: uniform, overscan: 2 });
+    const w = computeVariableWindow({
+      scrollTop: 0,
+      viewportH: 100,
+      offsets: uniform,
+      overscan: 2,
+    });
     expect(w.start).toBe(0);
     expect(w.padTop).toBe(0);
     // 총 높이 = padTop + 렌더 높이 + padBottom = 20*40
-    const rendered = w.end === 0 ? 0 : uniform[w.end - 1]! - (w.start === 0 ? 0 : uniform[w.start - 1]!);
+    const rendered =
+      w.end === 0 ? 0 : uniform[w.end - 1]! - (w.start === 0 ? 0 : uniform[w.start - 1]!);
     expect(w.padTop + rendered + w.padBottom).toBe(800);
   });
 
   it('중간 스크롤: 오버스캔 포함, 스페이서 합이 전체 높이 유지', () => {
-    const w = computeVariableWindow({ scrollTop: 400, viewportH: 100, offsets: uniform, overscan: 2 });
+    const w = computeVariableWindow({
+      scrollTop: 400,
+      viewportH: 100,
+      offsets: uniform,
+      overscan: 2,
+    });
     // 400px = 10번째 항목 경계, 뷰포트 100 = 항목 2~3개
     expect(w.start).toBeLessThanOrEqual(10);
     expect(w.end).toBeGreaterThan(10);
@@ -30,7 +46,12 @@ describe('computeVariableWindow - 가변 높이 가상화', () => {
   });
 
   it('맨 아래로 스크롤 초과해도 안전(클램프)', () => {
-    const w = computeVariableWindow({ scrollTop: 999999, viewportH: 100, offsets: uniform, overscan: 2 });
+    const w = computeVariableWindow({
+      scrollTop: 999999,
+      viewportH: 100,
+      offsets: uniform,
+      overscan: 2,
+    });
     expect(w.end).toBe(20);
     expect(w.padBottom).toBe(0);
   });
@@ -45,8 +66,18 @@ describe('computeVariableWindow - 가변 높이 가상화', () => {
   });
 
   it('렌더 항목 수는 전체 크기와 무관하게 상한이 있다(가상화 이득)', () => {
-    const small = computeVariableWindow({ scrollTop: 200, viewportH: 100, offsets: toOffsets(Array(50).fill(40)), overscan: 2 });
-    const huge = computeVariableWindow({ scrollTop: 200, viewportH: 100, offsets: toOffsets(Array(100000).fill(40)), overscan: 2 });
+    const small = computeVariableWindow({
+      scrollTop: 200,
+      viewportH: 100,
+      offsets: toOffsets(Array(50).fill(40)),
+      overscan: 2,
+    });
+    const huge = computeVariableWindow({
+      scrollTop: 200,
+      viewportH: 100,
+      offsets: toOffsets(Array(100000).fill(40)),
+      overscan: 2,
+    });
     expect(small.end - small.start).toBe(huge.end - huge.start);
   });
 });

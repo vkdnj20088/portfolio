@@ -47,10 +47,18 @@ describe('POST /api/answer', () => {
   });
 
   it('delta 를 흘리고 마지막 done 에 근거를 실어 보낸다', async () => {
-    const events = (await readSse(await post(JSON.stringify({ query: '연차는 며칠 부여되나요?' })))) as {
+    const events = (await readSse(
+      await post(JSON.stringify({ query: '연차는 며칠 부여되나요?' })),
+    )) as {
       type: string;
       text?: string;
-      answer?: { docId: string; text: string; passageText: string; spanStart: number; spanEnd: number };
+      answer?: {
+        docId: string;
+        text: string;
+        passageText: string;
+        spanStart: number;
+        spanEnd: number;
+      };
     }[];
     const done = events[events.length - 1];
     expect(done?.type).toBe('done');
@@ -67,7 +75,9 @@ describe('POST /api/answer', () => {
   });
 
   it('코퍼스에 답이 없으면 delta 없이 done(answer=null)', async () => {
-    const events = await readSse(await post(JSON.stringify({ query: '주차장은 몇 시까지 운영하나요?' })));
+    const events = await readSse(
+      await post(JSON.stringify({ query: '주차장은 몇 시까지 운영하나요?' })),
+    );
     expect(events).toEqual([{ type: 'done', answer: null }]);
   });
 });

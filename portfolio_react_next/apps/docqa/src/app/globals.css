@@ -786,10 +786,14 @@ mark {
   color: var(--color-text-muted);
   line-height: 1.6;
 }
-.followUpNote b { color: var(--color-text); }
+.followUpNote b {
+  color: var(--color-text);
+}
 /* 360px 에서는 입력과 버튼을 세로로 - 나란히 두면 버튼 라벨이 줄바꿈되며 폼 높이가 튄다. */
 @media (max-width: 420px) {
-  .followUp { flex-direction: column; }
+  .followUp {
+    flex-direction: column;
+  }
 }
 
 /* 보조 액션(후속질문 제출). primaryBtn 보다 시각 위계가 낮아야 한다 - 주 질의 입력이 여전히
@@ -808,9 +812,17 @@ mark {
     background var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard);
 }
-.secondaryBtn:hover { border-color: var(--color-primary); }
-.secondaryBtn:active { transform: scale(0.97); transition-duration: 0ms; }
-.secondaryBtn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.secondaryBtn:hover {
+  border-color: var(--color-primary);
+}
+.secondaryBtn:active {
+  transform: scale(0.97);
+  transition-duration: 0ms;
+}
+.secondaryBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 
 /* ── 카테고리 패싯(#D2) ─────────────────────────────────── */
 /* 직전까지 카테고리는 결과에 표시만 됐다 - 보이는데 누를 수 없는 정보였다.
@@ -837,9 +849,18 @@ mark {
     border-color var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard);
 }
-.facetChip:hover { border-color: var(--color-border-strong); color: var(--color-text); }
-.facetChip:active { transform: scale(0.97); transition-duration: 0ms; }
-.facetChip:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.facetChip:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+.facetChip:active {
+  transform: scale(0.97);
+  transition-duration: 0ms;
+}
+.facetChip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 /* 선택 상태는 aria-pressed 를 근거로 삼는다 - 보조기술용 속성과 시각 상태가 갈리지 않게. */
 .facetChip[aria-pressed='true'] {
   background: var(--color-primary-subtle);
@@ -848,6 +869,15 @@ mark {
   font-weight: 600;
 }
 /* 개수는 tabular-nums 로 - 칩을 토글할 때 자릿수가 바뀌며 폭이 튀는 것을 막는다. */
-.facetCount { font-variant-numeric: tabular-nums; color: var(--color-text-muted); font-size: var(--text-xs); }
-.facetChip[aria-pressed='true'] .facetCount { color: var(--color-link); }
-.facetActive { color: var(--color-text-muted); font-weight: 400; }
+.facetCount {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+.facetChip[aria-pressed='true'] .facetCount {
+  color: var(--color-link);
+}
+.facetActive {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}

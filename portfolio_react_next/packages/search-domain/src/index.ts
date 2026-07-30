@@ -14,11 +14,4 @@ export { createDocQaApi, answerChunks, ANSWER_STEP_MS } from './docQaApi';
 export type { DocQaApi } from './docQaApi';
 export { verifyGrounding } from './grounding';
 export type { GroundingReport } from './grounding';
-export type {
-  Doc,
-  Passage,
-  ScoredPassage,
-  Answer,
-  AnswerEvent,
-  SearchMode,
-} from './types';
+export type { Doc, Passage, ScoredPassage, Answer, AnswerEvent, SearchMode } from './types';

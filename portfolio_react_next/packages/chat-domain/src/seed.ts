@@ -51,13 +51,25 @@ export function createSeedState(now: number): ChatState {
 
   const shortConversation: Array<[Message['role'], string]> = [
     ['user', '사이드 프로젝트 아이디어 좀 같이 정리해 줄래?'],
-    ['assistant', '좋아요. 어떤 분야에 관심이 있으신가요? 최근에 자주 쓰는 서비스에서 불편했던 점부터 출발하면 좋습니다.'],
+    [
+      'assistant',
+      '좋아요. 어떤 분야에 관심이 있으신가요? 최근에 자주 쓰는 서비스에서 불편했던 점부터 출발하면 좋습니다.',
+    ],
     ['user', '팀 회고를 기록하는 도구가 마땅치 않아. 노션은 너무 자유도가 높고.'],
-    ['assistant', '구조화된 회고 도구라는 방향이 좋네요. 템플릿 고정 + 액션 아이템 추적, 두 가지가 핵심 기능이 될 수 있습니다.'],
+    [
+      'assistant',
+      '구조화된 회고 도구라는 방향이 좋네요. 템플릿 고정 + 액션 아이템 추적, 두 가지가 핵심 기능이 될 수 있습니다.',
+    ],
     ['user', '액션 아이템 추적을 조금 더 구체화해 줘.'],
-    ['assistant', '회고에서 나온 액션에 담당자와 기한을 붙이고, 다음 회고 시작 시 지난 액션의 완료 여부를 먼저 확인하는 흐름을 제안합니다. 완료율이 팀 지표가 됩니다.'],
+    [
+      'assistant',
+      '회고에서 나온 액션에 담당자와 기한을 붙이고, 다음 회고 시작 시 지난 액션의 완료 여부를 먼저 확인하는 흐름을 제안합니다. 완료율이 팀 지표가 됩니다.',
+    ],
     ['user', '좋다. MVP 범위는 어떻게 잡을까?'],
-    ['assistant', 'MVP 는 회고 작성(고정 템플릿), 액션 아이템 등록, 다음 회고에서의 리뷰 세 가지로 좁히는 것을 추천합니다. 알림이나 통계는 그 다음입니다.'],
+    [
+      'assistant',
+      'MVP 는 회고 작성(고정 템플릿), 액션 아이템 등록, 다음 회고에서의 리뷰 세 가지로 좁히는 것을 추천합니다. 알림이나 통계는 그 다음입니다.',
+    ],
   ];
   const shortMessages: Message[] = shortConversation.map(([role, text], index) =>
     textMessage(short.id, role, text, now - (90 - index * 10) * MINUTE),
@@ -65,7 +77,12 @@ export function createSeedState(now: number): ChatState {
   // parts 유니온 확장 실증(STEP 12) - 'code' 조각이 붙은 메시지. 렌더러 스위치에
   // 케이스 하나가 늘었을 뿐 목록/스크롤/복사(요약 텍스트) 계층은 그대로다.
   shortMessages.push(
-    textMessage(short.id, 'user', '마지막으로, 회고 템플릿을 코드로 정리해 줄 수 있어?', now - 12 * MINUTE),
+    textMessage(
+      short.id,
+      'user',
+      '마지막으로, 회고 템플릿을 코드로 정리해 줄 수 있어?',
+      now - 12 * MINUTE,
+    ),
     {
       id: createId('msg'),
       chatId: short.id,
@@ -89,9 +106,7 @@ export function createSeedState(now: number): ChatState {
       role === 'user'
         ? `${i}번째 질문입니다. 페이지네이션 경계가 잘 동작하는지 확인하는 메시지예요.`
         : `${i}번째 응답입니다. 이 방은 50개 단위 페이지네이션 데모용이라 메시지에 번호를 박아 두었습니다.`;
-    longMessages.push(
-      textMessage(long.id, role, text, now - (130 - i) * 15 * MINUTE),
-    );
+    longMessages.push(textMessage(long.id, role, text, now - (130 - i) * 15 * MINUTE));
   }
 
   const notice: ChatRoom = {

@@ -30,13 +30,48 @@ export interface FollowUpCase {
  * 컨텍스트 없이도 맞혀서 측정 자체가 무의미해진다.
  */
 export const FOLLOWUP_GOLDSET: FollowUpCase[] = [
-  { first: '연차는 며칠 부여되나요?', followUp: '반차는 어떻게 쓰나요?', gold: 'HR-01-p2', pinnedDocId: 'HR-01' },
-  { first: '연차는 며칠 부여되나요?', followUp: '병가는 며칠까지인가요?', gold: 'HR-01-p3', pinnedDocId: 'HR-01' },
-  { first: '재택근무는 주 며칠까지 가능한가요?', followUp: '초과근무는 어떻게 보상되나요?', gold: 'HR-02-p3', pinnedDocId: 'HR-02' },
-  { first: '비밀번호는 몇 자 이상이어야 하나요?', followUp: '얼마마다 바꿔야 하나요?', gold: 'SEC-01-p2', pinnedDocId: 'SEC-01' },
-  { first: '지정가 주문은 어떻게 체결되나요?', followUp: '출금할 때는 무엇이 필요한가요?', gold: 'PROD-01-p3', pinnedDocId: 'PROD-01' },
-  { first: '경비 정산은 언제까지 청구해야 하나요?', followUp: '자기계발비는 연 얼마인가요?', gold: 'HR-03-p3', pinnedDocId: 'HR-03' },
-  { first: '프로덕션 배포는 언제 할 수 있나요?', followUp: '온콜 담당자는 어떻게 정해지나요?', gold: 'INFRA-01-p3', pinnedDocId: 'INFRA-01' },
+  {
+    first: '연차는 며칠 부여되나요?',
+    followUp: '반차는 어떻게 쓰나요?',
+    gold: 'HR-01-p2',
+    pinnedDocId: 'HR-01',
+  },
+  {
+    first: '연차는 며칠 부여되나요?',
+    followUp: '병가는 며칠까지인가요?',
+    gold: 'HR-01-p3',
+    pinnedDocId: 'HR-01',
+  },
+  {
+    first: '재택근무는 주 며칠까지 가능한가요?',
+    followUp: '초과근무는 어떻게 보상되나요?',
+    gold: 'HR-02-p3',
+    pinnedDocId: 'HR-02',
+  },
+  {
+    first: '비밀번호는 몇 자 이상이어야 하나요?',
+    followUp: '얼마마다 바꿔야 하나요?',
+    gold: 'SEC-01-p2',
+    pinnedDocId: 'SEC-01',
+  },
+  {
+    first: '지정가 주문은 어떻게 체결되나요?',
+    followUp: '출금할 때는 무엇이 필요한가요?',
+    gold: 'PROD-01-p3',
+    pinnedDocId: 'PROD-01',
+  },
+  {
+    first: '경비 정산은 언제까지 청구해야 하나요?',
+    followUp: '자기계발비는 연 얼마인가요?',
+    gold: 'HR-03-p3',
+    pinnedDocId: 'HR-03',
+  },
+  {
+    first: '프로덕션 배포는 언제 할 수 있나요?',
+    followUp: '온콜 담당자는 어떻게 정해지나요?',
+    gold: 'INFRA-01-p3',
+    pinnedDocId: 'INFRA-01',
+  },
 ];
 
 export interface FollowUpScore {

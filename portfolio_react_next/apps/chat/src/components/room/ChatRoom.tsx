@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChatApiError, type ChatRoom as ChatRoomModel, type MessageRating } from '@chat/chat-domain';
+import {
+  ChatApiError,
+  type ChatRoom as ChatRoomModel,
+  type MessageRating,
+} from '@chat/chat-domain';
 import { Button, Spinner, useToast } from '@chat/ui';
 import { chatApi, isTransportFailure } from '@/lib/api/chatApi';
 import { refreshRooms } from '@/lib/chat-store/roomsStore';
@@ -211,7 +215,9 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
       try {
         replace(await chatApi.rateMessage(room.id, messageId, rating));
       } catch {
-        showToast('피드백을 저장하지 못했습니다. 네트워크 상태를 확인해 주세요.', { variant: 'error' });
+        showToast('피드백을 저장하지 못했습니다. 네트워크 상태를 확인해 주세요.', {
+          variant: 'error',
+        });
       }
     },
     [room.id, replace, showToast],
@@ -227,7 +233,9 @@ function RoomBody({ room }: { room: ChatRoomModel }) {
       try {
         await chatApi.deleteMessage(room.id, messageId);
       } catch {
-        showToast('응답을 다시 생성하지 못했습니다. 네트워크 상태를 확인해 주세요.', { variant: 'error' });
+        showToast('응답을 다시 생성하지 못했습니다. 네트워크 상태를 확인해 주세요.', {
+          variant: 'error',
+        });
         setSending(false);
         return;
       }

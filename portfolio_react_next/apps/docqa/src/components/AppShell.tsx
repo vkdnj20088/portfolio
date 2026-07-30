@@ -59,7 +59,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClick={toggleTheme}
           // 첫 페인트에는 현재 테마를 아직 모른다(하이드레이션 전). 모르는 상태를 아는 척하지 않는다.
           aria-label={
-            theme === null ? '테마 전환' : theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'
+            theme === null
+              ? '테마 전환'
+              : theme === 'dark'
+                ? '라이트 모드로 전환'
+                : '다크 모드로 전환'
           }
         >
           <ThemeIcon dark={theme === 'dark'} />

@@ -491,9 +491,7 @@ export function createMockChatApi(options: MockChatApiOptions = {}) {
       await delay(ports.delays.read);
       return loadState()
         .rooms.map(toSummary)
-        .sort(
-          (a, b) => (b.lastMessageAt ?? b.createdAt) - (a.lastMessageAt ?? a.createdAt),
-        );
+        .sort((a, b) => (b.lastMessageAt ?? b.createdAt) - (a.lastMessageAt ?? a.createdAt));
     },
 
     /** 채팅방 조회 */
@@ -593,10 +591,7 @@ export function createMockChatApi(options: MockChatApiOptions = {}) {
      * 지금은 클라이언트 색인이지만 계약은 "질의를 주면 결과를 준다" 하나라, 서버 검색으로
      * 옮길 때 이 메서드의 구현만 바뀌고 화면 코드는 그대로다.
      */
-    async searchMessages(
-      query: string,
-      options?: { limit?: number },
-    ): Promise<MessageSearchHit[]> {
+    async searchMessages(query: string, options?: { limit?: number }): Promise<MessageSearchHit[]> {
       ensureOnline();
       await delay(ports.delays.read);
       return searcher.search(loadState(), query, options?.limit);

@@ -66,7 +66,10 @@ function sseBody(events: AnswerEvent[], errorAfter?: number) {
 
 function eventsFor(answer: Answer): AnswerEvent[] {
   return [
-    ...answer.text.split(/(\s+)/).filter(Boolean).map((text) => ({ type: 'delta' as const, text })),
+    ...answer.text
+      .split(/(\s+)/)
+      .filter(Boolean)
+      .map((text) => ({ type: 'delta' as const, text })),
     { type: 'done' as const, answer },
   ];
 }

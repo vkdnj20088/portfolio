@@ -55,7 +55,8 @@ function upperBoundIndex(offsets: number[], value: number): number {
   let hi = offsets.length;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (offsets[mid]! > value) hi = mid; // mid < hi <= length -> 정의됨
+    if (offsets[mid]! > value)
+      hi = mid; // mid < hi <= length -> 정의됨
     else lo = mid + 1;
   }
   return lo;

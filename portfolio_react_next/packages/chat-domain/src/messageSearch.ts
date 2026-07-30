@@ -109,7 +109,12 @@ export function createMessageSearcher(): MessageSearcher {
         });
       }
       return rows
-        .sort((a, b) => b.score - a.score || b.createdAt - a.createdAt || a.messageId.localeCompare(b.messageId))
+        .sort(
+          (a, b) =>
+            b.score - a.score ||
+            b.createdAt - a.createdAt ||
+            a.messageId.localeCompare(b.messageId),
+        )
         .slice(0, limit);
     },
   };

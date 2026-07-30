@@ -227,12 +227,7 @@ export function ChatRoomList() {
       </div>
 
       {mode === 'messages' ? (
-        <MessageHits
-          query={query}
-          hits={hits}
-          searching={searching}
-          onNavigate={handleNavigate}
-        />
+        <MessageHits query={query} hits={hits} searching={searching} onNavigate={handleNavigate} />
       ) : visible.length === 0 ? (
         <div className={styles.center} role="status">
           <p className={styles.muted}>검색과 일치하는 채팅방이 없습니다.</p>
@@ -272,9 +267,7 @@ export function ChatRoomList() {
                 >
                   <span className={styles.titleRow}>
                     <span className={styles.title}>
-                      {room.type === 'receive-only' && (
-                        <span className={styles.badge}>공지</span>
-                      )}
+                      {room.type === 'receive-only' && <span className={styles.badge}>공지</span>}
                       {room.title}
                     </span>
                     <time className={styles.time}>
@@ -381,9 +374,7 @@ function MessageHits({
             >
               <span className={styles.titleRow}>
                 <span className={styles.title}>
-                  <span className={styles.badge}>
-                    {hit.role === 'user' ? '내 메시지' : '응답'}
-                  </span>
+                  <span className={styles.badge}>{hit.role === 'user' ? '내 메시지' : '응답'}</span>
                   {hit.chatTitle}
                 </span>
                 <time className={styles.time}>{formatDateTime(hit.createdAt)}</time>

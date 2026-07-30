@@ -5,7 +5,10 @@ import { ToastProvider, useToast } from './Toast';
 function Trigger() {
   const { showToast } = useToast();
   return (
-    <button type="button" onClick={() => showToast('저장에 실패했습니다.', { variant: 'error', durationMs: 0 })}>
+    <button
+      type="button"
+      onClick={() => showToast('저장에 실패했습니다.', { variant: 'error', durationMs: 0 })}
+    >
       알림 띄우기
     </button>
   );

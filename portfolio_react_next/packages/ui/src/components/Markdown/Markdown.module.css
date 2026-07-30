@@ -1,11 +1,23 @@
 /* 마크다운 렌더 스타일(#C1). 말풍선 안에 들어가므로 첫/마지막 여백을 흡수해
    부모의 padding 과 이중으로 쌓이지 않게 한다. */
-.root > :first-child { margin-top: 0; }
-.root > :last-child { margin-bottom: 0; }
+.root > :first-child {
+  margin-top: 0;
+}
+.root > :last-child {
+  margin-bottom: 0;
+}
 
-.p { margin: 0 0 var(--space-2); }
-.list { margin: 0 0 var(--space-2); padding-left: 1.15em; list-style: disc; }
-.list li { margin: 2px 0; }
+.p {
+  margin: 0 0 var(--space-2);
+}
+.list {
+  margin: 0 0 var(--space-2);
+  padding-left: 1.15em;
+  list-style: disc;
+}
+.list li {
+  margin: 2px 0;
+}
 
 /* 인라인 코드 - 배경만으로 구분하면 고대비 모드에서 사라지므로 테두리도 준다. */
 .inlineCode {
@@ -30,7 +42,9 @@
   font-size: 0.88em;
   line-height: 1.55;
 }
-.pre code { white-space: pre; }
+.pre code {
+  white-space: pre;
+}
 /* 언어 라벨 - data 속성으로 붙여 마크업을 늘리지 않는다. */
 .pre[data-lang]::before {
   content: attr(data-lang);
@@ -44,5 +58,13 @@
 
 /* --color-primary 는 표면용이라 텍스트로 쓰면 대비가 낮다 - 텍스트용 --color-link 를 쓴다
    (앱의 다른 링크와 같은 규칙). */
-.link { color: var(--color-link); text-decoration: underline; text-underline-offset: 2px; }
-.link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 2px; }
+.link {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
