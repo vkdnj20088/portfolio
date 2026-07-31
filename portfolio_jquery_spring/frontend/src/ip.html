@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JC Guard - 최종은의 jQuery + Spring Boot 포트폴리오 (IP 접근 설정)</title>
-    <meta name="description" content="허용 IP 와 사용 시간대를 등록·검색·삭제하는 어드민 데모. 100만 건 키셋 페이지네이션, 정책 우선순위 평가, 접속 기기 시간대 표기, 내용/기간 검색.">
+    <meta name="description" content="허용 IP 와 사용 시간대를 등록·검색·삭제하는 어드민 데모. 규칙이 겹칠 때 무엇이 이기는지 평가 순서대로 보여 주는 정책 시뮬레이터, OFFSET 없는 키셋 페이지네이션, 접속 기기 시간대 표기.">
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
@@ -29,6 +29,9 @@
         <!-- 해석된 IANA 시간대. 값은 ip.ts 가 Intl.DateTimeFormat().resolvedOptions() 로 채운다 -
              하드코딩이 아니라 브라우저 설정을 읽었다는 것을 화면에서 보이게 하는 자리다. -->
         <p class="ip-tz">표시 시간대 <code id="tzNote">-</code> <span>(브라우저 설정에서 읽음)</span></p>
+        <!-- 무엇을 보면 되는지. 규칙을 추가할 때 서버가 대역 포함 여부를 즉시 판정하는 것이
+             이 화면에서 가장 볼 만한 동작인데, 눌러 보지 않으면 드러나지 않는다. -->
+        <p class="app__hint">규칙을 추가할 때 그 대역이 지금 접속한 IP 를 포함하는지 서버가 바로 판정해 알려 줍니다. 허용과 차단이 겹치면 우선순위와 구체성으로 해소합니다.</p>
     </header>
 
     <section class="card">
@@ -83,8 +86,45 @@
                 <tbody id="ipTableBody" aria-live="polite"></tbody>
             </table>
             <div id="ipEmpty" class="ip-empty" hidden>등록된 규칙이 없습니다.</div>
+            <!-- 규모를 화면에서 말한다. 3행짜리 표만 보이면 목록 설계가 아무것도 아닌 것처럼
+                 읽히는데, 정작 "총 몇 건"을 적지 않는 것이 이 설계의 선택이다 - COUNT 는
+                 OFFSET 의 비용을 되살린다. 거래소 데모의 "DOM 16행 / 전체 1,224행" 과 같은 톤. -->
+            <p class="ip-scale">표시 <b id="ipCount">0</b>건 · 30건씩 커서로 가져옵니다 <span>(총 건수는 세지 않습니다 - COUNT 가 OFFSET 의 비용을 되살립니다)</span></p>
             <div class="ip-more"><button id="loadMore" type="button" class="btn" hidden>더 보기</button></div>
         </div>
+    </section>
+
+    <!-- 정책 시뮬레이터. 규칙을 저장하고 목록으로 보여 주는 것은 CRUD 이고, 접근 제어에서
+         어려운 부분은 규칙이 겹칠 때 무엇이 이기는지다. 평가 엔드포인트가 판정과 함께
+         추적(evaluatedRules)을 돌려주므로, 이 화면은 결과가 아니라 그 과정을 그린다. -->
+    <section class="card sim" aria-labelledby="simTitle">
+        <h2 id="simTitle" class="sim__title">정책 시뮬레이터</h2>
+        <p class="sim__lead">규칙이 겹칠 때 <strong>무엇이 이기는지</strong>를 봅니다. 판정만이 아니라 평가 순서 전체와 <strong>다른 규칙이 왜 적용되지 않았는지</strong>를 함께 돌려받습니다.</p>
+
+        <div class="sim__grid">
+            <div class="field">
+                <label class="field__label" for="simTarget">평가할 IP</label>
+                <div class="custom-input">
+                    <input id="simTarget" type="text" maxlength="45" placeholder="예: 203.0.113.10" autocomplete="off">
+                    <button id="simWhoami" type="button" class="btn">내 IP</button>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="simAt">평가 시점</label>
+                <input id="simAt" type="datetime-local">
+            </div>
+        </div>
+        <!-- 시점 입력을 둔 이유를 적는다. 규칙마다 사용 기간이 있어 시점이 판정을 실제로 바꾸고,
+             그래서 이 화면은 조회가 아니라 예측 도구가 된다("다음 주에 이 IP 가 들어올 수 있나"). -->
+        <p class="sim__note">규칙마다 사용 기간이 있어 <strong>시점이 판정을 바꿉니다</strong>. 비우면 지금 기준으로 평가합니다.</p>
+
+        <div class="sim__actions">
+            <button id="simRun" type="button" class="btn btn--primary">평가</button>
+        </div>
+
+        <p id="simError" class="ip-hint ip-hint--error" hidden></p>
+        <!-- 판정이 바뀌는 자리라 aria-live 로 읽어 준다(시각 변화만으로는 스크린리더에 안 전해진다). -->
+        <div id="simResult" class="sim-result" role="status" aria-live="polite" hidden></div>
     </section>
 </main>
 

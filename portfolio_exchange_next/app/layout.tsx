@@ -20,7 +20,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="ko" suppressHydrationWarning className={`${noto.variable} ${roboto.variable}`}>
       <body>
-        <div className="demo-badge">최종은의 React + Next 포트폴리오 · 거래소 데모 · 실서비스 아님 · 더미 데이터</div>
+        {/* 배지는 "무엇이 아닌지"(실서비스 아님)만 말하고 있었다. 트레이딩 화면만 본 사람에게는
+            무엇을 보면 되는지가 없어서, 그 한 줄을 덧붙인다. 거래 UI 안이 아니라 이 바에 두는
+            이유: 화면 어느 칸에 넣어도 그 칸의 성격을 흐린다. */}
+        <div className="demo-badge">
+          <span>최종은의 React + Next 포트폴리오 · 거래소 데모 · 실서비스 아님 · 더미 데이터</span>
+          <span className="db-look">실무에서 호가창을 20단으로 늘리고 차트를 옮겼던 작업의 재현입니다. 호가를 누르면 주문가로 들어가고, 주문 유형에 스탑이 있습니다.</span>
+        </div>
         <Providers nonce={nonce}>
           <AppShell>{children}</AppShell>
         </Providers>

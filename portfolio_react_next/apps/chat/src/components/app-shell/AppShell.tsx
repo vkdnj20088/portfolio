@@ -42,9 +42,16 @@ export function AppShell({ children, sidebar }: AppShellProps) {
             <SidebarToggle />
           </div>
           <div className={styles.sidebarBody}>{sidebar}</div>
-          {/* 포트폴리오 식별 표기 - 모든 페이지에서 보이되 채팅 영역을 침범하지 않는 자리 */}
+          {/* 포트폴리오 식별 표기 - 모든 페이지에서 보이되 채팅 영역을 침범하지 않는 자리.
+              여섯 데모 중 이 앱만 §0(실서비스 아님)을 화면에서 말하지 않고 있었다. 응답이
+              결정적이라 같은 질문에 같은 답이 오는데, 그 사실이 안 적혀 있으면 의도한 목업이
+              아니라 고장난 제품으로 읽힌다. 여기에 한 줄을 붙인다(사이드바를 접으면 이 줄도
+              접히므로, 좁은 화면 첫 화면에는 랜딩에도 같은 사실을 둔다). */}
           <div className={styles.sidebarFooter}>
-            <span>최종은의 React + Next 포트폴리오</span>
+            <span>
+              최종은의 React + Next 포트폴리오
+              <em className={styles.footerNote}>실서비스 아님 · 응답은 결정적 목업</em>
+            </span>
             <ThemeToggle />
           </div>
         </aside>

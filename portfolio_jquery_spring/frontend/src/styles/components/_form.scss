@@ -49,6 +49,14 @@
     display: flex;
     gap: 8px;
 
+    // 파일 입력에는 flex 규칙이 없어서 네이티브 컨트롤의 고유 폭이 그대로 남고, 그만큼 옆
+    // 버튼을 칸 밖으로 밀어낸다(360px 에서 가로 4px 넘침). flex 안에서 실제로 줄어들려면
+    // min-width:0 이 함께 있어야 한다 - 기본값 auto 는 콘텐츠 폭 아래로 안 내려간다.
+    input[type='file'] {
+        flex: 1;
+        min-width: 0;
+    }
+
     input[type='text'] {
         flex: 1;
         padding: 10px 12px;

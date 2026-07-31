@@ -94,6 +94,16 @@
   color: var(--color-text-muted);
 }
 
+/* §0 표기는 귀속 문구보다 한 단 낮춘다 - 같은 크기로 두면 두 줄이 한 문장처럼 붙어 읽힌다. */
+.footerNote {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: calc(var(--text-xs) - 1px);
+  color: var(--color-text-subtle, var(--color-text-muted));
+  word-break: keep-all;
+}
+
 .main {
   display: flex;
   flex-direction: column;

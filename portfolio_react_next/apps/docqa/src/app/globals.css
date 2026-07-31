@@ -651,6 +651,18 @@ mark {
   border-radius: var(--radius-lg);
 }
 
+/* 빈 결과의 원인과 다음 행동. 결과 없음 문장보다 한 단 낮춰 두 줄이 한 문장으로 붙지 않게 한다. */
+.emptyHint {
+  display: block;
+  max-width: 48ch;
+  margin: var(--space-2) auto 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-text-subtle, var(--color-text-muted));
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 /* ── 품질 지표(/eval) ──────────────────────────────────── */
 .evalH2 {
   margin-top: var(--space-8);

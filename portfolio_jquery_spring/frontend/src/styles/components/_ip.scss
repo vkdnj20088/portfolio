@@ -179,8 +179,174 @@
 }
 .ip-more { text-align: center; margin-top: 14px; }
 
+// 표 아래 규모 캡션. 앞부분(표시 N건 / 30건씩)은 사실, 괄호는 그 사실의 이유라 한 단 낮춘다.
+// ── 정책 시뮬레이터 ───────────────────────────────────────────
+// 새 그래머를 만들지 않는다. 등장은 파일 검증 결과 카드와 같은 4px + opacity 이고, 판정 색은
+// 그 카드가 쓰는 --result-ok-* / --result-block-* 토큰을 그대로 쓴다(다크에서 함께 뒤집힌다).
+//
+// 키프레임을 여기 다시 적은 이유: 두 페이지는 SCSS 엔트리가 갈라져 있고(main.scss / ip.scss)
+// 공용 모션 파티션이 없다. file-result 를 통째로 불러오면 이 페이지가 쓰지 않는 드롭존 CSS 가
+// 함께 실린다. 값이 바뀌면 두 곳을 같이 고친다 - 모션 토큰(--duration-base/--ease-out)은 공유다.
+@keyframes sim-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sim {
+  &__title {
+    margin: 0 0 6px;
+    font-size: 16px;
+  }
+
+  &__lead,
+  &__note {
+    color: var(--muted);
+    font-size: 13px;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  &__lead {
+    margin: 0 0 16px;
+  }
+
+  &__note {
+    margin: 8px 0 0;
+    font-size: 12px;
+  }
+
+  // 두 입력을 나란히. 360px 에서는 아래 미디어쿼리가 한 줄씩으로 내린다.
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 14px;
+    align-items: start;
+  }
+
+  &__actions {
+    margin-top: 14px;
+  }
+}
+
+.sim-result {
+  margin-top: 16px;
+  animation: sim-result-in var(--duration-base) var(--ease-out);
+}
+
+// 판정 박스. 색만으로 말하지 않는다 - 배지에 "허용/거부" 글자가 함께 있다.
+.sim-verdict {
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: var(--radius);
+
+  &--allow {
+    background: var(--result-ok-bg);
+    border-color: var(--result-ok-border);
+    color: var(--result-ok-text);
+  }
+
+  &--deny {
+    background: var(--result-block-bg);
+    border-color: var(--result-block-border);
+    color: var(--result-block-text);
+  }
+
+  &__badge {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  &__reason {
+    margin: 0;
+    font-size: 14px;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  &__meta {
+    margin: 6px 0 0;
+    font-size: 12px;
+    opacity: 0.85;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// 표를 감싸는 스크롤 영역. 폭이 넉넉하면 스크롤이 생기지 않지만 규칙을 조건부로 두지 않는다 -
+// 스크롤 여부가 폭이 아니라 규칙 개수·설명 길이에 따라서도 갈리기 때문이다.
+// tabindex 는 JS 가 붙이고, 포커스 링은 _base.scss 의 [tabindex]:focus-visible 이 담당한다.
+.sim-trace-wrap {
+  overflow-x: auto;
+}
+
+.sim-trace {
+  margin-top: 14px;
+
+  caption {
+    padding: 0 0 8px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: left;
+  }
+
+  // 이긴 규칙 줄. 왼쪽 굵은 선으로 표시한다 - 배경만 칠하면 hover 와 구분이 안 되고,
+  // 표 안에서 한 줄만 색이 다른 것은 색각 조건에서 사라진다(결과 칸의 "이김" 글자가 본체다).
+  &__row--winner {
+    background: rgba(t.$ok, 0.08);
+    box-shadow: inset 3px 0 0 var(--status-ok);
+  }
+
+  &__win {
+    color: var(--status-ok);
+    font-weight: 700;
+  }
+
+  &__skip {
+    color: var(--muted);
+  }
+
+  // 규칙 설명은 주소 아래 줄로. 한 칸에 두 값이 들어가므로 nowrap 을 여기서만 푼다.
+  &__desc {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  &__note {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+}
+
+.ip-scale {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+
+  b { color: var(--text); font-variant-numeric: tabular-nums; }
+  span { color: var(--muted); opacity: 0.78; }
+}
+
 @media (max-width: 720px) {
   .ip-add__grid { grid-template-columns: 1fr; }
   .ip-toolbar,
   .ip-toolbar__filters { flex-direction: column; align-items: stretch; }
+  // 추적 표는 칸이 여섯이라 좁은 화면에서 잘린다. 표를 무너뜨려 카드로 만들면 "순서"라는
+  // 이 표의 요점이 사라지므로, 표의 형태는 지키고 가로 스크롤에 맡긴다(.sim-trace-wrap).
+  .sim__grid { grid-template-columns: 1fr; }
 }

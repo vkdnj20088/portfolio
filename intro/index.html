@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>최종은 (JONGEUN CHOI) - 풀스택 개발자 포트폴리오</title>
-<meta name="description" content="프론트엔드 파트를 리딩하며 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은. IT 경력 12년+, 검증(QA) 조율(PM) 구현(개발)을 모두 거친 개발 리더의 포트폴리오.">
+<meta name="description" content="프론트엔드 5명을 리딩하며 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은. IT 경력 12년+, 검증(QA) 조율(PM) 구현(개발)을 모두 거친 개발 리더의 포트폴리오.">
 <meta name="author" content="최종은 (JONGEUN CHOI)">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="최종은 (JONGEUN CHOI) - 풀스택 개발자 포트폴리오">
-<meta property="og:description" content="프론트엔드 파트를 리딩하며 백엔드와 인프라까지 직접 구현합니다. IT 경력 12년+, 검증(QA) 조율(PM) 구현(개발)을 모두 거친 개발 리더. 레거시 현대화로 Lighthouse 성능 60에서 99.">
+<!-- 미리보기 카드 문구는 헤드라인과 같이 움직여야 한다 - 직전 라운드에 본문만 고쳐서 이 줄에는
+     두 라운드 전 헤드라인("백엔드와 인프라까지 직접 구현")이 남아 있었다. 링크를 메일이나
+     메신저로 받은 사람은 페이지보다 이 문장을 먼저 읽는다. -->
+<meta property="og:description" content="프론트엔드 5명을 리딩하며 코드 리뷰와 표준 설계를 맡고, 막히는 지점은 API·인프라까지 직접 끝냅니다. IT 경력 12년+, 레거시 현대화로 Lighthouse 성능 60에서 99.">
 <meta property="og:locale" content="ko_KR">
 <!-- 미리보기 카드. 페이지 안의 링크는 지금 호스트에서 조립하지만 이 값들만은 절대 URL 이어야
      한다 - 카드를 만드는 것은 브라우저가 아니라 외부 크롤러(메신저, 메일, SNS)이고, 그쪽에는
@@ -114,9 +117,13 @@
   /* 한글 본문은 어절 단위로 끊는다. 기본값(normal)은 CJK 를 글자 단위로 끊어도 된다고 보므로
      "막히는 지 / 점은" 처럼 낱말이 갈린다 - 좁은 화면에서 특히 자주 난다.
      break-word 를 함께 두는 이유: keep-all 만 있으면 끊을 자리가 없는 긴 토큰(주소 등)이
-     칸을 밀고 나간다. 어절 우선, 불가능하면 그때만 강제 분리. */
+     칸을 밀고 나간다. 어절 우선, 불가능하면 그때만 강제 분리.
+     처음엔 산문 컨테이너만 열거해서 섹션 리드(#demos)·카드 제목·직책 줄이 빠졌다.
+     한글이 들어가는 자리는 모두 대상이다 - 360px 에서 "론트엔|드", "추출|형" 이 갈렸다. */
   .headline, .hero .sub, .about p.lead, .about p.body,
-  .wdesc, .tl-desc, .pblock p, .lab, #contact .sub {
+  .wdesc, .tl-desc, .pblock p, .lab, #contact .sub,
+  .kicker, #demos > .sub, .tl-role, .wtitle, .ph .pt, .sec, .compo .t, .compo li, .co,
+  .works-extra {
     word-break: keep-all;
     overflow-wrap: break-word;
   }
@@ -419,6 +426,13 @@
   /* ---------- demos (index) ---------- */
   .index-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--paper-faint); border-bottom: 1px solid var(--line); padding-bottom: 0.9rem; margin-bottom: 0.2rem; }
   ol.works { list-style: none; }
+  /* 카드 목록 밖의 한 줄(품질 지표 링크). 카드가 아니라 각주라 크기를 한 단 낮추고 테두리를
+     주지 않는다 - 일곱 번째 카드처럼 보이면 "선택된 작업 06"과 어긋난다. */
+  .works-extra { margin-top: 1.6rem; max-width: 62ch; font-size: 0.92rem; line-height: 1.7; color: var(--paper-dim); }
+  .works-extra b { color: var(--paper); font-weight: 600; }
+  .wx-lab { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--paper-faint); margin-right: 0.55rem; }
+  .wx-link { color: var(--acid); text-decoration: none; border-bottom: 1px solid transparent; white-space: nowrap; transition: border-color var(--duration-fast) var(--ease-out); }
+  .wx-link:hover, .wx-link:focus-visible { border-bottom-color: var(--acid); }
   .work {
     display: grid;
     grid-template-columns: 4rem 1fr clamp(160px, 19vw, 250px) auto;
@@ -587,14 +601,22 @@
 
       <!-- ===================== HERO ===================== -->
       <header class="hero" id="hero">
-        <p class="kicker reveal"><span class="dot" aria-hidden="true"></span>Front-end Lead / Full-stack</p>
+        <!-- "Lead" 는 영어 일반명사라 직책이 흐릿하다. 아래 타임라인이 "IT개발부 과장 /
+             Front-end 파트장" 으로 적고 있으니 hero 도 같은 표기를 쓴다. -->
+        <p class="kicker reveal"><span class="dot" aria-hidden="true"></span>Front-end 파트장 · Full-stack</p>
         <h1 class="name reveal">최종<em>은</em></h1>
         <p class="romaja reveal">Jongeun Choi</p>
-        <p class="headline reveal">프론트엔드 파트를 리딩하며, 막히는 지점은 <b>API·인프라까지 직접 끝냅니다</b></p>
-        <!-- 이 문단은 "무엇을 했나" 가 아니라 "어떻게 확인할 수 있나" 를 말한다. QA/PM 3축 서술은
-             아래 About 이 담당한다 - 직전까지 두 곳이 같은 구절("품질을 검증(QA)하고 일정을
-             조율(PM)")을 반복했다. -->
-        <p class="sub reveal">아래 여섯 데모는 실제로 돌아갑니다. 각 README 에는 왜 그렇게 만들었는지와 <b>무엇을 하지 않았는지까지</b> 남겼습니다.</p>
+        <!-- "막히는 지점은" 의 주어가 계속 나였다. 막히는 주체를 팀으로 두면 같은 문장이
+             리딩과 직접 실행 둘로 읽힌다 - 혼자 다 끝내는 리드는 스케일하지 않는 신호다.
+             리딩의 구체(코드 리뷰·표준 설계)는 아래 About 이 받는다: 여기 넣으면 55자가 되어
+             540px 까지 3줄이다(44자인 지금도 360px 에서만 3줄). -->
+        <p class="headline reveal">프론트엔드 5명을 리딩하며, 팀이 막히는 지점은 <b>API·인프라까지 직접 끝냅니다</b></p>
+        <!-- 뒤 문장은 "어떻게 확인할 수 있나" 다(QA/PM 3축 서술은 아래 About 이 담당한다 -
+             직전까지 두 곳이 "품질을 검증(QA)하고 일정을 조율(PM)" 을 그대로 반복했다).
+             앞 문장을 새로 얹은 이유: 검증 초대만으로는 README 를 열지 않는 독자에게 이 문단이
+             아무것도 주지 않는다. "다시 열리게 만들어 왔습니다" 로 쓰면 짧지만 15명 조직의
+             재런칭을 1인칭으로 흡수한다 - 맡은 범위(프론트엔드)를 적는다. -->
+        <p class="sub reveal">느렸던 화면을 빠르게 만들고, 멈췄던 서비스를 다시 여는 재런칭에 프론트엔드를 맡았습니다. 아래 여섯 데모는 실제로 돌아가고, 각 README 에 <b>하지 않은 선택까지</b> 남겼습니다.</p>
 
         <dl class="stats reveal" aria-label="핵심 지표">
           <div class="stat">
@@ -609,7 +631,8 @@
                정보가 사라지지도 않는다. 그 자리에는 타임라인에만 있던 규모와 관통 범위를 올렸다. -->
           <div class="stat">
             <dd class="num"><span data-count="50">50</span><span class="unit">만+</span></dd>
-            <dt class="lab">담당 앱 글로벌 다운로드 (해외 유저 75%)</dt>
+            <!-- "담당" 은 회사 앱인지 내가 만든 것인지 가른다. 프론트엔드 전담이 사실이다. -->
+            <dt class="lab">직접 만든 앱 글로벌 다운로드 (해외 유저 75%)</dt>
           </div>
           <!-- Brotli 86% 와 Lighthouse 60→99 는 같은 프로젝트(거래소 현대화)의 두 얼굴이라
                4칸 중 2칸을 한 프로젝트가 먹고 있었다. 하나로 합쳐 축이 겹치지 않게 한다. -->
@@ -634,8 +657,13 @@
             <!-- 연대기 순(QA -> PM -> 개발 -> 지금)이었는데 현재를 앞으로 돌렸다. 평가자가 먼저
                  알고 싶은 것은 "지금 무엇을 하는 사람인가" 이고, 과거는 그 판단의 근거로 뒤에
                  오는 편이 읽힌다. 한 문단 217자를 둘로 나눠 56ch 컨테이너에서 8줄 벽이 되지 않게 했다. -->
-            <p class="body reveal">지금은 가상자산거래소에서 프론트엔드 파트 5명을 리딩하며 백엔드 8명과 함께 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발합니다. 중단됐던 서비스를 신규 마켓과 함께 재설계해 재런칭했습니다.</p>
-            <p class="body reveal">그 앞에는 System QA <span data-career="qa">3년</span>으로 동시접속 20만 규모 라이브 서비스의 품질과 인프라를 검증했고, Tech PM <span data-career="pm">2년 1개월</span>로 4개국 고객사의 현지화 일정을 조율했습니다. 아래 여섯 데모는 그 방식을 코드로 옮긴 것이고, 각 README 에는 설계 근거와 <b>하지 않은 선택의 이유</b>까지 남겼습니다.</p>
+            <!-- "리딩" 은 그 자체로는 아무 정보가 없다(회의를 주재했는지 코드를 봤는지 모른다).
+                 무엇으로 리딩하는지를 적는다 - 기술 조직이 가장 먼저 확인하는 값이다. -->
+            <p class="body reveal">지금은 가상자산거래소에서 프론트엔드 파트 5명을 리딩하며, <b>코드 리뷰와 표준 설계</b>를 맡고 있습니다. 백엔드 8명과 함께 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발하고, 중단됐던 서비스를 신규 마켓과 함께 재설계해 재런칭했습니다.</p>
+            <!-- 끝 문장이 데모·README 였다. 같은 말을 히어로·데모 섹션·연락처에서 이미 세 번 하므로
+                 그 자리를 재직 이력에 준다. 페이지 표기 관례(시작월·종료월 포함)로 실측하면
+                 61+37+44+10 = 152개월 / 4개사 = 38개월 - 진행 중인 현 재직을 포함해도 3년을 넘는다. -->
+            <p class="body reveal">그 앞에는 System QA <span data-career="qa">3년</span>으로 동시접속 20만 규모 라이브 서비스의 품질과 인프라를 검증했고, Tech PM <span data-career="pm">2년 1개월</span>로 4개국 고객사의 현지화 일정을 조율했습니다. 네 곳 모두 운영 중인 서비스였고, <b>한 회사에 평균 3년 이상</b> 있었습니다.</p>
             <div class="contact-inline reveal">
               <a href="mailto:vkdnj20088@gmail.com">vkdnj20088@gmail.com</a>
             </div>
@@ -690,7 +718,11 @@
       <section id="demos" aria-labelledby="demos-h">
         <p class="eyebrow reveal" data-n="03">Demos</p>
         <h2 class="sec reveal" id="demos-h">인터랙티브 데모</h2>
-        <p class="sub reveal" style="max-width:52ch;color:var(--paper-dim);margin-bottom:2.5rem">직접 설계하고 구현한 코드 데모입니다. 프론트엔드 네 개와 백엔드 두 개, 여섯 개 모두 라이브로 열려 있습니다.</p>
+        <!-- "프론트엔드 네 개와 백엔드 두 개" 라고 적혀 있었는데 카드 라벨은 Frontend 1 /
+             Full-stack 3 / Backend 2 다(라벨을 올릴 때 이 줄을 안 고쳤다). 한 화면 안에서
+             페이지가 자기 말을 반박하던 자리다. 개수 대신 범위로 적는다: 서버측 관심사가 있는
+             카드가 다섯(fs 3 + be 2), 클라이언트 전용이 하나(거래소)다. -->
+        <p class="sub reveal" style="max-width:52ch;color:var(--paper-dim);margin-bottom:2.5rem">직접 설계하고 구현한 코드 데모입니다. 여섯 개 모두 라이브로 열려 있고, 화면만이 아니라 API · 저장 · 정책까지 직접 만든 것이 다섯 개입니다.</p>
 
         <div class="index-head reveal"><span>선택된 작업</span><span>06</span></div>
         <ol class="works">
@@ -703,7 +735,9 @@
               <div class="wbody">
                 <span class="cat">Frontend</span>
                 <h3 class="wtitle">거래소 목업</h3>
-                <p class="wdesc">실무에서 호가창을 10단에서 20단으로 늘리고 차트를 마이그레이션했던 작업을 공개 가능한 형태로 다시 만들었습니다. Mock 스트림이 시세·분봉·호가를 함께 갱신하고, 스탑 주문은 새 엔진이 아니라 체결 상태기계의 트리거 상태로 넣었습니다.</p>
+                <!-- 여섯 장 중 이 카드만 이해관계 절을 앞에 붙이지 않았다. 첫 문장이 이미
+                     "실무에서 한 일을 다시 만들었다" 라 그 역할을 하고 있다. 길이만 줄인다. -->
+                <p class="wdesc">실무에서 호가창을 10단&#8594;20단으로 늘리고 차트를 옮겼던 작업을 공개 가능한 형태로 다시 만들었습니다. Mock 스트림이 시세·분봉·호가를 함께 갱신하고, 스탑 주문은 새 엔진이 아니라 체결 상태기계의 트리거 상태로 넣었습니다. 거래 화면과 입출금·보유자산까지 세 화면입니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>lightweight-charts</span><span>zustand</span><span>실시간 Mock</span></div>
               </div>
               <img class="wthumb" src="img/demo-01-exchange.jpg" srcset="img/demo-01-exchange-400.jpg 400w, img/demo-01-exchange-800.jpg 800w, img/demo-01-exchange.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -717,7 +751,7 @@
               <div class="wbody">
                 <span class="cat">Full-stack</span>
                 <h3 class="wtitle">문서 근거 QA (검색 + 추출형 MRC)</h3>
-                <p class="wdesc">사내 문서에서 근거 문장을 그대로 인용해 답합니다. 생성이 아니라 추출이라 지어내지 않고, 근거가 약하면 답하지 않습니다. 골드셋 33문항으로 불응답 정확도 100%를 측정하고, 임계값을 밀면 정확도와 응답률이 어떻게 갈리는지 직접 볼 수 있습니다.</p>
+                <p class="wdesc">업무에 쓸 답변이라면 지어냈는지를 판별할 수 있어야 합니다. 그래서 생성이 아니라 근거 문장을 그대로 인용하는 추출로 만들고, 근거가 약하면 답하지 않게 했습니다. 골드셋 33문항에서 불응답 정확도 100%, 품질 지표 화면에서 임계값을 밀면 정확도와 응답률이 어떻게 갈리는지 직접 볼 수 있습니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>TF-IDF 검색</span><span>MRC 추출</span><span>SSE 스트리밍</span></div>
               </div>
               <img class="wthumb" src="img/demo-02-docqa.jpg" srcset="img/demo-02-docqa-400.jpg 400w, img/demo-02-docqa-800.jpg 800w, img/demo-02-docqa.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -732,7 +766,7 @@
               <div class="wbody">
                 <span class="cat">Full-stack</span>
                 <h3 class="wtitle">시맨틱 검색</h3>
-                <p class="wdesc">동의어 확장이 정확도를 올린다는 주장을 키워드 모드와 같은 골드셋으로 나란히 측정해 숫자로 답합니다. 임베딩 없이 결정적으로 도는 대신, 값을 하는지는 측정이 판정합니다.</p>
+                <p class="wdesc">검색이 좋아졌다는 말은 체감으로 우기기 쉽습니다. 동의어 확장이 정확도를 올린다는 주장을 키워드 모드와 같은 골드셋으로 나란히 재서 숫자로 답합니다. 임베딩 없이 결정적으로 도는 대신, 값을 하는지는 측정이 판정합니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>동의어 확장</span><span>결정적 랭킹</span></div>
               </div>
               <img class="wthumb" src="img/demo-03-search.jpg" srcset="img/demo-03-search-400.jpg 400w, img/demo-03-search-800.jpg 800w, img/demo-03-search.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -746,7 +780,7 @@
               <div class="wbody">
                 <span class="cat">Full-stack</span>
                 <h3 class="wtitle">AI 챗봇 목업</h3>
-                <p class="wdesc">전송 계층만 바꿔 Mock 과 실제 SSE 를 오가도록 경계를 그었습니다. 마크다운은 걸러내지 않고 파싱하지 않는 방식으로 안전 경계를 좁혔고, 연속 요청은 토큰 버킷으로 막고 남은 시간을 화면에 돌려줍니다.</p>
+                <p class="wdesc">실시간 UI 는 데모에서만 잘 돌고 실제 네트워크에서 깨집니다. 전송 계층만 바꿔 Mock 과 실제 SSE 를 오가도록 경계를 그었고, 마크다운은 걸러내는 대신 파싱하지 않아 안전 경계를 좁혔습니다. 연속 요청은 토큰 버킷으로 막고 남은 시간을 화면에 돌려줍니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>SSE</span><span>대화 검색</span><span>접근성</span></div>
               </div>
               <img class="wthumb" src="img/demo-04-chat.jpg" srcset="img/demo-04-chat-400.jpg 400w, img/demo-04-chat-800.jpg 800w, img/demo-04-chat.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -760,7 +794,8 @@
               <div class="wbody">
                 <span class="cat">Backend</span>
                 <h3 class="wtitle">파일 확장자 차단</h3>
-                <p class="wdesc">확장자가 아니라 내용으로 막습니다. Tika 판별과 컨테이너 탐지로 위장 파일을 잡고, 파싱은 동시 상한을 둔 벌크헤드 안에서만 돌려 한 요청이 전체를 굶기지 못하게 했습니다.</p>
+                <!-- "가장 흔한 침입 경로" 라고 쓰려다 순위를 주장할 근거가 없어 "흔한" 으로 뒀다. -->
+                <p class="wdesc">파일 업로드는 흔한 침입 경로인데 확장자 검사는 이름만 바꾸면 뚫립니다. 그래서 내용으로 막습니다. Tika 판별과 컨테이너 탐지로 위장 파일을 잡고, 파싱은 동시 상한을 둔 벌크헤드 안에서만 돌려 한 요청이 전체를 굶기지 못하게 했습니다.</p>
                 <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>Apache Tika</span><span>분산 락</span></div>
               </div>
               <img class="wthumb" src="img/demo-05-files.jpg" srcset="img/demo-05-files-400.jpg 400w, img/demo-05-files-800.jpg 800w, img/demo-05-files.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -775,7 +810,12 @@
               <div class="wbody">
                 <span class="cat">Backend</span>
                 <h3 class="wtitle">IP 차단</h3>
-                <p class="wdesc">허용 목록이 아니라 정책 엔진입니다. 허용과 차단이 충돌하면 우선순위와 구체성으로 해소하고, 어떤 규칙이 왜 이겼는지를 화면에서 추적할 수 있습니다. 100만 건은 키셋 커서로 넘깁니다.</p>
+                <!-- 직전 라운드에 "왜 이겼는지 화면에서 추적" 을 뺐던 것은 그 화면이 없었기
+                     때문이다. 시뮬레이터를 만들었으므로 되살리되, 화면이 실제로 하는 것과
+                     같은 말만 적는다 - 평가 순서 전체와 건너뛴 이유, 그리고 시점 이동.
+                     "100만 건" 은 되살리지 않는다. 배포된 데모의 규칙은 몇 건뿐이고, 목록이
+                     커서로 넘어간다는 사실은 그 화면이 자기 캡션에서 말한다. -->
+                <p class="wdesc">차단 규칙에는 늘 예외가 붙고, 예외가 붙는 순간 왜 막혔는지 아무도 모릅니다. 허용 목록이 아니라 정책 엔진으로 만든 이유입니다. 시뮬레이터에 IP 를 넣으면 어떤 규칙이 왜 이겼고 나머지는 왜 건너뛰었는지 평가 순서대로 보이고, 시점을 옮기면 판정이 달라집니다.</p>
                 <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>키셋 페이지네이션</span><span>정책 평가</span><span>UTC 저장·기기 TZ 표기</span></div>
               </div>
               <img class="wthumb" src="img/demo-06-ip.jpg" srcset="img/demo-06-ip-400.jpg 400w, img/demo-06-ip-800.jpg 800w, img/demo-06-ip.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -784,6 +824,16 @@
           </li>
 
         </ol>
+
+        <!-- 카드 여섯 장 밖에 한 줄을 둔다. 문서QA 의 품질 지표 화면은 이 포트폴리오에서 판단
+             근거가 가장 많이 적힌 곳인데(자기 오답 건수까지 공개한다) 앱 안쪽 탭이라 카드에서
+             들어온 사람이 못 보고 나간다. 일곱 번째 카드로 만들면 "선택된 작업 06"과 데모 개수
+             문구를 모두 흔들어서, 링크 한 줄로 둔다. -->
+        <p class="works-extra reveal">
+          <span class="wx-lab">덧붙여</span>
+          문서QA 는 골드셋 33문항으로 잰 정확도와 <b>스스로 틀린 건수까지</b> 공개하는 품질 지표 화면을 따로 두고 있습니다.
+          <a class="wx-link" data-demo-link="docqa-eval" href="#" hidden>품질 지표 열기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
+        </p>
       </section>
 
       <!-- ===================== EXPERIENCE (경력 + 대표 프로젝트) ===================== -->
@@ -926,7 +976,9 @@
       <section id="contact" aria-labelledby="contact-h">
         <p class="eyebrow reveal" data-n="05">Contact</p>
         <h2 class="sec reveal" id="contact-h">연락처</h2>
-        <p class="sub reveal" style="max-width:46ch;color:var(--paper-dim)">제안이나 문의는 이메일로 주세요. 이 페이지와 데모 여섯 개의 코드가 GitHub 에 열려 있고, 설계 판단과 하지 않은 선택의 이유는 각 README 에 있습니다.</p>
+        <!-- "문의는 이메일로 주세요" 는 무엇을 찾는 사람인지 알려주지 않는다. 응답 시간 약속은
+             넣지 않았다 - 첫 접점에서 지키지 못하는 약속이 가장 비싸다. -->
+        <p class="sub reveal" style="max-width:46ch;color:var(--paper-dim)">프론트엔드와 서버를 함께 볼 사람이 필요한 자리라면 언제든 연락 주세요. 이 페이지와 데모 여섯 개의 코드가 GitHub 에 열려 있고, 설계 판단과 하지 않은 선택의 이유는 각 README 에 있습니다.</p>
         <div class="contact-wrap two reveal">
           <a class="cc" href="mailto:vkdnj20088@gmail.com"><span class="k">Email</span><span class="v">vkdnj20088@gmail.com</span></a>
           <a class="cc" href="https://github.com/vkdnj20088/portfolio" rel="noopener noreferrer"><span class="k">GitHub</span><span class="v">github.com/vkdnj20088/portfolio</span></a>
@@ -934,7 +986,8 @@
       </section>
 
       <footer>
-        <span>최종은 (Jongeun Choi) - Full-stack Developer</span>
+        <!-- 히어로 kicker·타임라인과 직함이 세 가지로 갈려 있었다(Lead / 파트장 / Developer). -->
+        <span>최종은 (Jongeun Choi) - Front-end 파트장 · Full-stack</span>
         <span>Portfolio 2026</span>
       </footer>
 
@@ -971,7 +1024,10 @@
         // IP 배포에는 서브도메인이 없어 나눌 방법이 포트+경로뿐이다 - 그래서 IP 차단만 경로가
         // 다르다(subPath 는 도메인일 때의 경로 오버라이드. 없으면 path 를 그대로 쓴다).
         files:          { port: 8443, sub: 'file',     path: '/' },
-        ip:             { port: 8443, sub: 'ip',       path: '/ip.html', subPath: '/' }
+        ip:             { port: 8443, sub: 'ip',       path: '/ip.html', subPath: '/' },
+        // 카드가 아닌 링크 하나(품질 지표)도 같은 표를 쓴다. 문서QA 앱의 세 번째 화면이라
+        // 포트는 docqa 와 같고 경로만 다르다.
+        'docqa-eval':   { port: 9444, sub: 'docqa',    path: '/eval' }
       };
       var IS_LOCAL = location.protocol === 'file:' ||
         /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
@@ -984,8 +1040,8 @@
       var IS_IP = !/[a-z]$/i.test(location.hostname) || location.hostname.indexOf(':') >= 0;
 
       // 로컬에서는 호출되지 않는다 - 아래 호출부가 먼저 걸러낸다.
-      function demoUrl(card) {
-        var spec = DEMO_PORTS[card.getAttribute('data-demo')];
+      function demoUrl(key) {
+        var spec = DEMO_PORTS[key];
         if (!spec) return null;
         if (IS_IP) return 'https://' + location.hostname + ':' + spec.port + spec.path;
         // www 로 들어와도 데모는 apex 기준 서브도메인으로 보낸다(인증서에 두 형태가 모두 있다).
@@ -1018,10 +1074,21 @@
       // 조건을 여기 한 곳에만 두어 "로컬이면 아무것도 하지 않는다"를 한 번만 말한다.
       document.querySelectorAll('.work[data-demo]').forEach(function (card) {
         if (IS_LOCAL) return;
-        var url = demoUrl(card);
+        var url = demoUrl(card.getAttribute('data-demo'));
         if (!url) return;
         if (card.tagName === 'A') { card.setAttribute('href', url); return; }
         upgradeToLink(card, url);
+      });
+
+      // 카드 밖 링크(품질 지표). 카드는 전체가 <a> 로 승격되므로 그 안에 링크를 또 넣을 수 없다 -
+      // 목록 밖에 한 줄로 둔다. 카드와 같은 이유로 로컬에서는 주소를 만들지 않고 감춰 둔다.
+      document.querySelectorAll('a[data-demo-link]').forEach(function (link) {
+        if (IS_LOCAL) return;
+        var url = demoUrl(link.getAttribute('data-demo-link'));
+        if (!url) return;
+        link.setAttribute('href', url);
+        link.setAttribute('rel', 'noopener noreferrer');
+        link.hidden = false;
       });
 
       // ── 스크롤스파이 + 키보드 섹션 이동(#I1) ──────────────────────────────

@@ -29,7 +29,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/wallet" className={active("wallet")}>입출금</Link>
           <Link href="/assets" className={active("assets")}>보유자산</Link>
         </nav>
-        <div className="top-right"><TabSyncBadge /><ThemeToggle /><span className="login-chip">로그인 (데모)</span></div>
+        {/* 복귀 링크는 다른 데모처럼 떠 있는 버튼이었는데, 이 앱만 화면을 조작요소로 꽉 채운다.
+            position:fixed 는 뷰포트 어딘가의 버튼을 반드시 덮게 되고(1440 에서 "매수 주문",
+            1280x720 에서 시장가/스탑/주문가격), 자리를 옮겨도 다른 폭에서 다시 덮는다.
+            흐름 안으로 넣어 겹침이라는 가능성 자체를 없앤다 - 상단바는 sticky 라 계속 보인다. */}
+        <div className="top-right">
+          <a className="portfolio-home" href={portfolioHome} aria-label="포트폴리오 소개로 돌아가기">
+            <span className="ph-ic" aria-hidden="true">&#8592;</span> 포트폴리오
+          </a>
+          <TabSyncBadge /><ThemeToggle /><span className="login-chip">로그인 (데모)</span>
+        </div>
       </header>
       <div className="app-body">{children}</div>
       <nav className="bottom-tab">
@@ -39,9 +48,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         ))}
       </nav>
-      <a className="portfolio-home" href={portfolioHome} aria-label="포트폴리오 소개로 돌아가기">
-        <span className="ph-ic" aria-hidden="true">&#8592;</span> 포트폴리오
-      </a>
     </>
   );
 }

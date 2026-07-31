@@ -90,6 +90,39 @@ export interface WhoAmIResponse {
   ipAddress: string;
 }
 
+/**
+ * GET /api/ip-rules/evaluate 의 평가 추적 한 줄 (PolicyEvaluationResponse.EvaluatedRule).
+ *
+ * `matched` 와 `winner` 가 분리돼 있는 것이 이 타입의 요점이다 - 여러 규칙이 동시에 매치할 수
+ * 있고 판정을 정하는 것은 그중 하나뿐이라, 화면은 "매치했지만 지지 않았다"를 그릴 수 있어야 한다.
+ */
+export interface EvaluatedRule {
+  id: number;
+  ipAddress: string;
+  description: string;
+  action: 'ALLOW' | 'DENY';
+  priority: number;
+  /** 특정도. 같은 우선순위에서 tie-break 근거라 화면에 그대로 보여준다. */
+  prefixLength: number;
+  matched: boolean;
+  winner: boolean;
+  /** matched=false 인 이유(포함 안 됨 / 기간 밖 / 파싱 불가). matched 면 null. */
+  skipReason: string | null;
+}
+
+/** GET /api/ip-rules/evaluate (PolicyEvaluationResponse) - 판정 + 판정 근거 */
+export interface PolicyEvaluationResponse {
+  target: string;
+  normalizedTarget: string;
+  family: 'IPV4' | 'IPV6';
+  /** 이 판정의 기준 시각(ISO-8601 UTC). 시간 창 평가에 실제로 쓰인 값. */
+  evaluatedAt: string;
+  decision: 'ALLOW' | 'DENY';
+  matchedRule: EvaluatedRule | null;
+  evaluatedRules: EvaluatedRule[];
+  reason: string;
+}
+
 /** GET /api/ip-rules/match - 규칙(IP/CIDR)이 대상 IP 를 포함하는지 판정 + 정규화 */
 export interface IpMatchResponse {
   rule: string;

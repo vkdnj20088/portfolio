@@ -15,6 +15,24 @@
             margin: 0 0 20px;
             color: var(--muted);
             font-size: 14px;
+            // 한글은 어절 단위로 끊는다(기본값은 CJK 를 글자 단위로 끊어도 된다고 본다).
+            word-break: keep-all;
+            overflow-wrap: break-word;
+        }
+
+        // 주장 문단 다음의 사용 안내. 설명 문단의 캡션이라 위로 붙이고 한 단 낮춘다 -
+        // 20px 을 그대로 두면 별개의 안내문 두 개로 읽힌다(.ip-tz 와 같은 근거).
+        .app__hint {
+            margin: -14px 0 20px;
+            font-size: 13px;
+
+            code {
+                padding: 1px 5px;
+                border-radius: 5px;
+                background: var(--chip);
+                color: var(--primary-d);
+                font-size: 12px;
+            }
         }
     }
 }

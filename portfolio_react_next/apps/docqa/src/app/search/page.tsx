@@ -214,7 +214,15 @@ export default function SearchPage() {
 
         {results !== null &&
           (results.length === 0 ? (
-            <div className="empty">일치하는 문서를 찾지 못했습니다.</div>
+            /* 사실만 알려 주고 끝나면 다음에 무엇을 할지가 없다. 색인이 가상 사내문서
+               10건이라는 것과 동의어 사전 밖의 말은 확장되지 않는다는 것이 실제 원인이므로,
+               그것을 적고 샘플 질의로 돌아갈 길을 준다. */
+            <div className="empty">
+              일치하는 문서를 찾지 못했습니다.
+              <span className="emptyHint">
+                색인은 가상 사내문서 10건이고, 동의어 사전에 없는 말은 확장되지 않습니다. 위 예시 질의로 확인해 보세요.
+              </span>
+            </div>
           ) : (
             <>
               <h2 className="resultCount" role="status">

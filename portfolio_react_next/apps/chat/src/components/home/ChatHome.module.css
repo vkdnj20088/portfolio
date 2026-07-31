@@ -74,6 +74,19 @@
   letter-spacing: -0.01em;
 }
 
+/* 인사말과 입력창 사이의 안내. 폭을 제한해 한 줄이 화면 끝까지 늘어지지 않게 한다
+   (읽는 눈이 되돌아오는 거리가 길어지면 첫 화면에서 그냥 넘긴다). */
+.demoNote {
+  max-width: 46ch;
+  margin: calc(-1 * var(--space-2)) auto 0;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  text-align: center;
+  color: var(--color-text-muted);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .error {
   font-size: var(--text-sm);
   color: var(--color-danger);
