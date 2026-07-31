@@ -220,7 +220,8 @@ export default function SearchPage() {
             <div className="empty">
               일치하는 문서를 찾지 못했습니다.
               <span className="emptyHint">
-                색인은 가상 사내문서 10건이고, 동의어 사전에 없는 말은 확장되지 않습니다. 위 예시 질의로 확인해 보세요.
+                색인은 가상 사내문서 10건이고, 동의어 사전에 없는 말은 확장되지 않습니다. 위 예시
+                질의로 확인해 보세요.
               </span>
             </div>
           ) : (

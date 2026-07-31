@@ -96,12 +96,33 @@ mark {
     background: var(--color-bg);
   }
 }
+/* 브랜드 줄과 귀속 줄을 한 열로 쌓는다. 상단바가 가로 flex 라 귀속을 형제로 두면 내비와
+   같은 줄을 다투다가 좁은 화면에서 먼저 찌그러진다. */
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
 .brand {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+/* 귀속(누구 것)과 역할(어떤 사람)의 층은 색으로 나눈다 - 크기까지 함께 낮추면 상단바
+   안에서 두 줄 다 읽히지 않는 크기가 된다. */
+.owner {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  word-break: keep-all;
+}
+.ownerRole {
+  display: block;
+  margin-top: 1px;
+  color: var(--color-text-subtle, var(--color-text-muted));
 }
 .brand .mark {
   display: inline-grid;
@@ -753,6 +774,22 @@ mark {
 }
 
 @media (max-width: 560px) {
+  /* 귀속 두 줄이 들어오면서 브랜드와 내비가 한 줄에 같이 앉지 못한다. 폭이 모자라면 내비가
+     먼저 찌그러져 링크가 글자 단위로 쪼개졌다("근 / 거 / QA"). 줄을 나눠 각자 온전한 폭을
+     쓰게 한다 - 귀속을 감추는 대신 자리를 준다. */
+  .topbar {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+  }
+  .brandBlock {
+    flex-basis: 100%;
+  }
+  .nav {
+    margin-left: 0;
+  }
+  .themeToggle {
+    margin-left: auto;
+  }
   .nav a {
     padding: 6px 9px;
     font-size: var(--text-xs);

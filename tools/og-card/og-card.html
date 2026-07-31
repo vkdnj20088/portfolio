@@ -1,0 +1,220 @@
+<!doctype html>
+<!--
+  OG 공유 카드 원본 (1200x630) - 산출물은 intro/img/og-cover.jpg 입니다.
+
+  이 파일이 intro/ 안이 아니라 tools/ 아래 있는 이유: 배포 워크플로가 `cp -a intro/. dist/intro/`
+  로 intro 폴더를 통째로 퍼블릭에 올립니다. 카드 원본은 서비스가 쓰는 자산이 아니라 자산을
+  만드는 도구라, intro/ 에 두면 쓰지도 않는 파일이 공개 경로에 노출됩니다.
+
+  재생성:
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+      --headless --disable-gpu --hide-scrollbars --window-size=1200,630 \
+      --virtual-time-budget=8000 \
+      --screenshot=/tmp/og-cover.png \
+      file:///<저장소 절대경로>/tools/og-card/og-card.html
+    sips -s format jpeg -s formatOptions 88 /tmp/og-cover.png --out intro/img/og-cover.jpg
+    pkill -f "Google Chrome.*headless"   # macOS 는 --screenshot 뒤에 프로세스가 남습니다
+
+  값을 고칠 때: 지표 네 칸은 intro/index.html 의 `.stats` 와 같은 값이어야 합니다.
+  카드는 폭이 좁아 라벨의 괄호 보충(예: "(코드 리뷰 · 표준 설계)")만 덜어 냅니다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>og-card 1200x630</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Gowun+Batang:wght@400&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* 색과 폰트는 intro/index.html 의 :root 토큰을 그대로 옮긴 값입니다. 카드가 페이지와
+     같은 얼굴이어야 해서, 값을 바꿀 일이 생기면 페이지를 먼저 고치고 여기 반영합니다. */
+  :root {
+    --ink:        #0a0c0b;
+    --paper:      #e9e7dd;
+    --paper-dim:  #a9aba0;
+    --paper-faint:#82857a;
+    --line:       #24271f;
+    /* 카드에만 있는 값입니다. 페이지는 격자와 구분선이 같은 --line 이지만, 카드는 배경 격자가
+       늘 깔려 있어 같은 색을 쓰면 구분선이 격자에 묻혀 층이 사라집니다. 한 단만 올립니다. */
+    --line-strong:#31352a;
+    --acid:       #c9f24e;
+
+    --serif: "Fraunces", "Gowun Batang", Georgia, serif;
+    --mono:  "JetBrains Mono", "IBM Plex Sans KR", ui-monospace, Menlo, monospace;
+    --sans:  "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+
+  body {
+    position: relative;
+    background-color: var(--ink);
+    /* 페이지와 같은 64px 격자. 카드에서는 배경이 주인공이 아니라 질감이라 그대로 둡니다. */
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    color: var(--paper);
+    font-family: var(--sans);
+    /* 한글은 어절 단위로 끊습니다. 카드에서 줄바꿈이 깨지면 고칠 기회가 없습니다. */
+    word-break: keep-all;
+  }
+
+  /* 우상단 라임 블록. 카드가 썸네일로 줄어들어도 이 색 하나로 식별됩니다. */
+  .flag {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 258px;
+    height: 18px;
+    background: var(--acid);
+  }
+
+  .card {
+    position: absolute;
+    inset: 0;
+    padding: 74px 72px 62px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--acid);
+    text-transform: uppercase;
+  }
+  .url {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--paper);
+  }
+
+  .name {
+    margin-top: 26px;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 92px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+  }
+  .romaji {
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--paper-faint);
+  }
+
+  /* 헤드라인은 페이지 hero 와 같은 문장입니다. 라임 강조 범위도 페이지처럼 "무엇을 직접
+     끝내는가" 에만 겁니다 - 문장 전체를 물들이면 강조가 강조를 지웁니다. */
+  /* 33px 인 이유: 이 문장은 34.3px 을 넘으면 두 줄로 접히고, 접히면 "직접 / 끝냅니다" 로
+     끊겨 술어만 남습니다(실측). 폰트가 대체되어 폭이 조금 늘어도 견디도록 한 단 낮춥니다. */
+  .headline {
+    margin-top: 34px;
+    font-size: 33px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+  }
+  .headline b { font-weight: 600; color: var(--acid); }
+
+  /* 구분선은 둘인데 남는 세로 공간을 밀어내는 것은 위 하나뿐입니다. 둘 다 auto 로 두면
+     flex 가 여백을 반씩 나눠 가져, 데모 줄이 위 선에는 붙고 아래 선과는 37px 벌어집니다(실측). */
+  .rule { height: 1px; background: var(--line-strong); }
+  .rule--push { margin-top: auto; }
+
+  .demos {
+    padding: 20px 0;
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--paper-dim);
+  }
+
+  /* 지표 네 칸. 값은 페이지 .stats 와 같고, 칸을 가르는 세로선은 위 --line-strong 을 씁니다. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-top: 24px;
+  }
+  .stat { padding-left: 26px; border-left: 1px solid var(--line-strong); }
+  .stat:first-child { padding-left: 0; border-left: 0; }
+  .stat .num {
+    font-family: var(--mono);
+    font-size: 33px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--paper);
+  }
+  .stat .num .unit { font-size: 0.62em; color: var(--paper-dim); margin-left: 0.12em; }
+  .stat .num .to { color: var(--acid); }
+  .stat .lab {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: var(--paper-faint);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <div class="flag"></div>
+  <div class="card">
+    <div class="top">
+      <span class="kicker">Front-end 파트장 / Full-stack</span>
+      <span class="url">https://jongeunchoi.dev</span>
+    </div>
+
+    <h1 class="name">최종은</h1>
+    <p class="romaji">Jongeun Choi</p>
+
+    <p class="headline">프론트엔드 5명을 리딩하며, 팀이 막히는 지점은 <b>API·인프라까지</b> 직접 끝냅니다</p>
+
+    <div class="rule rule--push"></div>
+    <p class="demos">거래소 · 문서 근거 QA · 시맨틱 검색 · AI 챗봇 · 파일 확장자 차단 · IP 차단</p>
+    <div class="rule"></div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="num">12<span class="unit">년+</span></div>
+        <div class="lab">IT 총 경력</div>
+      </div>
+      <div class="stat">
+        <div class="num">50<span class="unit">만+</span></div>
+        <div class="lab">직접 만든 앱 다운로드</div>
+      </div>
+      <div class="stat">
+        <div class="num">60 <span class="to">&#8594;</span> 99</div>
+        <div class="lab">Lighthouse 성능</div>
+      </div>
+      <!-- 페이지에서 "시스템 4 관통" 을 리딩으로 바꾼 칸입니다. 숫자는 리딩 인원(5)이고
+           조직 전체(15)를 쓰지 않습니다 - 큰 숫자에 작은 라벨은 "15명을 이끈다" 로 읽힙니다. -->
+      <div class="stat">
+        <div class="num">5<span class="unit">명</span></div>
+        <div class="lab">프론트엔드 파트 리딩</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

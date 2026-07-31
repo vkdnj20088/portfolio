@@ -9,9 +9,9 @@ nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 
 | 파일 | 역할 |
 |------|------|
 | `nginx/portfolio.conf` | 포트별 리버스 프록시(443 인트로 · 8443 Guard · 9443 Chat · 9444 DocuQA · 9445 Exchange) + 80 ACME/리다이렉트 |
-| `nginx/portfolio-domain.conf` | **도메인(SNI) 기반** 라우팅 - 443 한 포트에서 서브도메인으로 가른다. 위 설정과 **함께** 켠다 |
+| `nginx/portfolio-domain.conf` | **도메인(SNI) 기반** 라우팅 - 443 한 포트에서 서브도메인으로 가릅니다. 위 설정과 **함께** 켭니다 |
 | `nginx/snippets/tls-domain.conf` | 도메인 인증서(표준 90일) 경로 - 도메인 블록들이 공유 |
-| `nginx/snippets/hsts.conf` | HSTS 한 줄. `add_header` 를 쓰는 location 마다 다시 include 해야 한다(아래 참고) |
+| `nginx/snippets/hsts.conf` | HSTS 한 줄. `add_header` 를 쓰는 location 마다 다시 include 해야 합니다(아래 참고) |
 | `nginx/conf.d/portfolio-hardening.conf` | http 컨텍스트 드롭인 - 버전 은닉, slowloris 타임아웃, rate limit 존, upstream keepalive |
 | `issue-cert-domain.sh` | 도메인 인증서 발급(apex+www+서브 7개 SAN) + 도메인 설정 활성화 |
 | `apply-hardening.sh` | 위 드롭인·스니펫·사이트 설정 배치 + 검증 + 실패 시 자동 원복 |
@@ -138,11 +138,11 @@ systemd 가 통째로 비웁니다. 데모라 격리본의 영속이 필요 없�
 `systemctl is-active portfolio-*` 를 반드시 확인하세요.
 
 **아직 하지 않은 것**(판단 근거를 남깁니다):
-- **브로틀리 정적 사전압축** - 빌드 파이프라인 4곳을 고쳐야 하는데 이 트래픽에서 이득이 작다.
-- **HTTP/3(QUIC)** - nginx 재빌드가 필요하고, 단일 리전 저트래픽에서 체감이 marginal.
+- **브로틀리 정적 사전압축** - 빌드 파이프라인 4곳을 고쳐야 하는데 이 트래픽에서 이득이 작습니다.
+- **HTTP/3(QUIC)** - nginx 재빌드가 필요하고, 단일 리전 저트래픽에서 체감이 marginal 한 수준입니다.
 - **fail2ban** - 저장소가 아니라 서버 ops 영역이고, 이미 `limit_req`/`limit_conn` 으로 같은
-  공격면을 막는다. 로그 기반 밴은 그 위의 한 겹이지 대체가 아니다.
-- **CDN·다중 upstream·mTLS** - 단일 리전 저트래픽이고, 무인증 공개가 의도한 설계라 해당 없음.
+  공격면을 막습니다. 로그 기반 밴은 그 위의 한 겹이지 대체가 아닙니다.
+- **CDN·다중 upstream·mTLS** - 단일 리전 저트래픽이고, 무인증 공개가 의도한 설계라 해당하지 않습니다.
 
 ### 데모 표본 복구 (portfolio-demo-reseed.timer)
 

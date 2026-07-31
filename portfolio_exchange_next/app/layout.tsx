@@ -25,6 +25,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             이유: 화면 어느 칸에 넣어도 그 칸의 성격을 흐린다. */}
         <div className="demo-badge">
           <span>최종은의 React + Next 포트폴리오 · 거래소 데모 · 실서비스 아님 · 더미 데이터</span>
+          {/* 귀속 줄이 스택 이름까지만 말한다. 서브도메인으로 직접 들어온 평가자에게는 이
+              바가 유일한 자기소개라, 만든 사람의 역할을 인트로와 같은 표기로 한 줄 더 둔다. */}
+          <span className="db-role">Front-end 파트장 · Full-stack · IT 경력 12년+</span>
           <span className="db-look">실무에서 호가창을 20단으로 늘리고 차트를 옮겼던 작업의 재현입니다. 호가를 누르면 주문가로 들어가고, 주문 유형에 스탑이 있습니다.</span>
         </div>
         <Providers nonce={nonce}>

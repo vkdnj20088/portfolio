@@ -38,13 +38,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className="topbar">
-        <span className="brand">
-          <span className="mark" aria-hidden="true">
-            JC
+        {/* 여섯 데모 중 이 앱만 화면에 소유자 표기가 없었다(브라우저 탭 제목에만 있었다).
+            데모는 서브도메인으로 직접 열려서 인트로를 안 거친 평가자에게는 여기가 유일한
+            자기소개 자리다. 푸터가 아니라 상단바에 두는 이유: §0 배지가 이미 여기 있어
+            정체성 표기가 한 곳에 모이고, sticky 라 검색 결과가 길어져도 계속 보인다. */}
+        <div className="brandBlock">
+          <span className="brand">
+            <span className="mark" aria-hidden="true">
+              JC
+            </span>
+            DocuQA
+            <span className="demoBadge">데모 · 더미데이터</span>
           </span>
-          DocuQA
-          <span className="demoBadge">데모 · 더미데이터</span>
-        </span>
+          <span className="owner">
+            최종은의 React + Next 포트폴리오
+            <span className="ownerRole">Front-end 파트장 · Full-stack · IT 경력 12년+</span>
+          </span>
+        </div>
         <nav className="nav" aria-label="제품">
           <Link href="/" aria-current={!isSearch && !isEval ? 'page' : undefined}>
             근거 QA

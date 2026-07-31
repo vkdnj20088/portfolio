@@ -136,3 +136,27 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* 사이드바가 접혔을 때만 나오는 귀속 표기. 스위치는 CSS 가 이미 보고 있는 data-sidebar 하나다
+   (AppShell 의 접힘 규칙과 같은 속성 - 상태를 두 군데서 따로 판단하지 않는다).
+   JS 가 없으면 속성이 붙지 않고 사이드바도 펼쳐진 채라, 숨어 있어도 푸터가 같은 말을 한다. */
+.identity {
+  display: none;
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-text-muted);
+  word-break: keep-all;
+}
+
+:global(html[data-sidebar='collapsed']) .identity {
+  display: block;
+}
+
+/* 사이드바 푸터와 같은 위계를 쓴다 - 귀속이 위, 역할은 한 단 작게. */
+.identityRole {
+  display: block;
+  margin-top: 2px;
+  font-size: calc(var(--text-xs) - 1px);
+}

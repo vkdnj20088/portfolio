@@ -113,9 +113,12 @@ input, select { font-family: inherit; }
   word-break: keep-all;
   overflow-wrap: break-word;
 }
-/* 두 문장의 역할이 달라 색으로 층을 나눈다. §0(무엇이 아닌지)은 배지색, 안내는 한 톤 낮춘다.
+/* 세 문장의 역할이 달라 색으로 층을 나눈다. §0(무엇이 아닌지)은 배지색, 안내는 한 톤 낮춘다.
    좁은 화면에서는 줄을 바꿔 두 문장이 한 덩어리로 뭉치지 않게 한다. */
 .demo-badge .db-look { color: #9a9384; margin-left: 8px; }
+/* 역할 줄은 앞 줄과 같은 "포트폴리오를 만든 사람" 축이라 금색 계열을 낮춰 쓰고, 회색 계열인
+   안내(db-look)와 갈라 둔다. 항상 줄을 바꿔 귀속 줄에 붙은 꼬리로 읽히지 않게 한다. */
+.demo-badge .db-role { display: block; color: #b09a78; font-size: 0.95em; }
 @media (max-width: 900px) { .demo-badge .db-look { display: block; margin-left: 0; } }
 
 /* ============ 상단바 / 하단탭 ============ */

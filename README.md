@@ -147,6 +147,9 @@ portfolio/
 │   └── apps/docqa/             #   문서 근거 QA + 시맨틱 검색 (JC DocuQA)
 ├── portfolio_exchange_next/    # Next / React 거래소 목업 (매칭 엔진)
 ├── portfolio_jquery_spring/    # jQuery / Spring 백엔드 (파일 차단 + IP 접근 제어)
+├── infra/                      # nginx 설정, systemd 유닛, 프로비저닝 / 배포 스크립트
+├── tools/                      # 자산 생성 원본 (배포에 올라가지 않는 도구)
+│   └── og-card/                #   공유 카드 원본 -> intro/img/og-cover.jpg
 └── README.md
 ```
 

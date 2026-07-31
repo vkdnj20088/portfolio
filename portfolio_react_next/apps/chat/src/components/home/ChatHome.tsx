@@ -79,7 +79,8 @@ export function ChatHome() {
             읽힌다. 결정적 목업이라는 사실과 무엇을 눌러 볼지를 한 줄로 둔다(사이드바 §0 은
             좁은 화면에서 레일로 접혀 안 보이므로, 첫 화면에는 이 줄이 그 역할을 겸한다). */}
         <p className={styles.demoNote}>
-          실 LLM 없이 도는 목업이라 같은 질문에는 같은 답이 옵니다. 아래 칩으로 스트리밍과 실패·재시도 흐름을 그대로 재현할 수 있습니다.
+          실 LLM 없이 도는 목업이라 같은 질문에는 같은 답이 옵니다. 아래 칩으로 스트리밍과
+          실패·재시도 흐름을 그대로 재현할 수 있습니다.
         </p>
         <MessageComposer
           value={value}
@@ -106,6 +107,15 @@ export function ChatHome() {
             {error}
           </p>
         )}
+        {/* 귀속 표기는 사이드바 푸터에 있는데, 사이드바가 접히면 함께 접힌다. 640px 이하는
+            저장된 선호가 없으면 접힌 채로 시작하므로(layout 의 초기화 스크립트) 좁은 화면
+            방문자는 이 앱을 누가 만들었는지 화면에서 볼 수 없었다. §0 표기가 위 demoNote 로
+            같은 구멍을 메운 것과 같은 방식이다. 다만 §0 과 달리 문구가 사이드바와 똑같아서,
+            펼친 상태에서도 내면 같은 줄이 한 화면에 두 번 나온다 - 접혔을 때만 낸다. */}
+        <p className={styles.identity}>
+          최종은의 React + Next 포트폴리오
+          <span className={styles.identityRole}>Front-end 파트장 · Full-stack · IT 경력 12년+</span>
+        </p>
       </div>
     </div>
   );

@@ -33,17 +33,52 @@
         letter-spacing: -0.5px;
     }
 
+    // 귀속(누구 것)과 역할(어떤 사람)을 한 열로 쌓는다. 배너가 좌우 양끝 정렬이라 오른쪽
+    // 끝을 기준으로 붙여야 두 줄이 계단으로 어긋나지 않는다.
     &__applicant {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
+        gap: 2px;
         color: #cbc6de;
         font-size: 15px;
         font-weight: 600;
         letter-spacing: -0.2px;
     }
 
+    // 텍스트 노드를 감싸는 줄. flex 컨테이너 안에서는 감싸지 않은 텍스트가 익명 항목으로
+    // 쪼개져 "최종은의 / jQuery + Spring Boot / 포트폴리오" 가 세 줄로 갈라진다. 감싸기만
+    // 하면 되고 nowrap 은 걸지 않는다 - 좁은 화면에서 줄바꿈을 막으면 배너를 넘친다.
+    &__owner {
+        word-break: keep-all;
+    }
+
+    &__role {
+        color: #9d97b4;
+        font-size: 12.5px;
+        font-weight: 600;
+        word-break: keep-all;
+    }
+
     // 워드마크의 두 번째 조각. 그라디언트 텍스트를 걷어내고 단색으로(background-clip 미사용).
     &__grad {
         color: #fff;
         font-weight: 800;
+    }
+
+    // 역할 줄이 생기면서 오른쪽 블록이 넓어졌고, 좌우 양끝 정렬이라 좁은 화면에서는 두 블록이
+    // 서로를 밀어 워드마크가 "JC / Guard" 로 쪼개졌다. 이 폭에서는 위아래로 쌓아 각자 한 줄을
+    // 온전히 쓰게 한다(줄여서 감추는 대신 자리를 준다).
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+
+        &__applicant {
+            align-items: flex-start;
+            text-align: left;
+        }
     }
 }
 
