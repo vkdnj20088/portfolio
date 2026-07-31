@@ -17,10 +17,10 @@ const noop = () => () => {};
  * getSnapshot 이 매번 새 문자열을 만들어도 안전하다 - React 는 Object.is 로 비교하는데
  * 문자열은 값으로 같으면 같다고 판정한다(무한 렌더 루프가 생기지 않는다).
  */
-export function usePortfolioHome(fallback: string): string {
+export function usePortfolioHome(fallback: string, from?: string): string {
   return useSyncExternalStore(
     noop,
-    () => portfolioHomeHref(fallback),
+    () => portfolioHomeHref(fallback, from),
     () => fallback,
   );
 }

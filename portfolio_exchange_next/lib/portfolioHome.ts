@@ -20,16 +20,31 @@ import { useSyncExternalStore } from "react";
 const LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/;
 const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/;
 
-export function portfolioHomeHref(fallback: string): string {
+/**
+ * 인트로에서 갈 곳은 최상단이 아니라 데모 목록이다. 인트로는 자기소개까지 담은 긴 한 장이라
+ * 루트로 보내면 목록이 1280x800 기준 2,441px 아래에 있고, 데모를 보고 나온 사람이 다음 데모로
+ * 가려면 그만큼 다시 스크롤해야 했다.
+ *
+ * from 은 방금 보고 나온 데모의 키(인트로 카드의 data-demo). 인트로가 그 카드에 표식을 단다.
+ * referrer 를 안 쓰는 이유는 여섯 표면 모두 `Referrer-Policy: no-referrer` 이기 때문이다.
+ */
+const DEMOS = "#demos";
+
+function introPath(from?: string): string {
+  return from ? `/?from=${encodeURIComponent(from)}${DEMOS}` : `/${DEMOS}`;
+}
+
+export function portfolioHomeHref(fallback: string, from?: string): string {
   if (typeof window === "undefined") return fallback;
 
   const { protocol, hostname } = window.location;
+  // 로컬에서는 인트로 위치를 모른다 - 앵커를 붙일 근거가 없어 기본값을 그대로 둔다.
   if (protocol === "file:" || LOCAL_HOST.test(hostname)) return fallback;
-  if (IPV4.test(hostname)) return `https://${hostname}/`;
+  if (IPV4.test(hostname)) return `https://${hostname}${introPath(from)}`;
 
   const labels = hostname.split(".");
   const apex = labels.length > 2 ? labels.slice(1).join(".") : hostname;
-  return `https://${apex}/`;
+  return `https://${apex}${introPath(from)}`;
 }
 
 // 값이 바뀔 일이 없으므로 구독하지 않는다(해지 함수만 돌려준다).
@@ -46,10 +61,10 @@ const noop = () => () => {};
  * getSnapshot 이 매번 새 문자열을 만들어도 안전하다 - React 는 Object.is 로 비교하는데
  * 문자열은 값으로 같으면 같다고 판정한다(무한 렌더 루프가 생기지 않는다).
  */
-export function usePortfolioHome(fallback: string): string {
+export function usePortfolioHome(fallback: string, from?: string): string {
   return useSyncExternalStore(
     noop,
-    () => portfolioHomeHref(fallback),
+    () => portfolioHomeHref(fallback, from),
     () => fallback,
   );
 }

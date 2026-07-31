@@ -12,7 +12,7 @@
  */
 import './styles/ip.scss';
 import $ from 'jquery';
-import { PORTFOLIO_HOME, siblingScreenHref } from './config';
+import { portfolioHomeHref, siblingScreenHref } from './config';
 import {
   Problem, IpMatchResponse, IpRuleListResponse, IpRuleResponse, WhoAmIResponse,
   PolicyEvaluationResponse, EvaluatedRule,
@@ -415,7 +415,7 @@ $('#ipTableBody').on('click', '.ip-del', function (this: HTMLElement) {
 
 // ---- 초기 로드 ----------------------------------------------------------
 $(() => {
-  $('.portfolio-home').attr('href', PORTFOLIO_HOME);
+  $('.portfolio-home').attr('href', portfolioHomeHref('ip'));
   // 나머지 한 화면(파일 확장자 차단)의 주소는 배포 형태마다 달라 런타임에 조립한다.
   $('.sibling-screen').attr('href', siblingScreenHref('ip'));
   showResolvedZone();

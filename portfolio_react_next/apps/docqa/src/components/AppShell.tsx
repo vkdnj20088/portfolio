@@ -14,7 +14,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isSearch = pathname.startsWith('/search');
   const isEval = pathname.startsWith('/eval');
-  const portfolioHome = usePortfolioHome(PORTFOLIO_FALLBACK);
+  // 인트로 카드의 data-demo 와 같은 키. 이 앱은 화면마다 다른 카드라 라우트에서 고른다.
+  // 품질 지표(/eval)는 카드가 아니라 목록 밖 링크 한 줄이다 - 키는 보내되 표식은 붙지 않는다.
+  const demoKey = isEval ? 'docqa-eval' : isSearch ? 'docqa-search' : 'docqa-qa';
+  const portfolioHome = usePortfolioHome(PORTFOLIO_FALLBACK, demoKey);
 
   const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
   useEffect(() => {

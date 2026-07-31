@@ -19,7 +19,8 @@ const TABS: { href: string; key: string; label: string; Icon: (p: SVGProps<SVGSV
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const active = (key: string) => (path.startsWith(`/${key}`) ? "on" : "");
-  const portfolioHome = usePortfolioHome(PORTFOLIO_FALLBACK);
+  // 인트로 카드의 data-demo 와 같은 키. 인트로가 "방금 본 데모" 표식을 다는 데 쓴다.
+  const portfolioHome = usePortfolioHome(PORTFOLIO_FALLBACK, "exchange");
   return (
     <>
       <header className="topbar">

@@ -12,7 +12,8 @@ const PORTFOLIO_FALLBACK = process.env.NEXT_PUBLIC_PORTFOLIO_URL ?? '/';
  * 딸려 들어간다).
  */
 export function PortfolioHomeLink() {
-  const href = usePortfolioHome(PORTFOLIO_FALLBACK);
+  // 인트로 카드의 data-demo 와 같은 키. 인트로가 "방금 본 데모" 표식을 다는 데 쓴다.
+  const href = usePortfolioHome(PORTFOLIO_FALLBACK, 'chat');
   return (
     <a className="portfolio-home" href={href} aria-label="포트폴리오 소개로 돌아가기">
       <span className="ph-ic" aria-hidden="true">
