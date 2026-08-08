@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { NetworkStatusBanner } from '@/components/network/NetworkStatusBanner';
 import { Logo } from './Logo';
 import { PortfolioHomeLink } from './PortfolioHomeLink';
+import { ReplyModeNote } from './ReplyModeNote';
 import { SidebarToggle } from './SidebarToggle';
 import { ThemeToggle } from './ThemeToggle';
 import styles from './AppShell.module.css';
@@ -57,7 +58,8 @@ export function AppShell({ children, sidebar }: AppShellProps) {
               <span className={styles.footerRole}>
                 Front-end 파트장 · Full-stack · IT 경력 12년+
               </span>
-              <em className={styles.footerNote}>실서비스 아님 · 응답은 결정적 목업</em>
+              {/* 문구는 응답 모드에 따라 갈린다(LLM 전송 모드에서 "결정적 목업"은 거짓말) */}
+              <ReplyModeNote className={styles.footerNote} />
             </span>
             <ThemeToggle />
           </div>

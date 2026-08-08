@@ -1,6 +1,8 @@
 import { pickReply } from '@chat/chat-domain';
 import { problemResponse } from '@chat/ui';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { isLlmMode, streamAnthropicReply } from '@/lib/server/anthropicReply';
+import { replyCache, streamGeneration } from '@/lib/server/replyCache';
 
 /**
  * 응답 스트리밍 엔드포인트(STEP 12 실증) - text/event-stream(SSE).
@@ -8,8 +10,21 @@ import { checkRateLimit } from '@/lib/rateLimit';
  * 클라이언트가 마지막 사용자 입력과 방별 응답 일련번호를 보내면, 서버가 mock 과 동일한
  * 결정적 선택(pickReply)으로 문안을 골라 어절 단위 delta 로 흘리고 마지막에 done 을 낸다.
  * 텍스트 생성과 증분 전달이 실제 네트워크 경계 너머로 옮겨졌을 뿐, 소비 계약(ReplyEvent)은 같다.
+ *
+ * LLM 전송 모드: 서버 환경에 ANTHROPIC_API_KEY 가 있으면 pickReply 대신 실제 LLM 스트리밍으로
+ * 답한다. 와이어 형태(delta/done SSE)는 동일해서 클라이언트는 어느 생성인지 구분하지 않는다.
+ * 재요청·재연결은 결정성 캐시(replyCache)가 같은 답을 재생해 이어받기 의미론을 보존한다.
+ * 키가 없으면(배포 기본) 이 분기는 존재하지 않는 것과 같다 - 배포 동작 무변경.
  */
 export const dynamic = 'force-dynamic';
+
+/**
+ * 응답 모드 조회 - 화면(§0 문구)이 "결정적 목업"과 "실제 LLM" 중 무엇을 말할지 결정하는 근거.
+ * 키는 서버 런타임 환경이라 빌드 산출물로는 알 수 없으므로, 클라이언트가 이 값을 물어본다.
+ */
+export function GET(): Response {
+  return Response.json({ mode: isLlmMode() ? 'llm' : 'mock' });
+}
 
 interface ReplyRequest {
   text?: unknown;
@@ -58,6 +73,11 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
   const seq = typeof body.seq === 'number' && Number.isFinite(body.seq) ? body.seq : 0;
+
+  if (isLlmMode()) {
+    return llmResponse(text, seq, req.signal);
+  }
+
   const reply = pickReply(text, seq);
   const words = reply.split(' ');
   const gap = Math.max(1, Math.floor(REPLY_BUDGET_MS / Math.max(1, words.length)));
@@ -86,6 +106,42 @@ export async function POST(req: Request): Promise<Response> {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       'X-Accel-Buffering': 'no', // nginx 등 프록시가 스트림을 버퍼링하지 않게(실배포 대비)
+    },
+  });
+}
+
+/**
+ * LLM 전송 모드의 SSE 응답. 캐시 키는 mock 의 결정성 지표와 동일한 (seq, text) - mock 이
+ * pickReply(text, seq) 로 같은 답을 재생하듯, 여기서는 캐시가 같은 답을 재생한다.
+ *
+ * 생성은 요청 수명과 분리되어 있어(replyCache) 클라이언트가 중단해도 완주한다. 이 응답
+ * 스트림만 중단에 반응해 닫힌다 - 재연결한 요청은 같은 버퍼를 처음부터 재생받고, 접두 스킵은
+ * 클라이언트(sseTransport)가 한다. mock 분기와 같은 헤더/이벤트 형태를 유지한다.
+ */
+function llmResponse(text: string, seq: number, signal: AbortSignal): Response {
+  const generation = replyCache.getOrStart(`${seq}:${text}`, () => streamAnthropicReply(text));
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: unknown) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+      try {
+        for await (const event of streamGeneration(generation, signal)) {
+          send(event);
+        }
+        // 생성 실패면 done 없이 닫힌다 - 클라이언트가 불완전 스트림으로 보고 재시도한다.
+      } catch {
+        // 중단(AbortError)이면 조용히 종료 - mock 분기와 같은 규약.
+      } finally {
+        controller.close();
+      }
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
     },
   });
 }

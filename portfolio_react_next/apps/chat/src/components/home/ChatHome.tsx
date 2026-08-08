@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { chatApi } from '@/lib/api/chatApi';
+import { useReplyMode } from '@/hooks/useReplyMode';
 import { refreshRooms } from '@/lib/chat-store/roomsStore';
 import { clearHomeDraft, readHomeDraft, saveHomeDraft, setPendingMessage } from '@/lib/draft';
 import { MessageComposer } from '@/components/composer/MessageComposer';
@@ -36,6 +37,7 @@ const SUGGESTIONS = [
 
 export function ChatHome() {
   const router = useRouter();
+  const replyMode = useReplyMode();
   const [value, setValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,10 +79,14 @@ export function ChatHome() {
         <h1 className={styles.greeting}>무엇이든 물어보세요</h1>
         {/* 인사말만 있으면 실제 LLM 을 기대하게 되고, 그러면 같은 답이 반복되는 것이 결함으로
             읽힌다. 결정적 목업이라는 사실과 무엇을 눌러 볼지를 한 줄로 둔다(사이드바 §0 은
-            좁은 화면에서 레일로 접혀 안 보이므로, 첫 화면에는 이 줄이 그 역할을 겸한다). */}
+            좁은 화면에서 레일로 접혀 안 보이므로, 첫 화면에는 이 줄이 그 역할을 겸한다).
+            LLM 전송 모드(로컬 키)에서는 이 문장이 거짓말이 되므로 모드에 맞춰 갈아 끼운다. */}
         <p className={styles.demoNote}>
-          실 LLM 없이 도는 목업이라 같은 질문에는 같은 답이 옵니다. 아래 칩으로 스트리밍과
-          실패·재시도 흐름을 그대로 재현할 수 있습니다.
+          {replyMode === 'llm'
+            ? '지금은 로컬 API 키로 실제 LLM(Claude)이 응답합니다. 배포판은 키 없이 결정적 ' +
+              '목업으로 동작하며, 아래 칩의 실패·재시도 재현은 두 모드에서 똑같이 동작합니다.'
+            : '실 LLM 없이 도는 목업이라 같은 질문에는 같은 답이 옵니다. 아래 칩으로 스트리밍과 ' +
+              '실패·재시도 흐름을 그대로 재현할 수 있습니다.'}
         </p>
         <MessageComposer
           value={value}

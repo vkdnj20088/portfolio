@@ -13,6 +13,7 @@
     "check:browser-support": "es-check es2022 \".next/static/chunks/**/*.js\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@chat/chat-domain": "workspace:*",
     "@chat/ui": "workspace:*",
     "next": "16.2.12",
@@ -20,14 +21,14 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@chat/eslint-config": "workspace:*",
+    "@chat/typescript-config": "workspace:*",
     "@playwright/test": "1.62.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@chat/eslint-config": "workspace:*",
-    "@chat/typescript-config": "workspace:*",
     "es-check": "^9.6.4",
     "eslint": "^9.18.0",
     "jsdom": "^30.0.1",
