@@ -1,7 +1,8 @@
-# infra - 통합 EC2 배포 (인트로 + 데모 서브도메인 5개)
+# infra - 통합 EC2 배포 (인트로 + 데모 여덟 화면)
 
 한 대의 EC2 에서 인트로 랜딩과 데모를 함께 서빙하기 위한 코드화된 인프라입니다.
-화면은 일곱이지만 앱 서브도메인은 여섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트입니다.
+화면은 여덟이지만 앱은 다섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트이고,
+파일 차단 · IP 접근 제어 · 작업 릴레이가 한 앱(guard)의 세 화면입니다.
 nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 버전관리 파일로 둡니다.
 
 ## 구성
@@ -61,6 +62,7 @@ https://docqa.<도메인>/      문서QA (+ /search)   127.0.0.1:3030
 https://file.<도메인>/       파일 확장자 차단     127.0.0.1:8080 "/"
 https://ip.<도메인>/         IP 접근 제어         127.0.0.1:8080 "/ip.html"
 https://guard.<도메인>/      위 둘의 원래 주소(유지)
+https://guard.<도메인>/relay.html  작업 릴레이   127.0.0.1:8080 (새 서브도메인 없이 경로로)
 https://loandoc.<도메인>/    대출 서류 분류        127.0.0.1:8000
 https://search.<도메인>/     docqa/search 로 301
 https://www.<도메인>/        apex 로 301
@@ -90,10 +92,18 @@ SNI 가 있는 요청은 도메인 블록이, 없는 요청(IP 리터럴 접속)
 ```bash
 # 1) DNS: A 레코드 아홉 개를 서버 공인 IP 로
 #    (apex, www, exchange, chat, docqa, search, guard, file, ip, loandoc - 인증서 SAN 과 같은 목록)
-# 2) 발급 + 활성화 (DNS 전파 확인 -> 80 도달 확인 -> dry-run -> 발급 -> 검증까지 한 번에)
 cd ~/portfolio && git pull
+
+# 2) 엣지 설정 먼저. 도메인 설정은 upstream **이름**으로 프록시하고 그 정의는 하드닝 드롭인에
+#    있다 - 앱이 늘어 upstream 이 추가된 뒤라면 이걸 건너뛸 때 6) 검증이 깨진다.
+sudo bash infra/apply-hardening.sh
+
+# 3) 발급 + 활성화 (선행 조건 검사 -> DNS 전파 -> 80 도달 -> dry-run -> 발급 -> 검증)
 sudo -E DOMAIN=example.dev LE_EMAIL=you@example.com bash infra/issue-cert-domain.sh
 ```
+
+> 순서를 지키지 않으면 `host not found in upstream` 으로 nginx 검증이 실패합니다. 스크립트가
+> **발급 전에** 이를 잡아 안내하지만(인증서 rate limit 보호), 순서 자체는 위가 정답입니다.
 
 ### 엣지 하드닝 (apply-hardening.sh)
 

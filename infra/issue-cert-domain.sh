@@ -48,6 +48,23 @@ log "0) 사전 점검"
 [[ -f "$PROXY_SNIPPET" ]] || die "프록시 스니펫이 없습니다: ${PROXY_SNIPPET} (provision.sh 를 먼저 실행)"
 [[ -d "$WEBROOT" ]] || die "ACME 웹루트가 없습니다: ${WEBROOT} (provision.sh 를 먼저 실행)"
 command -v certbot >/dev/null 2>&1 || die "certbot 이 없습니다. issue-cert-ip.sh 를 먼저 실행했다면 설치돼 있어야 합니다."
+
+# 도메인 설정은 upstream **이름**으로 프록시하는데, 그 정의는 하드닝 드롭인
+# (conf.d/portfolio-hardening.conf)에 있고 배치 주체는 apply-hardening.sh 다. 데모가 늘어
+# upstream 이 추가되면 이 순서 의존이 드러난다 - 서버 드롭인이 낡은 채로 도메인 설정만 새로
+# 깔리면 `host not found in upstream` 으로 nginx -t 가 깨진다(loandoc 을 붙일 때 실제로 겪음).
+# 그 검증은 6) 에 있어서 **인증서를 발급한 뒤에** 넘어졌다 - 발급에는 rate limit 이 있으므로
+# 태우기 전에 여기서 막는다. 실패를 앞으로 당기는 것이 이 점검의 전부다.
+MISSING_UPSTREAMS=()
+while read -r up; do
+  [[ -n "$up" ]] || continue
+  grep -rqs "upstream[[:space:]]\+${up}[[:space:]]*{" /etc/nginx/ || MISSING_UPSTREAMS+=("$up")
+done < <(grep -oE 'proxy_pass https?://portfolio_[a-z0-9_]+' "$INFRA/nginx/portfolio-domain.conf" \
+  | sed -E 's|.*//||' | sort -u)
+if [[ ${#MISSING_UPSTREAMS[@]} -gt 0 ]]; then
+  die "upstream 정의가 서버에 없습니다: ${MISSING_UPSTREAMS[*]}
+      하드닝 드롭인이 낡았습니다. 먼저 실행하세요: sudo bash ${INFRA}/apply-hardening.sh"
+fi
 command -v dig >/dev/null 2>&1 || apt-get install -y dnsutils >/dev/null 2>&1 || true
 # dig 이 없으면 아래 DNS 대조가 전부 "불일치" 로 보여 원인을 엉뚱한 곳에서 찾게 된다.
 command -v dig >/dev/null 2>&1 || die "dig 이 없습니다: sudo apt-get install -y dnsutils"

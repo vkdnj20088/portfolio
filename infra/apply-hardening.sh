@@ -167,7 +167,13 @@ fi
 
 # robots.txt: 인트로는 열고(파일), 데모는 닫는다(스니펫). 방향이 뒤집히면 검색 결과에
 # 인트로 대신 앱 내부 경로가 뜨므로, 두 방향을 다 확인한다.
-if [[ -n "${DOM:-}" ]]; then
+#
+# 도메인 **사이트가 켜져 있을 때만** 묻는다. 꺼져 있으면 서브도메인 요청은 도메인 블록이
+# 아니라 default_server(인트로 정적)가 받아서, 데모 robots 가 인트로의 `Allow: /` 로 응답한다 -
+# 설정은 멀쩡한데 검증만 실패한다(도메인을 붙이기 전 이 스크립트를 먼저 돌리면 늘 그렇게 된다).
+if [[ -n "${DOM:-}" ]] && [[ ! -e "${ENABLED}/portfolio-domain" ]]; then
+  printf '  %-38s %s\n' "도메인 robots.txt" "건너뜀(도메인 사이트 비활성)"
+elif [[ -n "${DOM:-}" ]]; then
   if [[ "$(probe "https://${DOM}/robots.txt")" == "404" ]]; then
     printf '  %-38s %s\n' "인트로 robots.txt" "건너뜀(인트로 미배포)"
   elif introbots="$(curl -sk --max-time 10 "https://${DOM}/robots.txt")" \
