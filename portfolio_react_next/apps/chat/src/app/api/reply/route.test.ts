@@ -49,6 +49,11 @@ describe('POST /api/reply (무키 폴백)', () => {
     const done = events.at(-1);
     expect(done?.type).toBe('done');
     expect(done?.text).toBe(pickReply(text, 0)); // 무키 = 이전과 비트 단위로 같은 답
-    expect(events.filter((e) => e.type === 'delta').map((e) => e.text).join('')).toBe(done?.text);
+    expect(
+      events
+        .filter((e) => e.type === 'delta')
+        .map((e) => e.text)
+        .join(''),
+    ).toBe(done?.text);
   }, 15000); // mock 재생은 실제 2초 예산으로 흐른다 - 여유를 둔다
 });

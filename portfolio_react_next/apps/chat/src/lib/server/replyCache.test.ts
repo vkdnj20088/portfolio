@@ -68,7 +68,12 @@ describe('ReplyCache + streamGeneration', () => {
     expect(callCount()).toBe(1);
     expect(a.at(-1)).toEqual({ type: 'done', text: '하나 둘 셋' });
     // 재연결 리더도 전체를 재생받는다 - 접두 스킵은 클라이언트 몫이라 서버는 항상 전체를 준다.
-    expect(b.filter((e) => e.type === 'delta').map((e) => e.text).join('')).toBe('하나 둘 셋');
+    expect(
+      b
+        .filter((e) => e.type === 'delta')
+        .map((e) => e.text)
+        .join(''),
+    ).toBe('하나 둘 셋');
     expect(b.at(-1)).toEqual({ type: 'done', text: '하나 둘 셋' });
   });
 
