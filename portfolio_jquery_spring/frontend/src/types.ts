@@ -132,3 +132,52 @@ export interface IpMatchResponse {
   family: 'IPV4' | 'IPV6';
   matches: boolean;
 }
+
+// ---- 작업 릴레이 (재시도 파이프라인) ------------------------------------
+// 상태·오류·유형·시나리오는 전부 enum 코드 문자열이다 - 표시 문자열은
+// lib/relayMessages.ts 카탈로그가 조립한다(서버는 문장을 만들지 않는다).
+
+export interface RelayAttempt {
+  run: number;
+  attemptNo: number;
+  startedAt: string;          // ISO(UTC) - 표시는 접속 기기 시간대
+  success: boolean;
+  errorCode: string | null;
+  backoffMs: number;
+  cid: string | null;
+}
+
+export interface RelayJob {
+  id: number;
+  idempotencyKey: string;
+  type: string;
+  payload: string | null;
+  status: string;
+  attemptCount: number;
+  maxAttempts: number;
+  seed: number;
+  scenario: string;
+  run: number;
+  nextAttemptAt: string | null;
+  enqueueCid: string | null;
+  createdAt: string;
+  updatedAt: string;
+  attempts: RelayAttempt[];
+}
+
+export interface RelayStats {
+  byStatus: Record<string, number>;
+  outboxPending: number;
+  ghostEvents: number;
+}
+
+export interface RelayJobList {
+  jobs: RelayJob[];
+  stats: RelayStats;
+}
+
+export interface RelayEnqueueResponse {
+  job: RelayJob | null;       // 저장 실패 주입 경로면 null
+  duplicate: boolean;
+  persisted: boolean;
+}

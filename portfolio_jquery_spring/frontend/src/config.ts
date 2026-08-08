@@ -26,10 +26,10 @@ const FALLBACK = '/';
 const DEMOS = '#demos';
 
 /**
- * from 은 방금 보고 나온 화면의 키다(인트로 카드의 data-demo 와 같은 값 - 'files' / 'ip').
- * 인트로가 그 카드에 "방금 본 데모" 표식을 달아, 여섯 개 중 무엇이 남았는지 보이게 한다.
- * referrer 로 하지 않는 이유: 여섯 표면 모두 `Referrer-Policy: no-referrer` 라 document.referrer
- * 가 비어 있다. 표식 하나를 위해 보안 헤더를 푸는 것보다 쿼리 한 개가 싸다.
+ * from 은 방금 보고 나온 화면의 키다(인트로 카드의 data-demo 와 같은 값 - 'files' / 'ip' / 'relay').
+ * 인트로가 그 카드에 "방금 본 데모" 표식을 달아, 카드 중 무엇이 남았는지 보이게 한다.
+ * referrer 로 하지 않는 이유: 복귀 링크를 보내는 표면 모두 `Referrer-Policy: no-referrer` 라
+ * document.referrer 가 비어 있다. 표식 하나를 위해 보안 헤더를 푸는 것보다 쿼리 한 개가 싸다.
  */
 function introPath(from?: string): string {
   return from ? `/?from=${encodeURIComponent(from)}${DEMOS}` : `/${DEMOS}`;
@@ -48,36 +48,41 @@ export function resolvePortfolioHome(hostname: string, protocol: string, from?: 
   return `https://${apex}${introPath(from)}`;
 }
 
+// 이 앱의 세 화면. 인트로 카드의 data-demo 키와 같은 값을 쓴다(from= 표식 공유).
+export type Screen = 'files' | 'ip' | 'relay';
+
 // hostname/protocol 을 인자로 받는 이유: 브라우저 밖(테스트, 빌드 도구)에서도 규칙을 검증할 수
 // 있게 하려는 것이다. location 이 없는 환경에서는 모듈을 불러오는 것만으로 터지지 않게 막는다.
-// 상수가 아니라 함수인 것은 두 화면이 서로 다른 카드이기 때문이다(siblingScreenHref 와 같은 형태).
-export const portfolioHomeHref = (here: 'files' | 'ip'): string =>
+// 상수가 아니라 함수인 것은 화면마다 서로 다른 카드이기 때문이다(screenHref 와 같은 형태).
+export const portfolioHomeHref = (here: Screen): string =>
   typeof location === 'undefined'
     ? FALLBACK
     : resolvePortfolioHome(location.hostname, location.protocol, here);
 
 /**
- * 나머지 한 화면으로 가는 링크. 두 화면(파일 확장자 차단 / IP 접근 제어)은 **한 애플리케이션**인데
- * 배포에서 서브도메인으로만 갈라 두어, 화면끼리 오갈 방법이 없었다. 한쪽을 보던 사람은 인트로로
- * 되돌아가야 나머지를 볼 수 있었다 - README 가 "두 화면은 한 앱"이라고 적어 둔 것을 정작 화면에서는
- * 확인할 수 없는 상태였다.
+ * 다른 화면으로 가는 링크. 세 화면(파일 확장자 차단 / IP 접근 제어 / 작업 릴레이)은
+ * **한 애플리케이션**인데 배포에서 서브도메인으로 갈라 두어, 화면끼리 오갈 방법이 없었다.
+ * README 가 "한 앱"이라고 적은 것을 화면에서도 확인할 수 있게 배너의 내비가 이 값을 쓴다.
  *
  * 목적지 규칙은 배포 형태마다 다르다:
- *   - 서브도메인 배포: 첫 라벨만 바꾼다. file.example.dev <-> ip.example.dev
- *   - 그 외(로컬, IP 리터럴, guard.): 같은 출처의 다른 경로. "/" <-> "/ip.html"
- *     IP 배포는 두 화면이 같은 포트(:8443)에 살고, guard. 도 한 서브도메인이 둘을 다 서빙한다.
- *     origin 을 그대로 두므로 포트가 보존된다 - 여기서 포트를 떨어뜨리면 인트로로 가 버린다.
+ *   - 전용 서브도메인 배포(file./ip.): 첫 라벨을 바꾼다. 단 릴레이는 전용 서브도메인이
+ *     없으므로(설계: 새 서브도메인 0) 원 주소인 guard.<apex>/relay.html 로 보낸다.
+ *   - 그 외(로컬, IP 리터럴, guard.): 같은 출처의 다른 경로. origin 을 그대로 두므로
+ *     포트가 보존된다 - 여기서 포트를 떨어뜨리면 인트로로 가 버린다.
  */
-export function resolveSiblingScreen(hostname: string, origin: string, here: 'files' | 'ip'): string {
-  const target = here === 'files' ? 'ip' : 'file';
+const SCREEN_PATH: Record<Screen, string> = { files: '/', ip: '/ip.html', relay: '/relay.html' };
+
+export function resolveScreenHref(hostname: string, origin: string, target: Screen): string {
   const labels = hostname.split('.');
   if (labels.length > 2 && (labels[0] === 'file' || labels[0] === 'ip')) {
-    return `https://${[target, ...labels.slice(1)].join('.')}/`;
+    const apex = labels.slice(1);
+    if (target === 'relay') return `https://${['guard', ...apex].join('.')}/relay.html`;
+    return `https://${[target === 'files' ? 'file' : 'ip', ...apex].join('.')}/`;
   }
-  return `${origin}${here === 'files' ? '/ip.html' : '/'}`;
+  return `${origin}${SCREEN_PATH[target]}`;
 }
 
-export const siblingScreenHref = (here: 'files' | 'ip'): string =>
+export const screenHref = (target: Screen): string =>
   typeof location === 'undefined'
-    ? here === 'files' ? '/ip.html' : '/'
-    : resolveSiblingScreen(location.hostname, location.origin, here);
+    ? SCREEN_PATH[target]
+    : resolveScreenHref(location.hostname, location.origin, target);

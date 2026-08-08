@@ -94,6 +94,17 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.NOT_FOUND, "NOT_FOUND", "대상을 찾을 수 없음", e.getMessage());
     }
 
+    @ExceptionHandler(RelayJobNotFoundException.class)
+    public ProblemDetail handleRelayJobNotFound(RelayJobNotFoundException e) {
+        return problem(HttpStatus.NOT_FOUND, "NOT_FOUND", "대상을 찾을 수 없음", e.getMessage());
+    }
+
+    @ExceptionHandler(RelayIllegalTransitionException.class)
+    public ProblemDetail handleRelayIllegalTransition(RelayIllegalTransitionException e) {
+        // 클라이언트가 보던 상태가 낡았다는 뜻 - 화면은 코드로 문구를 조립하고 목록을 새로고침한다.
+        return problem(HttpStatus.CONFLICT, "ILLEGAL_TRANSITION", "허용되지 않는 상태 전이", e.getMessage());
+    }
+
     @ExceptionHandler(InvalidIpException.class)
     public ProblemDetail handleInvalidIp(InvalidIpException e) {
         return problem(HttpStatus.BAD_REQUEST, "INVALID", "잘못된 IP/CIDR", e.getMessage());

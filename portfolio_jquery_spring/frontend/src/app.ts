@@ -14,7 +14,7 @@
 // -> JS 와 CSS 모두 콘텐츠 해시가 붙고, <link>/<script> 는 HtmlWebpackPlugin 이 주입한다.
 import './styles/main.scss';
 import $ from 'jquery';
-import { portfolioHomeHref, siblingScreenHref } from './config';
+import { portfolioHomeHref, screenHref, type Screen } from './config';
 import {
   CustomCreatedResponse,
   CustomItem,
@@ -318,8 +318,10 @@ function startRetryCooldown(seconds: number): void {
 // ---- 초기 로드 ----------------------------------------------------------
 $(() => {
   $('.portfolio-home').attr('href', portfolioHomeHref('files'));
-  // 나머지 한 화면(IP 접근 제어)의 주소는 배포 형태마다 달라 런타임에 조립한다.
-  $('.sibling-screen').attr('href', siblingScreenHref('files'));
+  // 다른 화면들의 주소는 배포 형태마다 달라 런타임에 조립한다.
+  $('.sibling-screen[data-screen]').each(function () {
+    $(this).attr('href', screenHref($(this).data('screen') as Screen));
+  });
   bindDropZone();
   renderFixed();
   renderCustom();

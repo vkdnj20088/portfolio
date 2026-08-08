@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolvePortfolioHome, resolveSiblingScreen } from './config';
+import { resolvePortfolioHome, resolveScreenHref } from './config';
 
 // 이 버튼은 "인트로로 돌아가기"다. 예전엔 상수 '/' 라 이 앱의 루트(파일 차단 화면)로 갔다 -
 // ip.html 에서 누르면 다른 데모로 튀었다. 아래가 그 회귀를 막는다.
@@ -48,34 +48,44 @@ describe('resolvePortfolioHome - 복귀 버튼 목적지', () => {
 });
 
 // 두 화면은 한 애플리케이션이다. 배포 형태에 따라 "나머지 한 화면"의 주소가 달라진다.
-describe('resolveSiblingScreen - 나머지 한 화면', () => {
-  it('서브도메인 배포: 첫 라벨만 맞바꾼다', () => {
-    expect(resolveSiblingScreen('file.example.dev', 'https://file.example.dev', 'files'))
+describe('resolveScreenHref - 화면 내비 목적지', () => {
+  it('전용 서브도메인 배포: 첫 라벨을 바꾼다', () => {
+    expect(resolveScreenHref('file.example.dev', 'https://file.example.dev', 'ip'))
       .toBe('https://ip.example.dev/');
-    expect(resolveSiblingScreen('ip.example.dev', 'https://ip.example.dev', 'ip'))
+    expect(resolveScreenHref('ip.example.dev', 'https://ip.example.dev', 'files'))
       .toBe('https://file.example.dev/');
   });
 
+  it('릴레이는 전용 서브도메인이 없다 - guard 의 경로로 보낸다(설계: 새 서브도메인 0)', () => {
+    expect(resolveScreenHref('file.example.dev', 'https://file.example.dev', 'relay'))
+      .toBe('https://guard.example.dev/relay.html');
+    expect(resolveScreenHref('ip.example.co.kr', 'https://ip.example.co.kr', 'relay'))
+      .toBe('https://guard.example.co.kr/relay.html');
+  });
+
   it('다단계 ccTLD 에서도 첫 라벨만 바꾼다', () => {
-    expect(resolveSiblingScreen('ip.example.co.kr', 'https://ip.example.co.kr', 'ip'))
+    expect(resolveScreenHref('ip.example.co.kr', 'https://ip.example.co.kr', 'files'))
       .toBe('https://file.example.co.kr/');
   });
 
-  it('IP 배포: 같은 출처의 다른 경로 - 포트를 잃지 않는다', () => {
-    // 포트를 떨어뜨리면 :443 인 인트로로 가 버린다. 두 화면은 둘 다 :8443 에 있다.
-    expect(resolveSiblingScreen('3.36.172.157', 'https://3.36.172.157:8443', 'files'))
+  it('포트 배포: 같은 출처의 다른 경로 - 포트가 보존된다', () => {
+    expect(resolveScreenHref('3.36.172.157', 'https://3.36.172.157:8443', 'ip'))
       .toBe('https://3.36.172.157:8443/ip.html');
-    expect(resolveSiblingScreen('3.36.172.157', 'https://3.36.172.157:8443', 'ip'))
+    expect(resolveScreenHref('3.36.172.157', 'https://3.36.172.157:8443', 'relay'))
+      .toBe('https://3.36.172.157:8443/relay.html');
+    expect(resolveScreenHref('3.36.172.157', 'https://3.36.172.157:8443', 'files'))
       .toBe('https://3.36.172.157:8443/');
   });
 
-  it('guard. 는 한 서브도메인이 두 화면을 다 서빙하므로 경로로 오간다', () => {
-    expect(resolveSiblingScreen('guard.example.dev', 'https://guard.example.dev', 'files'))
+  it('guard. 는 세 화면을 다 서빙한다 - 같은 출처 유지', () => {
+    expect(resolveScreenHref('guard.example.dev', 'https://guard.example.dev', 'ip'))
       .toBe('https://guard.example.dev/ip.html');
+    expect(resolveScreenHref('guard.example.dev', 'https://guard.example.dev', 'relay'))
+      .toBe('https://guard.example.dev/relay.html');
   });
 
-  it('로컬에서도 경로로 오간다', () => {
-    expect(resolveSiblingScreen('localhost', 'http://localhost:8080', 'files'))
-      .toBe('http://localhost:8080/ip.html');
+  it('로컬에서는 같은 출처의 경로다', () => {
+    expect(resolveScreenHref('localhost', 'http://localhost:8080', 'relay'))
+      .toBe('http://localhost:8080/relay.html');
   });
 });

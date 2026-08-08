@@ -1,0 +1,319 @@
+// 작업 릴레이 화면 전용 컴포넌트. 주인공은 타임라인(relay-attempt)이다 - 큐 통계보다
+// "한 작업의 시도 이력"이 먼저 읽히도록 카드가 이력을 크게 가져간다.
+
+// ── 큐 현황 ──────────────────────────────────────────────────────────────
+.relay-stats {
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+
+        @media (max-width: 720px) {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    &__outbox {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--muted);
+
+        b { color: var(--text); }
+    }
+
+    &__note {
+        margin-left: 4px;
+        font-size: 12px;
+    }
+}
+
+.relay-stat {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    text-align: center;
+
+    &__num {
+        display: block;
+        font-size: 22px;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__label {
+        display: block;
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--muted);
+        word-break: keep-all;
+    }
+
+    // 격리는 이 화면의 "포기 지점" 증거라 색으로 한 단 세운다.
+    &--dead_letter &__num { color: var(--danger); }
+    &--succeeded &__num { color: var(--ok); }
+    &--running &__num { color: var(--primary); }
+}
+
+// 유령 이벤트 - 0이면 조용히, 생기는 순간 위험색으로. 비교 데모의 점수판이다.
+.relay-ghost {
+    b { font-variant-numeric: tabular-nums; }
+
+    &--hot b,
+    &--hot { color: var(--danger); }
+}
+
+// ── 예약 ────────────────────────────────────────────────────────────────
+.relay-h2 {
+    margin: 0 0 12px;
+    font-size: 17px;
+}
+
+.relay-quick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.relay-enq-status {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.relay-detail {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+
+    &__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+}
+
+.relay-key {
+    grid-column: 1 / -1;
+}
+
+.relay-mode {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    legend {
+        padding: 0 4px;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 16px;
+        font-size: 13px;
+    }
+}
+
+.relay-idem {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+
+    b { color: var(--text); font-variant-numeric: tabular-nums; }
+    span { display: block; font-size: 12px; }
+
+    &--inject {
+        // 칩 배경(라이트 라벤더 고정) 위라 글자도 고정 다크 바이올렛으로 - 양 테마 대비 확보.
+        color: var(--primary-d);
+        padding: 8px 10px;
+        border-left: 3px solid var(--primary);
+        background: var(--chip);
+        border-radius: 0 var(--radius) var(--radius) 0;
+    }
+}
+
+// ── 작업 카드 + 타임라인 ─────────────────────────────────────────────────
+.relay-jobs__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.relay-filter {
+    font-size: 13px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.relay-job {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+
+    & + & { margin-top: 10px; }
+
+    &--dead_letter { border-left: 3px solid var(--danger); }
+    &--succeeded { border-left: 3px solid var(--ok); }
+    &--running,
+    &--retrying { border-left: 3px solid var(--primary); }
+
+    &__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px 12px;
+    }
+
+    &__title {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    &__key {
+        font-size: 13px;
+        background: var(--chip);
+        // 칩은 다크 테마에서도 라이트 라벤더를 유지한다(토큰 주석의 colored badge 패턴).
+        // 글자색을 상속(--text)에 맡기면 다크에서 밝은 글자가 밝은 칩에 묻힌다 - 명시한다.
+        color: var(--primary-d);
+        padding: 1px 6px;
+        border-radius: 4px;
+    }
+
+    &__type { font-size: 14px; font-weight: 600; }
+
+    &__status {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    &__next {
+        font-size: 12.5px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        margin: 6px 0 8px;
+        font-size: 12.5px;
+        color: var(--muted);
+    }
+
+    &__payload { color: var(--text); }
+
+    &__attempts { display: grid; gap: 4px; }
+
+    &__waiting {
+        margin: 2px 0;
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    &__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+}
+
+.relay-pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--chip);
+    color: var(--muted);
+
+    &--running,
+    &--retrying { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary-d); }
+    &--succeeded { background: var(--result-ok-bg); color: var(--result-ok-text); }
+    &--dead_letter { background: var(--result-block-bg); color: var(--result-block-text); }
+}
+
+// 타임라인 한 줄: #n · 시각 · 성패 · 사유 · 다음 대기(산식) · cid
+.relay-attempt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+
+    &--ok { background: var(--result-ok-bg); }
+    &--fail { background: var(--result-block-bg); }
+
+    &__no { font-weight: 700; font-variant-numeric: tabular-nums; }
+    &__clock { font-variant-numeric: tabular-nums; color: var(--muted); }
+    &__outcome { font-weight: 600; }
+    &--ok &__outcome { color: var(--result-ok-text); }
+    &--fail &__outcome { color: var(--result-block-text); }
+    &__error { color: var(--muted); }
+
+    &__backoff {
+        font-variant-numeric: tabular-nums;
+
+        i {
+            font-style: normal;
+            font-size: 12px;
+            color: var(--muted);
+
+            // 산식은 넓은 화면에서만 인라인으로 - 좁으면 title(툴팁)로만 남는다.
+            @media (max-width: 720px) { display: none; }
+        }
+    }
+
+    &__cid {
+        margin-left: auto;
+        font-size: 11.5px;
+        color: var(--muted);
+    }
+}
+
+// 재처리 세대 구분선 - 세대끼리 같은 타임라인이 "나란히" 보이는 것이 목적이다.
+.relay-run-divider {
+    margin: 6px 0 2px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    font-size: 12px;
+    color: var(--muted);
+}
+
+// 각주 카드
+.relay-notes {
+    ul {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+        font-size: 13.5px;
+        color: var(--muted);
+    }
+
+    strong { color: var(--text); }
+    code { font-size: 12.5px; }
+}

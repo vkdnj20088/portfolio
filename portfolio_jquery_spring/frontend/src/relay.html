@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JC Guard - 최종은의 jQuery + Spring Boot 포트폴리오 (작업 릴레이)</title>
+    <meta name="description" content="실패하는 작업을 잃지 않고, 무한히 붙잡지도 않는 재시도 파이프라인 데모. 지수 백오프, 멱등 키, 아웃박스 비교, DLQ 재처리 - 실패까지 시드로 재현되는 결정적 실행.">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <!-- 이 파일은 webpack(HtmlWebpackPlugin) 템플릿이다. 산출물 static/relay.html 은 직접 수정 금지.
+         <script>/<link> 는 여기 적지 않는다 - 해시 파일명을 HtmlWebpackPlugin 이 주입한다. -->
+</head>
+<body>
+<header class="brand-banner">
+    <div class="brand-banner__brand">
+        <span class="brand-banner__mark" aria-hidden="true"></span>
+        <span class="brand-banner__wordmark">JC Guard</span>
+        <a class="sibling-screen" data-screen="files" href="/"><span class="ss-label">파일 확장자 차단</span><span aria-hidden="true">&#8594;</span></a>
+        <a class="sibling-screen" data-screen="ip" href="/ip.html"><span class="ss-label">IP 접근 제어</span><span aria-hidden="true">&#8594;</span></a>
+    </div>
+    <!-- 배너는 세 화면이 같아야 "같은 앱의 다른 화면"으로 읽힌다(sibling-screen 과 같은 이유).
+         index.html·ip.html 과 이 파일을 함께 고친다. -->
+    <div class="brand-banner__applicant">
+        <span class="brand-banner__owner">최종은의 <span class="brand-banner__grad">jQuery + Spring Boot</span> 포트폴리오</span>
+        <span class="brand-banner__role">Front-end 파트장 &#183; Full-stack &#183; IT 경력 12년+</span>
+    </div>
+</header>
+
+<main class="app app--wide">
+    <header class="app__header">
+        <h1>작업 릴레이</h1>
+        <!-- 30초 명제. 화면의 나머지 전부가 이 한 문장의 증거다. -->
+        <p>실패하는 작업을 <strong>잃지 않고, 무한히 붙잡지도 않습니다.</strong>
+           실패와 재시도, 포기(격리)까지 전부 실제로 일어나고, 전부 시드에서 재현됩니다.
+           (데모 - 실제 외부 호출은 하지 않습니다.)</p>
+        <p class="app__hint">아래 예약 버튼을 누르면 1초 뒤 워커가 집어 갑니다. 실패한 시도에는 다음
+           대기가 산식과 함께 붙고, 화면에 보이는 시간만큼 실제로 기다립니다 - 표시값과 실행값이
+           다르면 그 자체가 거짓말이라서요. 운영이라면 기저를 초·분 단위로 잡습니다.</p>
+    </header>
+
+    <!-- 큐 현황 - 상태별 카운터. 격리(DLQ)가 0이 아니라는 것 자체가 "포기 지점이 있다"의 증거다. -->
+    <section class="card relay-stats" aria-label="큐 현황">
+        <div class="relay-stats__grid" id="statGrid" aria-live="polite"></div>
+        <p class="relay-stats__outbox">아웃박스 미발행 <b id="outboxPending">0</b>건
+            <span class="relay-ghost">&#183; 유령 이벤트 <b id="ghostCount">0</b>건</span>
+            <span class="relay-stats__note">(유령 = 원본 없이 발행된 이벤트 - 직접 발행 모드의 비용)</span></p>
+    </section>
+
+    <!-- 예약 - 빠른 버튼 3개가 30초 동선, 상세 폼은 접혀 있다. -->
+    <section class="card relay-enqueue" aria-labelledby="enqTitle">
+        <h2 id="enqTitle" class="relay-h2">작업 예약</h2>
+        <div class="relay-quick">
+            <button id="quickSuccess" type="button" class="btn btn--primary">성공하는 작업</button>
+            <button id="quickLucky" type="button" class="btn btn--primary">3회째 성공</button>
+            <button id="quickFail" type="button" class="btn btn--primary">끝내 실패 (격리행)</button>
+            <button id="openDetail" type="button" class="btn">직접 설정&#8230;</button>
+            <span id="enqStatus" class="relay-enq-status" role="status" aria-live="polite"></span>
+        </div>
+
+        <div id="detailPanel" class="relay-detail" hidden>
+            <div class="relay-detail__grid">
+                <div class="field">
+                    <label class="field__label" for="jobType">작업 유형</label>
+                    <select id="jobType"></select>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="scenario">실패 시나리오</label>
+                    <select id="scenario"></select>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="maxAttempts">최대 시도</label>
+                    <select id="maxAttempts">
+                        <option>1</option><option>2</option><option selected>3</option>
+                        <option>4</option><option>5</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="seedInput">시드 (비우면 키에서 파생)</label>
+                    <input id="seedInput" type="text" inputmode="numeric" placeholder="예: 20260801" autocomplete="off">
+                </div>
+                <div class="field relay-key">
+                    <label class="field__label" for="idemKey">멱등 키</label>
+                    <span class="custom-input">
+                        <input id="idemKey" type="text" maxlength="64" placeholder="같은 키는 몇 번을 보내도 실행 1건" autocomplete="off">
+                        <button id="newKey" type="button" class="btn">새 키</button>
+                    </span>
+                </div>
+            </div>
+            <!-- 발행 모드 - 아웃박스 비교의 스위치. 저장 실패 주입과 함께 눌러야 차이가 드러난다. -->
+            <fieldset class="relay-mode">
+                <legend>예약 이벤트 발행</legend>
+                <label><input type="radio" name="pubMode" value="OUTBOX" checked> 아웃박스 (원본과 같은 트랜잭션)</label>
+                <label><input type="radio" name="pubMode" value="DIRECT"> 직접 발행 (트랜잭션 밖 - 안티패턴)</label>
+            </fieldset>
+            <div class="relay-detail__actions">
+                <button id="enqueueBtn" type="button" class="btn btn--primary">예약</button>
+                <button id="sameKeyBtn" type="button" class="btn">같은 키로 다시 예약</button>
+                <button id="failInjectBtn" type="button" class="btn btn--danger">저장 실패 주입</button>
+            </div>
+            <!-- 멱등 카운터. "두 번째 요청은 오류가 아니라 기존 작업을 돌려주는 200"이 재시도 안전의 요점. -->
+            <p class="relay-idem" id="idemCounter" hidden>예약 요청 <b data-c="req">0</b>건 &#183;
+                실제 생성 <b data-c="created">0</b>건 &#183; 중복 접힘 <b data-c="dup">0</b>건
+                <span>(중복은 오류가 아니라 기존 작업을 돌려주는 200 - 재시도 안전)</span></p>
+            <p class="relay-idem relay-idem--inject" id="injectNote" hidden></p>
+        </div>
+    </section>
+
+    <!-- 최근 작업 타임라인 - 이 화면의 주인공. 한 작업의 시도 이력이 30초 명제를 증명한다. -->
+    <section class="card relay-jobs" aria-labelledby="jobsTitle">
+        <div class="relay-jobs__head">
+            <h2 id="jobsTitle" class="relay-h2">최근 작업 타임라인</h2>
+            <label class="relay-filter"><input type="checkbox" id="dlqOnly"> 격리(DLQ)만</label>
+        </div>
+        <div id="jobList" aria-live="polite"></div>
+        <div id="jobsEmpty" class="ip-empty" hidden>작업이 없습니다 - 위에서 하나 예약해 보세요.</div>
+    </section>
+
+    <!-- 개념 각주 - 30초를 통과한 사람이 읽을 자리. -->
+    <section class="card relay-notes" aria-label="설계 각주">
+        <ul>
+            <li><strong>정확히 한 번은 없습니다.</strong> 분산 환경에서 exactly-once 는 성립하지 않아,
+                이 파이프라인은 <em>최소 한 번(at-least-once) 전달 + 멱등 소비</em>로 같은 효과를 만듭니다.
+                멱등 키가 그 소비 쪽 안전장치입니다.</li>
+            <li><strong>워커 리스는 <code>FOR UPDATE SKIP LOCKED</code></strong> 입니다. 이 저장소의 분산
+                락(GET_LOCK)은 대기자마다 커넥션을 점유해 큐에는 맞지 않습니다 - 행 잠금을 건너뛰는
+                리스가 큐의 정석이고, 워커 여럿이 같은 작업을 두 번 집지 않습니다.</li>
+            <li><strong>시도 이력은 append-only</strong> 입니다. 재처리는 이력을 지우지 않고 세대(run)를
+                올려 나란히 남깁니다 - 세대가 달라도 타임라인이 같은 것이 결정성의 증거입니다.</li>
+        </ul>
+    </section>
+</main>
+
+<a class="portfolio-home" href="/" aria-label="포트폴리오 소개로 돌아가기">
+    <span class="ph-ic" aria-hidden="true">&#8592;</span> 포트폴리오
+</a>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

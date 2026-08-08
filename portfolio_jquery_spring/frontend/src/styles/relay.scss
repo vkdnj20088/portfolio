@@ -1,0 +1,14 @@
+// 작업 릴레이 페이지 SCSS 엔트리. @use 순서 = 출력(캐스케이드) 순서.
+// 다른 두 화면과 토큰/공용 컴포넌트를 공유하되, relay 전용 컴포넌트를 더한다.
+
+@use 'tokens';
+@use 'base';
+@use 'components/brand-banner';
+@use 'layout';
+@use 'components/card';
+@use 'components/form';
+@use 'components/button';
+@use 'components/toast';
+@use 'components/ip'; // ip-empty 등 공용 소품 재사용(빈 목록 문구)
+@use 'components/relay';
+@use 'components/portfolio-home';

@@ -34,8 +34,9 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
  */
 module.exports = (env, argv) => {
   return {
-    // 멀티 페이지: 파일 확장자 차단(bundle) + IP 접근 설정(ip). 각 페이지는 자체 번들만 로드한다.
-    entry: { bundle: './src/app.ts', ip: './src/ip.ts' },
+    // 멀티 페이지: 파일 확장자 차단(bundle) + IP 접근 설정(ip) + 작업 릴레이(relay).
+    // 각 페이지는 자체 번들만 로드한다.
+    entry: { bundle: './src/app.ts', ip: './src/ip.ts', relay: './src/relay.ts' },
     output: {
       // static/ 전체를 output 으로 잡는다. CSS 가 파이프라인에 들어오면서 산출물이 두 디렉터리
       // (js/, css/)로 나뉘는데, output.path 를 js/ 에 두면 clean 이 css/ 를 청소하지 못해
@@ -87,8 +88,17 @@ module.exports = (env, argv) => {
         scriptLoading: 'defer',
         minify: { removeComments: true, collapseWhitespace: false },
       }),
+      // 작업 릴레이 페이지 - 재시도 파이프라인 데모(Spring 정적 서빙: /relay.html).
+      new HtmlWebpackPlugin({
+        template: path.resolve(__dirname, 'src/relay.html'),
+        filename: 'relay.html',
+        chunks: ['relay'],
+        inject: 'head',
+        scriptLoading: 'defer',
+        minify: { removeComments: true, collapseWhitespace: false },
+      }),
       new MiniCssExtractPlugin({
-        // [name]: 페이지별 CSS(bundle.<hash>.css / ip.<hash>.css). 각 HTML 은 자기 것만 주입.
+        // [name]: 페이지별 CSS(bundle.<hash>.css / ip.<hash>.css / relay.<hash>.css). 각 HTML 은 자기 것만 주입.
         filename: 'css/[name].[contenthash:8].css',
       }),
     ],

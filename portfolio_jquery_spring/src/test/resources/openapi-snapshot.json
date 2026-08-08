@@ -1,6 +1,36 @@
 {
   "components" : {
     "schemas" : {
+      "AttemptResponse" : {
+        "properties" : {
+          "attemptNo" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "backoffMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "cid" : {
+            "type" : "string"
+          },
+          "errorCode" : {
+            "type" : "string"
+          },
+          "run" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "startedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
       "CustomCreatedResponse" : {
         "properties" : {
           "count" : {
@@ -55,6 +85,62 @@
           "limit" : {
             "format" : "int64",
             "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "EnqueueRequest" : {
+        "properties" : {
+          "failPersist" : {
+            "type" : "boolean"
+          },
+          "idempotencyKey" : {
+            "maxLength" : 64,
+            "minLength" : 0,
+            "pattern" : "[A-Za-z0-9._-]*",
+            "type" : "string"
+          },
+          "maxAttempts" : {
+            "format" : "int32",
+            "maximum" : 5,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "payload" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "publishMode" : {
+            "enum" : [ "OUTBOX", "DIRECT" ],
+            "type" : "string"
+          },
+          "scenario" : {
+            "enum" : [ "ALWAYS_SUCCEED", "THIRD_TIME_LUCKY", "ALWAYS_FAIL", "TIMEOUT_THEN_SUCCEED", "FLAKY_5XX" ],
+            "type" : "string"
+          },
+          "seed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "type" : {
+            "enum" : [ "PAYMENT_NOTIFY", "RECEIPT_EMAIL", "WEBHOOK_PUSH", "SEARCH_INDEX_SYNC" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "maxAttempts", "publishMode", "scenario", "type" ],
+        "type" : "object"
+      },
+      "EnqueueResponse" : {
+        "properties" : {
+          "duplicate" : {
+            "type" : "boolean"
+          },
+          "job" : {
+            "$ref" : "#/components/schemas/JobResponse"
+          },
+          "persisted" : {
+            "type" : "boolean"
           }
         },
         "type" : "object"
@@ -325,6 +411,84 @@
         "required" : [ "description", "endAt", "ipAddress", "startAt" ],
         "type" : "object"
       },
+      "JobListResponse" : {
+        "properties" : {
+          "jobs" : {
+            "items" : {
+              "$ref" : "#/components/schemas/JobResponse"
+            },
+            "type" : "array"
+          },
+          "stats" : {
+            "$ref" : "#/components/schemas/StatsResponse"
+          }
+        },
+        "type" : "object"
+      },
+      "JobResponse" : {
+        "properties" : {
+          "attemptCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "attempts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AttemptResponse"
+            },
+            "type" : "array"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "enqueueCid" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "idempotencyKey" : {
+            "type" : "string"
+          },
+          "maxAttempts" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "nextAttemptAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "payload" : {
+            "type" : "string"
+          },
+          "run" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "scenario" : {
+            "enum" : [ "ALWAYS_SUCCEED", "THIRD_TIME_LUCKY", "ALWAYS_FAIL", "TIMEOUT_THEN_SUCCEED", "FLAKY_5XX" ],
+            "type" : "string"
+          },
+          "seed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "status" : {
+            "enum" : [ "PENDING", "RUNNING", "RETRYING", "SUCCEEDED", "DEAD_LETTER", "CANCELED" ],
+            "type" : "string"
+          },
+          "type" : {
+            "enum" : [ "PAYMENT_NOTIFY", "RECEIPT_EMAIL", "WEBHOOK_PUSH", "SEARCH_INDEX_SYNC" ],
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "PolicyEvaluationResponse" : {
         "properties" : {
           "decision" : {
@@ -358,6 +522,26 @@
         },
         "type" : "object"
       },
+      "StatsResponse" : {
+        "properties" : {
+          "byStatus" : {
+            "additionalProperties" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "ghostEvents" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "outboxPending" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
       "StreamingResponseBody" : { },
       "WhoAmIResponse" : {
         "properties" : {
@@ -377,7 +561,7 @@
   "paths" : {
     "/api/extensions/custom" : {
       "get" : {
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "responses" : {
           "200" : {
             "content" : {
@@ -441,7 +625,7 @@
     },
     "/api/extensions/fixed" : {
       "get" : {
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "responses" : {
           "200" : {
             "content" : {
@@ -532,7 +716,7 @@
     },
     "/api/ip-rules" : {
       "get" : {
-        "operationId" : "list",
+        "operationId" : "list_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "q",
@@ -932,9 +1116,175 @@
         "summary" : "IP 규칙 수정",
         "tags" : [ "IP 접근 규칙" ]
       }
+    },
+    "/api/relay/jobs" : {
+      "get" : {
+        "description" : "시도 이력을 포함한 최근 20건. status 로 필터(예: DEAD_LETTER).",
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "PENDING", "RUNNING", "RETRYING", "SUCCEEDED", "DEAD_LETTER", "CANCELED" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "최근 작업 목록 + 큐 현황",
+        "tags" : [ "작업 릴레이" ]
+      },
+      "post" : {
+        "description" : "같은 멱등 키의 재요청은 오류가 아니라 기존 작업을 돌려주는 200 이다(duplicate=true). failPersist=true 는 아웃박스 비교용 저장 실패 주입 - persisted=false 로 돌아온다.",
+        "operationId" : "enqueue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EnqueueRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EnqueueResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "작업 예약",
+        "tags" : [ "작업 릴레이" ]
+      }
+    },
+    "/api/relay/jobs/{id}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "작업 단건 + 시도 타임라인",
+        "tags" : [ "작업 릴레이" ]
+      }
+    },
+    "/api/relay/jobs/{id}/cancel" : {
+      "post" : {
+        "description" : "PENDING/RETRYING 만 가능. RUNNING 이면 409(ILLEGAL_TRANSITION).",
+        "operationId" : "cancel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "작업 취소",
+        "tags" : [ "작업 릴레이" ]
+      }
+    },
+    "/api/relay/jobs/{id}/reprocess" : {
+      "post" : {
+        "description" : "DEAD_LETTER 만 가능. 멱등 키가 그대로라 재처리가 중복 실행을 만들지 않는다.",
+        "operationId" : "reprocess",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "격리(DLQ) 작업 수동 재처리",
+        "tags" : [ "작업 릴레이" ]
+      }
+    },
+    "/api/relay/stats" : {
+      "get" : {
+        "description" : "상태별 건수 + 아웃박스 미발행·유령 이벤트 수.",
+        "operationId" : "stats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "큐 현황",
+        "tags" : [ "작업 릴레이" ]
+      }
     }
   },
   "tags" : [ {
+    "description" : "실패하는 작업의 예약·재시도·격리(DLQ)·아웃박스 - 결정적 실패 주입 데모",
+    "name" : "작업 릴레이"
+  }, {
     "description" : "허용 IP/CIDR·사용 시간대 등록·수정·삭제·검색, 포함(containment) 조회, 변경 감사",
     "name" : "IP 접근 규칙"
   } ]

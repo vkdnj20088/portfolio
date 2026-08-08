@@ -62,7 +62,7 @@ class FlywayMigrationMySqlIT {
         // 컨텍스트가 떴다는 것 = Flyway 적용 + ddl-auto=validate 통과(엔티티-스키마 정합).
         Integer applied = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class);
-        assertThat(applied).isGreaterThanOrEqualTo(6); // V1~V5 + V6 ip_rule_version
+        assertThat(applied).isGreaterThanOrEqualTo(8); // V1~V7 + V8 relay_pipeline
     }
 
     @Test

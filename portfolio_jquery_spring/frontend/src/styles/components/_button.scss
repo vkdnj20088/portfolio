@@ -52,4 +52,22 @@
             border-color: var(--primary-d);
         }
     }
+
+    // 카드 안 행 단위 액션(릴레이 타임라인 등) - 표준 버튼보다 한 단 작다.
+    &--small {
+        padding: 5px 10px;
+        font-size: 12.5px;
+    }
+
+    // 되돌리기 어려운(또는 일부러 실패를 만드는) 조작 - 위험색 외곽선.
+    &--danger {
+        border-color: var(--danger);
+        color: var(--danger);
+
+        &:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: #fff;
+        }
+    }
 }
