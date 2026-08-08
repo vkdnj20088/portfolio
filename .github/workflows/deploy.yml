@@ -21,7 +21,7 @@ on:
       target:
         description: '배포 대상'
         type: choice
-        options: [all, intro, chat, docqa, exchange, backend]
+        options: [all, intro, chat, docqa, exchange, backend, loandoc]
         default: all
       sse:
         description: '챗/문서QA 에서 실제 SSE 전송을 켜서 빌드(NEXT_PUBLIC_TRANSPORT=sse)'
@@ -128,6 +128,24 @@ jobs:
           cp -a .next/standalone/. "${DEST}/"
           cp -a .next/static "${DEST}/.next/static"
           if [ -d public ]; then cp -a public "${DEST}/public"; fi
+
+      # LoanDoc (Python/FastAPI) - 빌드 산출물이 없는 소스 배포다. 의존성은 잠긴
+      # requirements 로 서버에서 세운다(deploy-remote.sh 가 릴리스 안에 venv 구성).
+      # 러너에서 스모크(합성 픽스처 E2E + 재현성)를 돌려 나쁜 소스가 서버에 닿기 전에 막는다.
+      - if: ${{ inputs.target == 'all' || inputs.target == 'loandoc' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' # 서버(우분투 24.04 기본 python3)와 동일 버전
+      - if: ${{ inputs.target == 'all' || inputs.target == 'loandoc' }}
+        name: loandoc 검증 + 수집
+        working-directory: portfolio_python_fastapi
+        run: |
+          python -m pip install --quiet -r requirements-dev.txt
+          python -m unittest discover -s tests
+          python scripts/ci_smoke.py
+          DEST="${GITHUB_WORKSPACE}/dist/loandoc"
+          mkdir -p "${DEST}"
+          cp -a loandoc webapp demo requirements.txt requirements-web.txt "${DEST}/"
 
       # 인트로(정적 HTML 한 장)
       - if: ${{ inputs.target == 'all' || inputs.target == 'intro' }}

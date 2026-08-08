@@ -1,0 +1,40 @@
+# /etc/systemd/system/portfolio-loandoc.service
+# JC LoanDoc (Python/FastAPI). 배포가 소스 릴리스를 current 로 심링크하고, 릴리스 안에
+# venv 를 만들어 둔다(deploy-remote.sh 의 loandoc 단계 - Node 처럼 빌드 산출물을 옮기는
+# 대신, 파이썬은 잠긴 requirements 로 서버에서 의존성을 세운다).
+#   sudo systemctl daemon-reload && sudo systemctl enable --now portfolio-loandoc
+[Unit]
+# 기동 실패가 반복되면 5분/5회에서 멈춘다 - 무한 재시작으로 자원을 태우지 않게.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+Description=Portfolio - JC LoanDoc (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/portfolio/loandoc/current
+EnvironmentFile=-/etc/portfolio/loandoc.env
+# matplotlib 폰트 캐시는 홈 디렉토리를 쓰려 한다 - ProtectHome 아래라 쓰기 가능한
+# 경로를 명시한다(없으면 기동마다 캐시 재구축 경고 + 느린 첫 렌더).
+Environment=MPLCONFIGDIR=/opt/portfolio/loandoc/mplcache
+ExecStart=/opt/portfolio/loandoc/current/venv/bin/uvicorn webapp.app:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+# 2GB 인스턴스에 Node 3개 + JVM 과 함께 산다. Node 는 힙 상한으로, 파이썬은 cgroup 으로
+# 같은 원칙을 건다 - 시각화(matplotlib) 스파이크가 다른 앱을 밀어내지 못하게.
+MemoryHigh=300M
+MemoryMax=400M
+# 하드닝(루프백 바인딩 + 읽기 전용 시스템 경로).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+LockPersonality=true
+ReadWritePaths=/opt/portfolio/loandoc
+
+[Install]
+WantedBy=multi-user.target

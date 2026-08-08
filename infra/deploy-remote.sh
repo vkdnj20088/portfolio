@@ -3,7 +3,7 @@
 # 원자 교체 -> 재기동 -> 헬스 게이트 -> 실패 시 직전 릴리스로 롤백.
 # 배포가 나쁜 빌드로 사이트를 죽이지 않게 하는 안전장치다.
 #
-# 필요 env: HOST, USER (SSH 대상), TARGET(all|intro|chat|docqa|exchange|backend). SSH 키는 워크플로가 준비한다.
+# 필요 env: HOST, USER (SSH 대상), TARGET(all|intro|chat|docqa|exchange|backend|loandoc). SSH 키는 워크플로가 준비한다.
 set -euo pipefail
 
 : "${HOST:?HOST 필요}"
@@ -21,7 +21,20 @@ health_url() {
     docqa)    echo "http://127.0.0.1:3030/" ;;
     exchange) echo "http://127.0.0.1:3010/" ;;
     backend)  echo "http://127.0.0.1:8080/actuator/health" ;;
+    loandoc)  echo "http://127.0.0.1:8000/healthz" ;;
     *) return 1 ;;
+  esac
+}
+
+# 전송 후·재기동 전 후처리. 파이썬 앱은 빌드 산출물이 없어 소스 + 잠긴 requirements 를
+# 옮기고, 의존성은 릴리스 안 venv 로 세운다 - 릴리스마다 독립 venv 라 롤백이 코드와
+# 의존성을 함께 되돌린다(공유 venv 였다면 롤백해도 의존성은 새 버전으로 남는다).
+post_transfer() {
+  case "$1" in
+    loandoc)
+      echo "== loandoc: venv 구성(잠긴 requirements) =="
+      $SSH "cd '$2' && python3 -m venv venv && ./venv/bin/pip install --quiet -r requirements-web.txt"
+      ;;
   esac
 }
 
@@ -44,6 +57,7 @@ deploy_one() {
   echo "== ${name}: 전송 =="
   $SSH "mkdir -p '${release}'"
   rsync -az --delete -e "ssh ${SSH_OPTS}" "dist/${name}/" "${USER}@${HOST}:${release}/"
+  post_transfer "${name}" "${release}"
 
   echo "== ${name}: 릴리스 교체 + 재기동 =="
   # reset-failed 를 먼저 부른다. 이전 배포가 크래시 루프로 재시작 한도(StartLimitBurst)에 걸려 있으면
@@ -109,6 +123,7 @@ if should backend  && [ "${rc}" -eq 0 ]; then deploy_one backend  || rc=1; fi
 if should chat     && [ "${rc}" -eq 0 ]; then deploy_one chat     || rc=1; fi
 if should docqa    && [ "${rc}" -eq 0 ]; then deploy_one docqa    || rc=1; fi
 if should exchange && [ "${rc}" -eq 0 ]; then deploy_one exchange || rc=1; fi
+if should loandoc  && [ "${rc}" -eq 0 ]; then deploy_one loandoc  || rc=1; fi
 if should intro    && [ "${rc}" -eq 0 ]; then deploy_intro        || rc=1; fi
 
 if [ "${rc}" -eq 0 ]; then

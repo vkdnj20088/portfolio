@@ -12,7 +12,7 @@ set -euo pipefail
 
 DEPLOY_USER=deploy
 APP_ROOT=/opt/portfolio
-APPS=(chat docqa exchange backend)
+APPS=(chat docqa exchange backend loandoc)
 ACME_WEBROOT=/var/www/acme
 INTRO_WEBROOT=/var/www/intro
 INFRA="$(cd "$(dirname "$0")" && pwd)"
@@ -22,7 +22,9 @@ log() { printf '\n\033[1;34m== %s ==\033[0m\n' "$*"; }
 log "패키지(nginx / JDK 21 / 도구)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y nginx openjdk-21-jre-headless curl ca-certificates gnupg rsync
+# python3-venv: loandoc(FastAPI) 릴리스 venv 용. fonts-nanum: loandoc 시각화의 한글 라벨용.
+apt-get install -y nginx openjdk-21-jre-headless curl ca-certificates gnupg rsync \
+  python3-venv fonts-nanum
 
 log "Node 22 (NodeSource)"
 if ! command -v node >/dev/null 2>&1; then

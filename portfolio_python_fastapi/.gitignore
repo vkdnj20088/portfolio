@@ -1,0 +1,14 @@
+# 가상환경·파이썬 부산물
+.venv/
+__pycache__/
+*.pyc
+
+# 시크릿 (로컬에서 LLM 폴백을 켤 때만 쓴다 - 배포에는 키를 두지 않는다)
+.env
+
+# 로컬 실행 중간 산출물 (커밋 대상은 demo/ 의 두 자산뿐)
+outputs/
+cache/
+
+# macOS
+.DS_Store

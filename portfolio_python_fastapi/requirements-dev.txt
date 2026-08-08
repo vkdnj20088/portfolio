@@ -1,0 +1,4 @@
+# 개발·테스트 전용 — 파이프라인 실행에는 requirements.txt만 있으면 된다
+-r requirements.txt
+-r requirements-web.txt
+hypothesis==6.165.1

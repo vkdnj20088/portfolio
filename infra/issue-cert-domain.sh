@@ -36,7 +36,7 @@ die()  { printf '\033[1;31m[실패] %s\033[0m\n' "$*" >&2; exit 1; }
 # 인증서에 담을 이름들. 서브도메인은 nginx 설정(portfolio-domain.conf)과 반드시 같아야 한다.
 # file/ip 는 guard 의 두 화면을 각각 승격한 것, search 는 docqa/search 로 보내는 입구다.
 # guard/docqa 도 남긴다 - 이미 뿌린 주소가 죽지 않게.
-SUBS=(www exchange chat docqa search guard file ip)
+SUBS=(www exchange chat docqa search guard file ip loandoc)
 NAMES=("$DOMAIN")
 for s in "${SUBS[@]}"; do NAMES+=("${s}.${DOMAIN}"); done
 

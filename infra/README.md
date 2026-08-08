@@ -1,14 +1,14 @@
 # infra - 통합 EC2 배포 (인트로 + 데모 서브도메인 5개)
 
 한 대의 EC2 에서 인트로 랜딩과 데모를 함께 서빙하기 위한 코드화된 인프라입니다.
-화면은 여섯이지만 서브도메인은 다섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트입니다.
+화면은 일곱이지만 앱 서브도메인은 여섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트입니다.
 nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 버전관리 파일로 둡니다.
 
 ## 구성
 
 | 파일 | 역할 |
 |------|------|
-| `nginx/portfolio.conf` | 포트별 리버스 프록시(443 인트로 · 8443 Guard · 9443 Chat · 9444 DocuQA · 9445 Exchange) + 80 ACME/리다이렉트 |
+| `nginx/portfolio.conf` | 포트별 리버스 프록시(443 인트로 · 8443 Guard · 9443 Chat · 9444 DocuQA · 9445 Exchange · 9446 LoanDoc) + 80 ACME/리다이렉트 |
 | `nginx/portfolio-domain.conf` | **도메인(SNI) 기반** 라우팅 - 443 한 포트에서 서브도메인으로 가릅니다. 위 설정과 **함께** 켭니다 |
 | `nginx/snippets/tls-domain.conf` | 도메인 인증서(표준 90일) 경로 - 도메인 블록들이 공유 |
 | `nginx/snippets/hsts.conf` | HSTS 한 줄. `add_header` 를 쓰는 location 마다 다시 include 해야 합니다(아래 참고) |
@@ -21,6 +21,7 @@ nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 
 | `systemd/portfolio-docqa.service` | Next standalone `node apps/docqa/server.js` (127.0.0.1:3030) |
 | `systemd/portfolio-exchange.service` | Next standalone `node server.js` (127.0.0.1:3010, 단독 프로젝트라 경로가 다름) |
 | `systemd/portfolio-backend.service` | Spring Boot jar(prod, 127.0.0.1:8080), Docker MySQL 의존 |
+| `systemd/portfolio-loandoc.service` | FastAPI uvicorn, 릴리스 내 venv (127.0.0.1:8000) |
 | `env/*.env.example` | `/etc/portfolio/*.env` 템플릿(시크릿은 서버에서만, 미커밋) |
 | `nginx/portfolio-bootstrap.conf` | 발급 전 80 전용 사이트(닭과 달걀 해소 - 아래 참고) |
 | `provision.sh` | 새 EC2 최초 1회(패키지·스왑·Docker MySQL·유저·유닛·nginx·인트로 웹루트) |
@@ -41,10 +42,11 @@ https://<ip>:8443/  JC Guard   (Spring)           127.0.0.1:8080
 https://<ip>:9443/  JC Chat    (Next)             127.0.0.1:3000
 https://<ip>:9444/  JC DocuQA  (Next, + /search)  127.0.0.1:3030
 https://<ip>:9445/  JC Exchange(Next)             127.0.0.1:3010
+https://<ip>:9446/  JC LoanDoc (FastAPI)          127.0.0.1:8000
 http://<ip>/        /.well-known/acme-challenge/ 만 서빙, 나머지는 443 으로 301
 ```
 
-**보안그룹 인바운드: 80, 443, 8443, 9443, 9444, 9445 (TCP).**
+**보안그룹 인바운드: 80, 443, 8443, 9443, 9444, 9445, 9446 (TCP).**
 
 ## 라우팅 (도메인이 있을 때) - 포트가 사라진다
 
@@ -59,6 +61,7 @@ https://docqa.<도메인>/      문서QA (+ /search)   127.0.0.1:3030
 https://file.<도메인>/       파일 확장자 차단     127.0.0.1:8080 "/"
 https://ip.<도메인>/         IP 접근 제어         127.0.0.1:8080 "/ip.html"
 https://guard.<도메인>/      위 둘의 원래 주소(유지)
+https://loandoc.<도메인>/    대출 서류 분류        127.0.0.1:8000
 https://search.<도메인>/     docqa/search 로 301
 https://www.<도메인>/        apex 로 301
 ```
@@ -86,7 +89,7 @@ SNI 가 있는 요청은 도메인 블록이, 없는 요청(IP 리터럴 접속)
 
 ```bash
 # 1) DNS: A 레코드 아홉 개를 서버 공인 IP 로
-#    (apex, www, exchange, chat, docqa, search, guard, file, ip - 인증서 SAN 과 같은 목록)
+#    (apex, www, exchange, chat, docqa, search, guard, file, ip, loandoc - 인증서 SAN 과 같은 목록)
 # 2) 발급 + 활성화 (DNS 전파 확인 -> 80 도달 확인 -> dry-run -> 발급 -> 검증까지 한 번에)
 cd ~/portfolio && git pull
 sudo -E DOMAIN=example.dev LE_EMAIL=you@example.com bash infra/issue-cert-domain.sh
@@ -232,7 +235,7 @@ t4g 는 Graviton(arm64)입니다. Next 의 standalone 산출물에는 `sharp` �
 ## 배포 레이아웃 (원자 교체 + 롤백)
 
 ```
-/opt/portfolio/{chat,docqa,exchange,backend}/
+/opt/portfolio/{chat,docqa,exchange,backend,loandoc}/
 ├── releases/<timestamp>/   # 각 배포가 새 디렉터리로 들어온다(최근 3개 유지)
 └── current -> releases/<timestamp>   # 심링크만 바꿔 원자 교체. 헬스 실패 시 직전으로 되돌린다
 
@@ -243,11 +246,11 @@ t4g 는 Graviton(arm64)입니다. Next 의 standalone 산출물에는 `sharp` �
 
 ```bash
 sudo bash infra/provision.sh
-# 1) 보안그룹 인바운드: 80, 443, 8443, 9443-9445
+# 1) 보안그룹 인바운드: 80, 443, 8443, 9443-9446
 # 2) /etc/portfolio/backend.env 에 실제 DB 값(+ MySQL 컨테이너 비번 동기화)
 # 3) IP 인증서 발급 + 통합 설정 활성화(한 방에)
 sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
-# 4) systemctl enable --now portfolio-chat portfolio-docqa portfolio-exchange portfolio-backend
+# 4) systemctl enable --now portfolio-chat portfolio-docqa portfolio-exchange portfolio-backend portfolio-loandoc
 ```
 
 ### 발급 전에는 왜 80 만 띄우나 (닭과 달걀)
@@ -263,7 +266,7 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 
 > ⚠ **생명선**: 80포트의 `location ^~ /.well-known/acme-challenge/` 블록은 절대 덮거나 리다이렉트
 > 뒤로 밀지 마세요. IP 인증서는 6일 주기 http-01 갱신이라, 이 경로가 막히면 갱신이 실패하고
-> 만료 시 **다섯 데모가 동시에** 내려갑니다.
+> 만료 시 **여섯 데모가 동시에** 내려갑니다.
 
 ## 배포 (GitHub Actions)
 

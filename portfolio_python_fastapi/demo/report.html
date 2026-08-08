@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>문서 분류 리포트 — demo_package.pdf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Gowun+Batang:wght@400&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0a0c0b;
+    --paper:      #e9e7dd;
+    --paper-dim:  #a9aba0;
+    --paper-faint:#82857a;
+    --line:       #24271f;
+    --line-strong:#31352a; /* 격자 위 구분선 — 격자(--line)와 같으면 묻힌다 */
+    --acid:       #c9f24e;
+    --serif: "Fraunces", "Gowun Batang", Georgia, serif;
+    --mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;
+    --sans:  "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: var(--ink);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    color: var(--paper);
+    font-family: var(--sans);
+    word-break: keep-all;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 56px 40px 72px; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; }
+  .kicker {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    letter-spacing: .22em; color: var(--acid); text-transform: uppercase;
+  }
+  .ver { font-family: var(--mono); font-size: 12px; color: var(--paper-faint); }
+  h1 {
+    margin-top: 20px; font-family: var(--serif); font-weight: 400;
+    font-size: clamp(30px, 4.5vw, 46px); line-height: 1.14; letter-spacing: -0.02em;
+  }
+  .meta { margin-top: 14px; font-family: var(--mono); font-size: 13px; color: var(--paper-dim); }
+  .meta b { color: var(--paper); font-weight: 500; }
+  .rule { height: 1px; background: var(--line-strong); margin: 36px 0; }
+  section { margin-top: 52px; }
+  section .kicker { font-size: 11px; }
+  h2 { margin-top: 10px; font-family: var(--serif); font-weight: 400; font-size: 25px; }
+  .caption { margin-top: 8px; font-size: 13px; line-height: 1.65; color: var(--paper-dim); max-width: 72ch; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 4px; }
+  .stat { padding-left: 24px; border-left: 1px solid var(--line-strong); }
+  .stat:first-child { padding-left: 0; border-left: 0; }
+  .num { font-family: var(--mono); font-size: 37px; font-weight: 700; line-height: 1; }
+  .num .unit { font-size: 0.62em; font-weight: 400; color: var(--paper-dim); margin-left: 0.1em; }
+  .lab {
+    margin-top: 11px; font-family: var(--mono); font-size: 11px;
+    letter-spacing: .08em; color: var(--paper-faint); text-transform: uppercase;
+  }
+
+  .tlwrap { overflow-x: auto; padding: 30px 0 36px;
+    scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  .tlwrap::-webkit-scrollbar { height: 6px; }
+  .tlwrap::-webkit-scrollbar-track { background: transparent; }
+  .tlwrap::-webkit-scrollbar-thumb { background: var(--line-strong); }
+  .tl { display: flex; gap: 2px; min-width: max-content; }
+  .seg { display: flex; }
+  .cell {
+    width: 22px; height: 48px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+  }
+  .cell i {
+    position: absolute; top: calc(100% + 7px); left: 0; right: 0; text-align: center;
+    font-style: normal; font-weight: 400; font-size: 9px; color: var(--paper-faint);
+  }
+  .cell.m::before {
+    content: ""; position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%;
+    background: var(--paper);
+  }
+  .cell.m--low::before { background: transparent; border: 1px solid var(--paper-dim); }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px;
+    font-family: var(--mono); font-size: 12px; color: var(--paper-dim);
+  }
+  .legend .cnt { color: var(--paper-faint); }
+  .chip { display: inline-block; width: 10px; height: 10px; margin-right: 8px; }
+  .dot {
+    display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--paper); margin: 0 8px 2px 0; vertical-align: middle;
+  }
+  .dot--low { background: transparent; border: 1px solid var(--paper-dim); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 400; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--paper-faint); text-align: left;
+    padding: 0 16px 9px 0; border-bottom: 1px solid var(--line-strong); white-space: nowrap;
+  }
+  td {
+    font-size: 13px; padding: 8px 16px 8px 0; vertical-align: top;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .dim { color: var(--paper-dim); }
+  .note { font-size: 12px; color: var(--paper-dim); }
+  .ev {
+    display: inline-block; font-family: var(--mono); font-size: 11px; color: var(--paper-dim);
+    max-width: 46ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+    padding: 2px 7px; border: 1px solid var(--line-strong); color: var(--paper-dim);
+    white-space: nowrap;
+  }
+  .tag--ai { background: var(--paper); border-color: var(--paper); color: var(--ink); font-weight: 700; }
+  .tag--low { color: var(--paper-faint); }
+  .tag--err { border-color: var(--paper); color: var(--paper); font-weight: 700; margin-left: 6px; }
+  tr.err td { border-bottom-color: var(--paper-faint); }
+  .truth { display: block; margin-top: 3px; font-family: var(--mono); font-size: 11px; color: var(--paper-dim); }
+  .evalgrid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 26px; }
+  .stages { max-width: 560px; }
+  .ok { margin-top: 22px; font-size: 13px; color: var(--paper); }
+
+  .foot { margin-top: 64px; }
+  .foot .cmd { font-family: var(--mono); font-size: 12px; color: var(--paper-dim); margin-top: 16px; }
+  .foot .cmd b { color: var(--paper); font-weight: 500; }
+
+  .t-URLA_1003{background:#c9f24e;color:var(--ink)}
+.t-INCOME_DOC{background:#dcae66;color:var(--ink)}
+.t-CREDIT_REPORT{background:#7aa9d1;color:var(--ink)}
+.t-TITLE_REPORT{background:#b97785;color:var(--ink)}
+.t-OTHER{background:#565a4f;color:var(--paper)}
+
+  @media (max-width: 760px) {
+    .wrap { padding: 40px 20px 56px; }
+    .stats, .evalgrid { grid-template-columns: repeat(2, 1fr); row-gap: 30px; }
+    .stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+    .ev { max-width: 28ch; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="top">
+      <span class="kicker">Document Classification Report</span>
+      <span class="ver">synthetic-demo</span>
+    </div>
+    <h1>대출 서류 패키지<br>문서 분류 리포트</h1>
+    <p class="meta"><b>demo_package.pdf</b> · 총 16페이지 · 페이지 단위 분류 + 문서 그루핑</p>
+  </header>
+
+  <div class="rule"></div>
+
+  <section style="margin-top:0">
+    <div class="stats">
+      <div class="stat"><div class="num">16<span class="unit">p</span></div>
+        <div class="lab">총 페이지</div></div>
+      <div class="stat"><div class="num">6</div>
+        <div class="lab">재구성 문서</div></div>
+      <div class="stat"><div class="num">5</div>
+        <div class="lab">검출 유형</div></div>
+      <div class="stat"><div class="num">15<span class="unit">/16p</span></div><div class="lab">룰 단독 확정</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">Timeline</div>
+    <h2>문서 그루핑 타임라인</h2>
+    <p class="caption">페이지 1–16을 순서대로 늘어놓고 판정 유형으로 칠했습니다.
+    이어진 블록 하나가 연속 문서 그룹이고, 블록 사이 틈이 문서 경계입니다.
+    셀 안 문자는 유형 이니셜, 셀 위 점은 판정 경로 표시입니다.</p>
+    <div class="tlwrap"><div class="tl"><span class="seg"><span class="cell" style="background:#b97785;color:var(--ink)" title="p1 · TITLE_REPORT · rule">T<i>1</i></span></span><span class="seg"><span class="cell" style="background:#c9f24e;color:var(--ink)" title="p2 · URLA_1003 · rule">U<i>2</i></span></span><span class="seg"><span class="cell" style="background:#7aa9d1;color:var(--ink)" title="p3 · CREDIT_REPORT · rule">C<i>3</i></span></span><span class="seg"><span class="cell" style="background:#dcae66;color:var(--ink)" title="p4 · INCOME_DOC · rule">I<i>4</i></span></span><span class="seg"><span class="cell" style="background:#c9f24e;color:var(--ink)" title="p5 · URLA_1003 · rule">U<i>5</i></span></span><span class="seg"><span class="cell" style="background:#b97785;color:var(--ink)" title="p6 · TITLE_REPORT · rule">T<i>6</i></span></span><span class="seg"><span class="cell" style="background:#7aa9d1;color:var(--ink)" title="p7 · CREDIT_REPORT · rule">C<i>7</i></span></span><span class="seg"><span class="cell" style="background:#dcae66;color:var(--ink)" title="p8 · INCOME_DOC · rule">I<i>8</i></span></span><span class="seg"><span class="cell" style="background:#c9f24e;color:var(--ink)" title="p9 · URLA_1003 · rule">U<i>9</i></span></span><span class="seg"><span class="cell" style="background:#565a4f;color:var(--paper)" title="p10 · OTHER · rule">O<i>10</i></span></span><span class="seg"><span class="cell" style="background:#b97785;color:var(--ink)" title="p11 · TITLE_REPORT · rule">T<i>11</i></span></span><span class="seg"><span class="cell" style="background:#dcae66;color:var(--ink)" title="p12 · INCOME_DOC · rule">I<i>12</i></span></span><span class="seg"><span class="cell" style="background:#c9f24e;color:var(--ink)" title="p13 · URLA_1003 · rule">U<i>13</i></span></span><span class="seg"><span class="cell" style="background:#7aa9d1;color:var(--ink)" title="p14 · CREDIT_REPORT · rule">C<i>14</i></span></span><span class="seg"><span class="cell m m--low" style="background:#b97785;color:var(--ink)" title="p15 · TITLE_REPORT · rule_lowconf">T<i>15</i></span></span><span class="seg"><span class="cell" style="background:#dcae66;color:var(--ink)" title="p16 · INCOME_DOC · rule">I<i>16</i></span></span></div></div>
+    <div class="legend"><span><i class="chip" style="background:#c9f24e"></i>U · URLA_1003 <span class="cnt">4p</span></span><span><i class="chip" style="background:#dcae66"></i>I · INCOME_DOC <span class="cnt">4p</span></span><span><i class="chip" style="background:#7aa9d1"></i>C · CREDIT_REPORT <span class="cnt">3p</span></span><span><i class="chip" style="background:#b97785"></i>T · TITLE_REPORT <span class="cnt">4p</span></span><span><i class="chip" style="background:#565a4f"></i>O · OTHER <span class="cnt">1p</span></span><span><span class="dot dot--ai"></span>AI 판정</span><span><span class="dot dot--low"></span>룰 저신뢰 추정</span></div>
+  </section>
+
+  <section>
+    <div class="kicker">Groups</div>
+    <h2>문서 단위 그룹</h2>
+    <p class="caption">같은 유형이 연속된 구간을 하나의 문서로 본 결과입니다. 이
+    패키지는 페이지 단위로 완전히 섞여 있어 구간이 짧게 쪼개집니다 — 원래 문서
+    단위 추정은 아래 재구성 부록에 있습니다.</p>
+    <table><thead><tr><th>#</th><th>유형</th><th>시작–끝</th><th>쪽수</th></tr></thead><tbody><tr><td class="mono dim">1</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td class="mono">p1</td><td class="mono dim">1</td></tr><tr><td class="mono dim">2</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td class="mono">p2</td><td class="mono dim">1</td></tr><tr><td class="mono dim">3</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td class="mono">p3</td><td class="mono dim">1</td></tr><tr><td class="mono dim">4</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td class="mono">p4</td><td class="mono dim">1</td></tr><tr><td class="mono dim">5</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td class="mono">p5</td><td class="mono dim">1</td></tr><tr><td class="mono dim">6</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td class="mono">p6</td><td class="mono dim">1</td></tr><tr><td class="mono dim">7</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td class="mono">p7</td><td class="mono dim">1</td></tr><tr><td class="mono dim">8</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td class="mono">p8</td><td class="mono dim">1</td></tr><tr><td class="mono dim">9</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td class="mono">p9</td><td class="mono dim">1</td></tr><tr><td class="mono dim">10</td><td><i class="chip" style="background:#565a4f"></i><span class="mono">OTHER</span></td><td class="mono">p10</td><td class="mono dim">1</td></tr><tr><td class="mono dim">11</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td class="mono">p11</td><td class="mono dim">1</td></tr><tr><td class="mono dim">12</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td class="mono">p12</td><td class="mono dim">1</td></tr><tr><td class="mono dim">13</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td class="mono">p13</td><td class="mono dim">1</td></tr><tr><td class="mono dim">14</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td class="mono">p14</td><td class="mono dim">1</td></tr><tr><td class="mono dim">15</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td class="mono">p15</td><td class="mono dim">1</td></tr><tr><td class="mono dim">16</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td class="mono">p16</td><td class="mono dim">1</td></tr></tbody></table>
+  </section>
+
+  <section>
+    <div class="kicker">Reconstruction</div>
+    <h2>논리 문서 재구성 <span class="dim" style="font-size:.6em">부록</span></h2>
+    <p class="caption">유형과 문서 내부 페이지 번호("Page N of M")로, 번호가 없는
+    URLA는 양식 구조 키(Section 1–9 → 부속서 → Lender Loan Information)로 원래
+    문서 단위·순서를 추정했습니다. 어느 키도 없는 페이지는 확정할 수 없어 별도
+    묶음으로 남깁니다.</p>
+    <table><thead><tr><th>문서</th><th>유형</th><th>페이지(재구성 순서)</th><th>비고</th></tr></thead><tbody><tr><td class="mono dim">1</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td class="mono ev" title="p1, p6, p11">p1, p6, p11</td><td class="note">내부 번호 &quot;Page n of 3&quot; 기준 재구성</td></tr><tr><td class="mono dim">2</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td class="mono ev" title="p15">p15</td><td class="note">내부 페이지 번호 없음 — 패키지 등장 순서 유지 (정렬된 묶음과 같은 문서일 수 있음)</td></tr><tr><td class="mono dim">3</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td class="mono ev" title="p2, p5, p9, p13">p2, p5, p9, p13</td><td class="note">내부 번호 &quot;Page n of 4&quot; 기준 재구성</td></tr><tr><td class="mono dim">4</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td class="mono ev" title="p3, p7, p14">p3, p7, p14</td><td class="note">내부 번호 &quot;Page n of 3&quot; 기준 재구성</td></tr><tr><td class="mono dim">5</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td class="mono ev" title="p4, p8, p12, p16">p4, p8, p12, p16</td><td class="note">내부 페이지 번호 없음 — 패키지 등장 순서 유지</td></tr><tr><td class="mono dim">6</td><td><i class="chip" style="background:#565a4f"></i><span class="mono">OTHER</span></td><td class="mono ev" title="p10">p10</td><td class="note">내부 페이지 번호 없음 — 패키지 등장 순서 유지</td></tr></tbody></table>
+  </section>
+
+  <section>
+    <div class="kicker">Pages</div>
+    <h2>페이지 단위 분류 결과</h2>
+    <table><thead><tr><th>페이지</th><th>판정 유형</th><th>판정</th><th>신뢰도</th><th>근거</th></tr></thead><tbody><tr><td class="mono">p1</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="title.commitment+title.order_no+title.schedule_b">title.commitment+title.order_no+title.schedule_b</span></td></tr><tr><td class="mono">p2</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="urla.title">urla.title</span></td></tr><tr><td class="mono">p3</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="credit.repositories+credit.score_disclosure">credit.repositories+credit.score_disclosure</span></td></tr><tr><td class="mono">p4</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="income.w2_box+income.w2_form+income.ein">income.w2_box+income.w2_form+income.ein</span></td></tr><tr><td class="mono">p5</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="urla.title">urla.title</span></td></tr><tr><td class="mono">p6</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="title.commitment+title.easement+title.legal_desc">title.commitment+title.easement+title.legal_desc</span></td></tr><tr><td class="mono">p7</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="credit.score_price_notice">credit.score_price_notice</span></td></tr><tr><td class="mono">p8</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="income.wage_transcript+income.sensitive_taxpayer">income.wage_transcript+income.sensitive_taxpayer</span></td></tr><tr><td class="mono">p9</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="urla.title+urla.lender_loan_info">urla.title+urla.lender_loan_info</span></td></tr><tr><td class="mono">p10</td><td><i class="chip" style="background:#565a4f"></i><span class="mono">OTHER</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="other.appraisal_form+other.appraisal_word">other.appraisal_form+other.appraisal_word</span></td></tr><tr><td class="mono">p11</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="title.commitment+title.schedule_b">title.commitment+title.schedule_b</span></td></tr><tr><td class="mono">p12</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="income.paystub+income.gross_net+income.ytd">income.paystub+income.gross_net+income.ytd</span></td></tr><tr><td class="mono">p13</td><td><i class="chip" style="background:#c9f24e"></i><span class="mono">URLA_1003</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="urla.title+urla.continuation">urla.title+urla.continuation</span></td></tr><tr><td class="mono">p14</td><td><i class="chip" style="background:#7aa9d1"></i><span class="mono">CREDIT_REPORT</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="credit.repositories+credit.understanding_score">credit.repositories+credit.understanding_score</span></td></tr><tr><td class="mono">p15</td><td><i class="chip" style="background:#b97785"></i><span class="mono">TITLE_REPORT</span></td><td><span class="tag tag--low">RULE·저신뢰</span></td><td class="mono dim">low</td><td><span class="ev" title="title.plat_map">title.plat_map</span></td></tr><tr><td class="mono">p16</td><td><i class="chip" style="background:#dcae66"></i><span class="mono">INCOME_DOC</span></td><td><span class="tag">RULE</span></td><td class="mono dim">high</td><td><span class="ev" title="income.pnl">income.pnl</span></td></tr></tbody></table>
+  </section>
+  
+
+  <footer class="foot">
+    <div class="rule" style="margin:0 0 0"></div>
+    <p class="cmd">재현 <b>$ python scripts/make_demo_package.py</b> — 실행 환경과 옵션은 README 참고</p>
+  </footer>
+
+</div>
+</body>
+</html>
