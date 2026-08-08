@@ -295,9 +295,13 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 데모 안의 "포트폴리오로 돌아가기" 링크는 인트로(443)를 가리켜야 하는데, 호스트가 시크릿이라
 빌드 산출물에는 자리표시자로 넣고 **배포 직전에 치환**합니다(빌드 로그에 IP 를 남기지 않습니다).
 
-배포 사용자는 `systemctl restart portfolio-*` 를 무암호 sudo 로 실행할 수 있어야 합니다
-(예: `/etc/sudoers.d/portfolio` 에
-`deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart portfolio-chat, /usr/bin/systemctl restart portfolio-docqa, /usr/bin/systemctl restart portfolio-exchange, /usr/bin/systemctl restart portfolio-backend, /usr/bin/systemctl reset-failed portfolio-chat, /usr/bin/systemctl reset-failed portfolio-docqa, /usr/bin/systemctl reset-failed portfolio-exchange, /usr/bin/systemctl reset-failed portfolio-backend, /usr/local/sbin/portfolio-sync-units`).
+배포 사용자는 `systemctl restart portfolio-*` 를 무암호 sudo 로 실행할 수 있어야 합니다.
+**앱을 추가하면 이 목록도 함께 늘려야 합니다** - 빠뜨리면 그 앱의 재기동만 조용히 비밀번호를
+물어보다 실패합니다(loandoc 첫 배포가 그랬습니다). `/etc/sudoers.d/portfolio`:
+
+```
+deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart portfolio-chat, /usr/bin/systemctl restart portfolio-docqa, /usr/bin/systemctl restart portfolio-exchange, /usr/bin/systemctl restart portfolio-backend, /usr/bin/systemctl restart portfolio-loandoc, /usr/bin/systemctl reset-failed portfolio-chat, /usr/bin/systemctl reset-failed portfolio-docqa, /usr/bin/systemctl reset-failed portfolio-exchange, /usr/bin/systemctl reset-failed portfolio-backend, /usr/bin/systemctl reset-failed portfolio-loandoc, /usr/local/sbin/portfolio-sync-units
+```
 
 ### 유닛 파일도 배포가 반영합니다
 
@@ -309,6 +313,12 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 덮어쓰는 통로가 되기 때문입니다. 또 `User=deploy` 가 없는 유닛은 거부해, root 로 도는 서비스를
 심어 권한을 올리는 뻔한 경로를 막습니다. 그래도 "배포 계정이 유닛 내용을 정한다"는 성질은 남으므로
 이는 **의식적인 트레이드오프**입니다(운영자 1명, 개인 데모 서버 기준).
+
+거부는 **전부 아니면 전무**입니다 - 유닛 하나가 걸리면 그 배포의 유닛 반영이 통째로 멈춥니다.
+그래서 배포는 root 유닛(`portfolio-demo-reseed.*`)을 애초에 이 디렉터리로 올리지 않습니다.
+예전에는 올렸고, 그 때문에 반영이 매번 거부되고 있었는데 **기존 유닛이 이미 설치돼 있어
+아무도 눈치채지 못했습니다**. 새 유닛(loandoc)이 처음 필요해진 배포에서 "unit could not be
+found" 로 드러났습니다.
 
 헬퍼가 설치돼 있지 않은 서버에서는 이 단계를 조용히 건너뜁니다 - 배포 전체를 실패시키지 않습니다.
 기존 서버에 1회만 설치하면 됩니다:

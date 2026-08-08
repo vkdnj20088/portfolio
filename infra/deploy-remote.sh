@@ -104,9 +104,21 @@ deploy_intro() {
 sync_units() {
   echo "== systemd 유닛 동기화 =="
   $SSH "mkdir -p /opt/portfolio/units"
-  rsync -az -e "ssh ${SSH_OPTS}" infra/systemd/ "${USER}@${HOST}:/opt/portfolio/units/"
+  # root 유닛(demo-reseed)은 **올리지 않는다**. 루트 헬퍼는 이 디렉터리의 유닛을 전부 검사해
+  # User=deploy 가 없으면 하나만 걸려도 전체를 거부하는데(권한 상승 방지 - 그 방어는 옳다),
+  # 그러면 새 유닛이 조용히 반영되지 않는다. loandoc 첫 배포가 정확히 이 이유로 깨졌다:
+  # 기존 유닛은 이미 설치돼 있어 아무도 눈치채지 못한 채, 새 유닛만 없는 상태가 이어졌다.
+  # README 가 말하는 "root 유닛은 경로를 나눴다"를 구현에서도 지킨다(--delete-excluded 는
+  # 예전 배포가 이미 올려 둔 것까지 치운다 - 남아 있으면 거부가 계속된다).
+  rsync -az --delete --delete-excluded --exclude='portfolio-demo-reseed.*' \
+    -e "ssh ${SSH_OPTS}" infra/systemd/ "${USER}@${HOST}:/opt/portfolio/units/"
   if $SSH "sudo -n /usr/local/sbin/portfolio-sync-units"; then
     echo "유닛 반영 완료"
+  elif $SSH "test -x /usr/local/sbin/portfolio-sync-units"; then
+    # 헬퍼가 있는데 실패한 것은 "없어서 건너뛴 것"과 전혀 다르다. 새 유닛이 포함된 배포라면
+    # 뒤의 재기동이 "unit could not be found" 로 죽는다 - 원인을 여기서 이름 붙여 둔다.
+    echo "!! 유닛 반영 실패(헬퍼는 있으나 거부/오류) - 새 유닛이 있는 배포라면 재기동이 깨진다"
+    return 1
   else
     echo "(유닛 자동 반영 헬퍼가 없어 건너뜁니다 - infra/README 의 1회 설치 참고)"
   fi

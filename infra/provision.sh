@@ -114,7 +114,7 @@ systemctl daemon-reload
 
 log "완료 - 남은 수동 단계"
 cat <<'NEXT'
-  1) 보안그룹 인바운드 개방: 80, 443, 8443, 9443, 9444, 9445 (TCP)
+  1) 보안그룹 인바운드 개방: 80, 443, 8443, 9443, 9444, 9445, 9446 (TCP)
      - 80 은 인증서 갱신(ACME) 때문에 반드시 필요하다.
   2) /etc/portfolio/backend.env 의 DB_PASSWORD 를 위 컨테이너 MYSQL_PASSWORD(extuser 용)와
      동일하게 채우기. DB_USER 는 extuser 그대로. (컨테이너 MYSQL_* 플레이스홀더도 실행 전 치환.)
@@ -126,9 +126,10 @@ cat <<'NEXT'
   4) 첫 배포: GitHub Actions 의 deploy 워크플로(workflow_dispatch, target=all) 실행.
      인트로(정적)까지 함께 올라간다.
   5) 배포 계정 sudoers(무암호) - 유닛 자동 반영까지 포함:
-     /etc/sudoers.d/portfolio 에 restart/reset-failed 4종 + /usr/local/sbin/portfolio-sync-units
+     /etc/sudoers.d/portfolio 에 restart/reset-failed **앱 수만큼** + /usr/local/sbin/portfolio-sync-units
+     (앱을 늘리면 이 목록도 늘린다 - 빠뜨린 앱만 재기동에서 비밀번호를 물어 실패한다.)
      (infra/README.md 의 "배포 (GitHub Actions)" 절에 전체 한 줄이 있다.)
   6) 기동 확인:
-     systemctl enable --now portfolio-chat portfolio-docqa portfolio-exchange portfolio-backend
+     systemctl enable --now portfolio-chat portfolio-docqa portfolio-exchange portfolio-backend portfolio-loandoc
      free -m   # 유휴 기준 사용량 1.0~1.3GB 면 정상(2GB 인스턴스)
 NEXT
