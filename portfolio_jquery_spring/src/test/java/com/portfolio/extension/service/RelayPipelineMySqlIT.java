@@ -37,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <ol>
  *   <li><b>SKIP LOCKED 상호배제</b> - 두 "워커"가 같은 준비 집합을 동시에 리스해도 같은 작업을
- *       두 번 집지 않는다. H2 는 InnoDB 행 잠금 의미론을 재현하지 못하므로 여기서만 실증된다.</li>
+ *       두 번 집지 않고, 서로를 기다리지도 않는다. 분배가 공평하다는 뜻은 아니다(테스트 본문
+ *       주석 참조). H2 는 InnoDB 행 잠금 의미론을 재현하지 못하므로 여기서만 실증된다.</li>
  *   <li><b>멱등 UNIQUE 동시성</b> - 같은 키의 동시 예약이 전부 한 작업으로 접힌다(초과 생성 0).</li>
  *   <li><b>아웃박스 원자성</b> - 저장 트랜잭션이 구르면 이벤트도 함께 구른다(직접 발행은 유령을 남긴다).</li>
  * </ol>
@@ -117,6 +118,8 @@ class RelayPipelineMySqlIT {
                 return ids;
             })));
         }
+        // 비차단의 증거가 이 대기다: SKIP LOCKED 가 없다면(맨 FOR UPDATE) 늦은 워커가
+        // 상대 잠금을 기다리느라 여기서 10초를 넘겨 실패한다.
         assertThat(bothLeased.await(10, TimeUnit.SECONDS)).isTrue();
         release.countDown();
 
@@ -124,9 +127,20 @@ class RelayPipelineMySqlIT {
         List<Long> second = futures.get(1).get(10, TimeUnit.SECONDS);
         pool.shutdown();
 
-        assertThat(first).hasSize(3);
-        assertThat(second).hasSize(3);
+        // "3건씩 공평 분배"는 InnoDB 가 보장하지 않는다(첫 CI 실행이 실증했다): 이 쿼리의
+        // ORDER BY 가 filesort 로 떨어지면 InnoDB 는 LIMIT 밖의 검사 행 전부를 잠가서,
+        // 먼저 정렬한 워커가 6건을 다 잠근 채 3건만 반환하고 상대는 전부 건너뛰어 0건이 된다.
+        // SKIP LOCKED 의 실제 보장 셋만 단언한다: 상호배제(겹침 0), 최소 한 워커는 가득 리스,
+        // 그리고 잠금이 풀리면 남은 작업이 전부 다시 리스된다(유실 없음).
         assertThat(first).doesNotContainAnyElementsOf(second); // 상호배제 - 겹침 0
+        assertThat(first.size()).isLessThanOrEqualTo(3);
+        assertThat(second.size()).isLessThanOrEqualTo(3);
+        assertThat(Math.max(first.size(), second.size())).isEqualTo(3);
+
+        // 두 트랜잭션 커밋 후: 아무 작업도 잠금에 물려 사라지지 않았다(전부 다시 후보).
+        List<Long> after = tx.execute(status -> jobs.leaseReady(Instant.now(), 10).stream()
+                .map(RelayJob::getId).toList());
+        assertThat(after).hasSize(6);
     }
 
     @Test
