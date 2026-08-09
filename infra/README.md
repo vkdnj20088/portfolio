@@ -1,8 +1,8 @@
-# infra - 통합 EC2 배포 (인트로 + 데모 여덟 화면)
+# infra - 통합 EC2 배포 (인트로 + 데모 아홉 화면)
 
 한 대의 EC2 에서 인트로 랜딩과 데모를 함께 서빙하기 위한 코드화된 인프라입니다.
-화면은 여덟이지만 앱은 다섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트이고,
-파일 차단 · IP 접근 제어 · 작업 릴레이가 한 앱(guard)의 세 화면입니다.
+화면은 아홉이지만 프로세스는 다섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트이고,
+파일 차단 · IP 접근 제어 · 작업 릴레이가 한 앱(guard)의 세 화면이며, 관심종목(ticker)은 정적 산출물이라 프로세스가 없습니다.
 nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 버전관리 파일로 둡니다.
 
 ## 구성
@@ -16,7 +16,7 @@ nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 
 | `nginx/conf.d/portfolio-hardening.conf` | http 컨텍스트 드롭인 - 버전 은닉, slowloris 타임아웃, rate limit 존, upstream keepalive |
 | `issue-cert-domain.sh` | 도메인 인증서 발급(apex+www+서브 7개 SAN) + 도메인 설정 활성화 |
 | `apply-hardening.sh` | 위 드롭인·스니펫·사이트 설정 배치 + 검증 + 실패 시 자동 원복 |
-| `nginx/snippets/tls-ip.conf` | 다섯 블록이 공유하는 TLS 설정 - **인증서 경로가 여기 한 곳에만** 있습니다 |
+| `nginx/snippets/tls-ip.conf` | 포트 블록들이 공유하는 TLS 설정 - **인증서 경로가 여기 한 곳에만** 있습니다 |
 | `nginx/snippets/proxy-app.conf` | 앱 프록시 공통 헤더 |
 | `systemd/portfolio-chat.service` | Next standalone `node apps/chat/server.js` (127.0.0.1:3000) |
 | `systemd/portfolio-docqa.service` | Next standalone `node apps/docqa/server.js` (127.0.0.1:3030) |
@@ -44,10 +44,11 @@ https://<ip>:9443/  JC Chat    (Next)             127.0.0.1:3000
 https://<ip>:9444/  JC DocuQA  (Next, + /search)  127.0.0.1:3030
 https://<ip>:9445/  JC Exchange(Next)             127.0.0.1:3010
 https://<ip>:9446/  JC LoanDoc (FastAPI)          127.0.0.1:8000
+https://<ip>:9447/  JC Ticker  (Flutter web, 정적) /var/www/ticker
 http://<ip>/        /.well-known/acme-challenge/ 만 서빙, 나머지는 443 으로 301
 ```
 
-**보안그룹 인바운드: 80, 443, 8443, 9443, 9444, 9445, 9446 (TCP).**
+**보안그룹 인바운드: 80, 443, 8443, 9443-9447 (TCP).**
 
 ## 라우팅 (도메인이 있을 때) - 포트가 사라진다
 
@@ -64,6 +65,7 @@ https://ip.<도메인>/         IP 접근 제어         127.0.0.1:8080 "/ip.htm
 https://guard.<도메인>/      위 둘의 원래 주소(유지)
 https://guard.<도메인>/relay.html  작업 릴레이   127.0.0.1:8080 (새 서브도메인 없이 경로로)
 https://loandoc.<도메인>/    대출 서류 분류        127.0.0.1:8000
+https://ticker.<도메인>/     실시간 관심종목       /var/www/ticker (정적)
 https://search.<도메인>/     docqa/search 로 301
 https://www.<도메인>/        apex 로 301
 ```
@@ -90,8 +92,8 @@ SNI 가 있는 요청은 도메인 블록이, 없는 요청(IP 리터럴 접속)
 ### 도메인 붙이기 (최초 1회)
 
 ```bash
-# 1) DNS: A 레코드 아홉 개를 서버 공인 IP 로
-#    (apex, www, exchange, chat, docqa, search, guard, file, ip, loandoc - 인증서 SAN 과 같은 목록)
+# 1) DNS: A 레코드 열한 개를 서버 공인 IP 로
+#    (apex, www, exchange, chat, docqa, search, guard, file, ip, loandoc, ticker - 인증서 SAN 과 같은 목록)
 cd ~/portfolio && git pull
 
 # 2) 엣지 설정 먼저. 도메인 설정은 upstream **이름**으로 프록시하고 그 정의는 하드닝 드롭인에
@@ -250,6 +252,7 @@ t4g 는 Graviton(arm64)입니다. Next 의 standalone 산출물에는 `sharp` �
 └── current -> releases/<timestamp>   # 심링크만 바꿔 원자 교체. 헬스 실패 시 직전으로 되돌린다
 
 /var/www/intro/             # 인트로는 정적이라 릴리스/재기동이 없다(rsync --delete 로 동기화)
+/var/www/ticker/            # 관심종목(Flutter web)도 정적 - 같은 방식, 캐시 정책만 다르다(nginx 주석)
 ```
 
 ## 최초 1회
@@ -276,7 +279,7 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 
 > ⚠ **생명선**: 80포트의 `location ^~ /.well-known/acme-challenge/` 블록은 절대 덮거나 리다이렉트
 > 뒤로 밀지 마세요. IP 인증서는 6일 주기 http-01 갱신이라, 이 경로가 막히면 갱신이 실패하고
-> 만료 시 **여섯 데모가 동시에** 내려갑니다.
+> 만료 시 **전 데모가 동시에** 내려갑니다.
 
 ## 배포 (GitHub Actions)
 

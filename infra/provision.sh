@@ -15,6 +15,7 @@ APP_ROOT=/opt/portfolio
 APPS=(chat docqa exchange backend loandoc)
 ACME_WEBROOT=/var/www/acme
 INTRO_WEBROOT=/var/www/intro
+TICKER_WEBROOT=/var/www/ticker   # Flutter web 정적 산출물 (ticker.<도메인> / :9447)
 INFRA="$(cd "$(dirname "$0")" && pwd)"
 
 log() { printf '\n\033[1;34m== %s ==\033[0m\n' "$*"; }
@@ -65,8 +66,8 @@ usermod -aG systemd-journal "$DEPLOY_USER"
 for app in "${APPS[@]}"; do mkdir -p "$APP_ROOT/$app/releases"; done
 # 배포가 유닛 파일을 올려 두는 자리(루트 헬퍼가 여기서만 읽어 /etc 로 반영한다).
 mkdir -p "$APP_ROOT/units"
-mkdir -p "$ACME_WEBROOT/.well-known/acme-challenge" "$INTRO_WEBROOT" /etc/portfolio
-chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_ROOT" "$INTRO_WEBROOT"
+mkdir -p "$ACME_WEBROOT/.well-known/acme-challenge" "$INTRO_WEBROOT" "$TICKER_WEBROOT" /etc/portfolio
+chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_ROOT" "$INTRO_WEBROOT" "$TICKER_WEBROOT"
 chmod 750 /etc/portfolio
 
 log "MySQL 8 컨테이너(127.0.0.1:3306 루프백 바인딩)"

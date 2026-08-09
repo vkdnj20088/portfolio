@@ -21,7 +21,7 @@ on:
       target:
         description: '배포 대상'
         type: choice
-        options: [all, intro, chat, docqa, exchange, backend, loandoc]
+        options: [all, intro, chat, docqa, exchange, backend, loandoc, ticker]
         default: all
       sse:
         description: '챗/문서QA 에서 실제 SSE 전송을 켜서 빌드(NEXT_PUBLIC_TRANSPORT=sse)'
@@ -34,6 +34,8 @@ concurrency:
 
 jobs:
   build:
+    # target=ticker 면 이 잡이 만들 것이 없다 - 빈 dist 를 tar 하다 실패하므로 통째로 스킵.
+    if: ${{ inputs.target != 'ticker' }}
     runs-on: ubuntu-24.04-arm # 서버(t4g/arm64)와 동일 아키텍처
     steps:
       - uses: actions/checkout@v4
@@ -228,17 +230,64 @@ jobs:
           path: dist.tar.gz
           retention-days: 3
 
+  # ticker(Flutter web)만 별도 잡인 이유: 산출물이 정적(아키텍처 무관)이라 arm64 러너가
+  # 필요 없고, Flutter SDK 의 linux-arm64 호스트 지원을 전제하지 않는 쪽이 안전하다.
+  # 빌드가 없을 때(다른 target) 아티팩트도 없으므로, deploy 쪽 다운로드도 같은 조건이다.
+  build-ticker:
+    if: ${{ inputs.target == 'all' || inputs.target == 'ticker' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9' # flutter.yml 과 같은 핀 - CI 와 배포가 같은 SDK 로 빌드
+          channel: stable
+          cache: true
+      - name: ticker 검증 + web 빌드(wasm)
+        working-directory: portfolio_flutter
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build web --wasm --base-href /
+          DEST="${GITHUB_WORKSPACE}/dist-ticker/ticker"
+          mkdir -p "${DEST}"
+          cp -a build/web/. "${DEST}/"
+          # 압축이 빠졌거나 빌드가 반쪽이면 여기서 멈춘다.
+          test -f "${DEST}/index.html" && test -f "${DEST}/flutter_service_worker.js" \
+            || { echo "::error::ticker web 산출물이 불완전합니다"; exit 1; }
+      - name: ticker 산출물 아카이브
+        run: tar -czf dist-ticker.tar.gz -C dist-ticker .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-ticker
+          path: dist-ticker.tar.gz
+          retention-days: 3
+
   deploy:
-    needs: build
+    needs: [build, build-ticker]
+    # 두 빌드 잡은 target 에 따라 각각 스킵될 수 있다 - 스킵은 실패가 아니지만,
+    # 실제 실패면 배포를 멈춘다.
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.build-ticker.result == 'success' || needs.build-ticker.result == 'skipped') }}
     runs-on: ubuntu-latest
     environment: production # (선택) 배포 승인 게이트를 붙일 수 있는 환경
     steps:
       - uses: actions/checkout@v4 # infra/deploy-remote.sh 를 쓴다
-      - uses: actions/download-artifact@v4
+      - if: ${{ inputs.target != 'ticker' }}
+        uses: actions/download-artifact@v4
         with:
           name: release
 
-      - name: 산출물 풀기 + 심링크 검증
+      - if: ${{ inputs.target == 'all' || inputs.target == 'ticker' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: release-ticker
+      - if: ${{ inputs.target == 'all' || inputs.target == 'ticker' }}
+        name: ticker 산출물 풀기
+        run: mkdir -p dist && tar -xzf dist-ticker.tar.gz -C dist
+
+      - if: ${{ inputs.target != 'ticker' }}
+        name: 산출물 풀기 + 심링크 검증
         run: |
           mkdir -p dist && tar -xzf dist.tar.gz -C dist
           # 아카이브를 거치며 심링크가 뭉개졌으면 여기서 멈춘다. 서버에 올린 뒤 크래시 루프로

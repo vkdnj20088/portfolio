@@ -6,15 +6,15 @@
 
 ## 개발자 소개
 
-프론트엔드 파트를 리딩하며 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은입니다.
+프론트엔드 파트를 리딩해 온, 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은입니다.
 검증(QA)과 조율(PM), 구현(개발)을 모두 거친 개발 리더로, IT 경력 12년 넘게
 프론트엔드를 중심으로 화면부터 서버, 인프라와 보안까지 하나의 흐름으로 다뤄 왔습니다.
 
-- 경력 구성(2026-07 기준): 프론트엔드 개발 7년 7개월(그중 풀스택 개발 10개월 · 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월
+- 경력 구성(2026-08 기준): 프론트엔드 개발 7년 8개월(그중 풀스택 개발 11개월 · 프론트엔드 파트 리딩 11개월), System QA 3년, Tech PM 2년 1개월
 - 대표 성과: 거래소 웹 개인 커밋 1,700+ (약 36%), Brotli 전송량 최대 86% 절감, Lighthouse 성능 60 -> 99 / SEO 80 -> 100, 글로벌 앱 다운로드 50만+
 - 인트로 페이지: **[jongeunchoi.dev](https://jongeunchoi.dev/)** - 경력, 기술 스택, 대표 프로젝트와 아래 데모를 한 화면에 모은 랜딩
 
-아래 코드 데모들이 이 포트폴리오의 코드 근거입니다(4개 폴더, 8개 데모).
+아래 코드 데모들이 이 포트폴리오의 코드 근거입니다(5개 폴더, 9개 데모).
 
 | 폴더 | 데모 | 스택 | 무게중심 | 라이브 | 테스트 |
 |------|------|------|----------|--------|--------|
@@ -22,24 +22,25 @@
 | `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 16 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거·인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 55 |
 | `portfolio_exchange_next` | 가상자산 거래소 목업 | Next 16 / React 19 / TS, lightweight-charts | 매칭엔진, 실시간, 성능, 멀티탭 | [exchange](https://exchange.jongeunchoi.dev/) | 단위 54(RTL 포함) |
 | `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 + 작업 릴레이 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) · [ip](https://ip.jongeunchoi.dev/) · [relay](https://guard.jongeunchoi.dev/relay.html) | 백엔드 189 + 통합 6종 24 + 프론트 33 |
-| `portfolio_python_fastapi` | 대출 서류 분류 파이프라인 (JC LoanDoc) | Python 3 / FastAPI, pypdf | 문서 파이프라인, 룰 + LLM 폴백 하이브리드, 재현성 | [loandoc](https://loandoc.jongeunchoi.dev/) | 단위 58 + E2E 스모크 |
+| `portfolio_python_fastapi` | 대출 서류 분류 파이프라인 (JC LoanDoc) | Python 3 / FastAPI, pypdf | 문서 파이프라인, 룰 + LLM 폴백 하이브리드, 재현성 | [loandoc](https://loandoc.jongeunchoi.dev/) | 단위 59 + E2E 스모크 |
+| `portfolio_flutter` | 실시간 관심종목 (JC Ticker) | Flutter 3.44 / Dart, 런타임 외부 패키지 0개 | 고빈도 갱신 성능, rebuild 격리, 결정론 벤치마크 | [ticker](https://ticker.jongeunchoi.dev/) | 단위·위젯 52 + 성능 가드 3 |
 
-여덟 데모가 한 대의 EC2 에 삽니다(인트로는 apex, 데모는 서브도메인 일곱 - 문서 QA 와 시맨틱 검색이 한 앱의 두 화면이고, 작업 릴레이는 guard. 서브도메인의 경로입니다). 각 폴더는 독립적으로 빌드, 실행, 배포됩니다. 상세 설계와 단계별 기록, 각 기능의 "무엇을 왜" 는 각 폴더의 README 에 절 단위로 있습니다. 인트로의 데모 링크는 주소를 적어 두지 않고 **지금 페이지의 호스트에서 조립**합니다 - 도메인이면 서브도메인을, IP 면 포트를 만들어 붙이므로 어느 쪽으로 접속해도 맞고 서버가 바뀌어도 고칠 곳이 없습니다(로컬에서는 각 카드의 개발 포트를 씁니다).
+아홉 데모가 한 대의 EC2 에 삽니다(인트로는 apex, 데모는 서브도메인 여덟 - 문서 QA 와 시맨틱 검색이 한 앱의 두 화면이고, 작업 릴레이는 guard. 서브도메인의 경로입니다). 각 폴더는 독립적으로 빌드, 실행, 배포됩니다. 상세 설계와 단계별 기록, 각 기능의 "무엇을 왜" 는 각 폴더의 README 에 절 단위로 있습니다. 인트로의 데모 링크는 주소를 적어 두지 않고 **지금 페이지의 호스트에서 조립**합니다 - 도메인이면 서브도메인을, IP 면 포트를 만들어 붙이므로 어느 쪽으로 접속해도 맞고 서버가 바뀌어도 고칠 곳이 없습니다(로컬에서는 각 카드의 개발 포트를 씁니다).
 
 ## 화면
 
 | | |
 |---|---|
-| **거래소** - 호가 20단, 캔들, 주문 폼, 체결 | **문서 근거 QA** - 근거 문장 인용 + 품질 지표 |
-| <img src="intro/img/demo-01-exchange.jpg" alt="거래소 목업 - 실시간 호가와 캔들 차트"> | <img src="intro/img/demo-02-docqa.jpg" alt="문서 근거 QA - 답변과 근거 문장 하이라이트"> |
-| **시맨틱 검색** - 동의어 확장 랭킹 | **AI 챗봇** - 어절 스트리밍, 대화 검색 |
-| <img src="intro/img/demo-03-search.jpg" alt="시맨틱 검색 - 확장 결과와 점수 비교"> | <img src="intro/img/demo-04-chat.jpg" alt="AI 챗봇 - 스트리밍 응답과 대화"> |
+| **거래소** - 호가 20단, 캔들, 주문 폼, 체결 | **AI 챗봇** - 어절 스트리밍, 대화 검색, 키 게이트 LLM |
+| <img src="intro/img/demo-01-exchange.jpg" alt="거래소 목업 - 실시간 호가와 캔들 차트"> | <img src="intro/img/demo-04-chat.jpg" alt="AI 챗봇 - 스트리밍 응답과 대화"> |
+| **대출 서류 분류** - 업로드 즉시 페이지 분류·그룹핑 | **실시간 관심종목** - 2,000종목 고빈도 갱신, 실행 중 계측 |
+| <img src="intro/img/demo-07-loandoc.jpg" alt="대출 서류 분류 - 판정 결과와 그룹핑 타임라인"> | <img src="intro/img/demo-09-ticker.jpg" alt="실시간 관심종목 - 2,000종목 목록과 Top-20, 수신 대비 rebuild 계측"> |
+| **문서 근거 QA** - 근거 문장 인용 + 품질 지표 | **시맨틱 검색** - 동의어 확장 랭킹 |
+| <img src="intro/img/demo-02-docqa.jpg" alt="문서 근거 QA - 답변과 근거 문장 하이라이트"> | <img src="intro/img/demo-03-search.jpg" alt="시맨틱 검색 - 확장 결과와 점수 비교"> |
 | **파일 확장자 차단** - 내용 기반 이중 검증 | **IP 접근 제어** - 키셋 페이지네이션, 정책 평가, 디바이스 TZ |
 | <img src="intro/img/demo-05-files.jpg" alt="파일 확장자 차단 - 고정/커스텀 확장자와 검증"> | <img src="intro/img/demo-06-ip.jpg" alt="IP 접근 제어 - 규칙 목록과 시간대 표시"> |
-| **대출 서류 분류** - 업로드 즉시 페이지 분류·그룹핑 | **분류 리포트** - 같은 파이프라인의 완성형 정적 산출물 |
-| <img src="intro/img/demo-07-loandoc.jpg" alt="대출 서류 분류 - 판정 결과와 그룹핑 타임라인"> | <img src="intro/img/demo-07-report.jpg" alt="분류 리포트 - 요약 지표와 타임라인"> |
-| **작업 릴레이** - 멱등 예약, 백오프 타임라인, 아웃박스 | |
-| <img src="intro/img/demo-08-relay.jpg" alt="작업 릴레이 - 큐 현황과 시도 타임라인"> | |
+| **작업 릴레이** - 멱등 예약, 백오프 타임라인, 아웃박스 | **분류 리포트** - 같은 파이프라인의 완성형 정적 산출물 |
+| <img src="intro/img/demo-08-relay.jpg" alt="작업 릴레이 - 큐 현황과 시도 타임라인"> | <img src="intro/img/demo-07-report.jpg" alt="분류 리포트 - 요약 지표와 타임라인"> |
 
 ---
 
@@ -150,7 +151,32 @@ uvicorn webapp.app:app --port 8000    # http://localhost:8000
 
 ---
 
-## 역량 축 - 여덟 데모를 관통하는 설계 서사
+## portfolio_flutter - 실시간 관심종목 (JC Ticker)
+
+Flutter + Dart 포트폴리오. 2,000종목 / 초당 최대 15,000건 갱신 feed 위에서
+60fps를 유지하는 관심종목 앱입니다. 거래소 데모와 소재(시세)는 같지만 축이
+다릅니다 - 거래소가 화면 폭(호가·캔들·매칭·멀티탭)을 증명한다면, 이 데모는
+**측정 방법론**(결정론 벤치마크, baseline 대비 before/after, 성능-신선도 스윕,
+성능 회귀 가드)을 증명합니다.
+
+- **정합성은 도착 즉시, 화면은 프레임 단위** - 종목별 timestampMs 단조 강제로 역순 tick 을 기각하고, 통지만 종목 단위 GatedNotifier 로 격리합니다. 매 tick 전체 재정렬/재합산 경로가 없습니다(순위는 O(log n) 증분, 시총은 BigInt 델타).
+- **주장을 화면이 증명** - 목록 상단 계측이 "초당 수신 N건 vs 행 rebuild 유발 K회"를 1초 주기로 표시합니다. 수치의 계약은 테스트가 고정합니다.
+- **런타임 외부 패키지 0개** - 상태관리/차트/한글검색 라이브러리 없이 ValueListenable · CustomPainter · 유니코드 산술로 직접 구현했습니다. 근거와 기각한 대안 7건은 DESIGN.md 에 있습니다.
+- **배포는 정적** - `flutter build web --wasm` 산출물을 nginx 가 직접 서빙합니다(첫 정적 앱 데모). 첫 로드 전송량과 웹의 한계(SEO·시맨틱스)는 README 에 수치·사실 그대로 공개합니다.
+- 상세: [portfolio_flutter/README.md](portfolio_flutter/README.md) · [DESIGN.md](portfolio_flutter/DESIGN.md) · [PERF.md](portfolio_flutter/PERF.md)
+
+로컬 실행 (Flutter 3.44+):
+
+```bash
+cd portfolio_flutter
+flutter pub get
+flutter run --profile -d macos        # 성능 확인은 profile 로 (debug 는 훨씬 느림)
+# 웹으로 보려면: flutter build web --wasm && python3 -m http.server 3060 --directory build/web
+```
+
+---
+
+## 역량 축 - 아홉 데모를 관통하는 설계 서사
 
 개별 기능을 넘어, 여러 데모를 **하나의 표준으로 다스린다**는 관점이 이 포트폴리오의 축입니다.
 각 항목의 코드 근거는 해당 앱 README 의 해당 절에 있습니다.
@@ -176,7 +202,7 @@ uvicorn webapp.app:app --port 8000    # http://localhost:8000
 
 ## 공통 원칙
 
-네 폴더가 공유하는 작업 방식입니다.
+다섯 폴더가 공유하는 작업 방식입니다.
 
 - 측정한 뒤 최적화합니다. 근거 없는 최적화는 넣지 않습니다.
 - 트레이드오프와 "하지 않은 것 + 이유" 를 README 에 남깁니다.
@@ -194,6 +220,7 @@ portfolio/
 ├── portfolio_exchange_next/    # Next / React 거래소 목업 (매칭 엔진)
 ├── portfolio_jquery_spring/    # jQuery / Spring 백엔드 (파일 차단 + IP 접근 제어)
 ├── portfolio_python_fastapi/   # Python / FastAPI 대출 서류 분류 파이프라인 (JC LoanDoc)
+├── portfolio_flutter/          # Flutter / Dart 실시간 관심종목 (JC Ticker)
 ├── infra/                      # nginx 설정, systemd 유닛, 프로비저닝 / 배포 스크립트
 ├── tools/                      # 자산 생성 원본 (배포에 올라가지 않는 도구)
 │   └── og-card/                #   공유 카드 원본 -> intro/img/og-cover.jpg
@@ -211,13 +238,14 @@ https://file.jongeunchoi.dev/       파일 확장자 차단
 https://ip.jongeunchoi.dev/         IP 접근 제어
 https://guard.jongeunchoi.dev/relay.html  작업 릴레이 (파일·IP 와 같은 앱)
 https://loandoc.jongeunchoi.dev/    대출 서류 분류 (JC LoanDoc)
+https://ticker.jongeunchoi.dev/     실시간 관심종목 (JC Ticker, 정적 서빙)
 ```
 
 한 대의 EC2(t4g.small, arm64)에서 **443 한 포트**로 전부 서빙합니다. SNI 로 서브도메인을 가르고,
 열 이름을 한 장(SAN)에 담은 Let's Encrypt 인증서를 씁니다.
 
 도메인 이전에는 IP 리터럴에 직접 TLS 를 걸었습니다 - SNI 가 없어 서브도메인을 못 쓰고 앱들이
-모두 `/api/*` 를 써 경로로도 못 나눠, **포트로** 갈랐습니다(`:8443` `:9443` `:9444` `:9445` `:9446`).
+모두 `/api/*` 를 써 경로로도 못 나눠, **포트로** 갈랐습니다(`:8443` `:9443`-`:9447`).
 그 설정은 지금도 **함께 켜져 있습니다**. SNI 가 있으면 도메인 블록이, 없으면 기존 default_server 가
 받으므로 `https://<ip>/` 로도 그대로 열립니다 - 도메인이 만료돼도 데모가 죽지 않습니다.
 

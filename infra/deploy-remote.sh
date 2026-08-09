@@ -3,7 +3,7 @@
 # 원자 교체 -> 재기동 -> 헬스 게이트 -> 실패 시 직전 릴리스로 롤백.
 # 배포가 나쁜 빌드로 사이트를 죽이지 않게 하는 안전장치다.
 #
-# 필요 env: HOST, USER (SSH 대상), TARGET(all|intro|chat|docqa|exchange|backend|loandoc). SSH 키는 워크플로가 준비한다.
+# 필요 env: HOST, USER (SSH 대상), TARGET(all|intro|chat|docqa|exchange|backend|loandoc|ticker). SSH 키는 워크플로가 준비한다.
 set -euo pipefail
 
 : "${HOST:?HOST 필요}"
@@ -97,6 +97,16 @@ deploy_intro() {
   $SSH "curl -fsS -o /dev/null 'http://127.0.0.1/' -H 'Host: localhost' || curl -fsSk -o /dev/null 'https://127.0.0.1/'"
 }
 
+# ticker(Flutter web)도 정적이다 - 인트로와 같은 방식으로 통째로 맞춘다. 다른 점은 헬스 확인뿐:
+# 인트로는 default_server 라 Host 없이 닿지만, ticker 는 IP 설정에서 9447 포트 블록이므로
+# 서버 로컬에서 그 포트를 직접 친다(-k: IP SAN 인증서라 127.0.0.1 검증은 원래 실패한다).
+deploy_ticker() {
+  echo "== ticker: 전송 =="
+  rsync -az --delete -e "ssh ${SSH_OPTS}" "dist/ticker/" "${USER}@${HOST}:/var/www/ticker/"
+  echo "== ticker: 헬스 게이트 =="
+  $SSH "curl -fsSk -o /dev/null 'https://127.0.0.1:9447/'"
+}
+
 # systemd 유닛을 저장소 기준으로 맞춘다. 이게 없으면 유닛(예: JVM 플래그)을 고쳐도 서버에는
 # 반영되지 않아, 사람이 SSH 로 들어가 cp + daemon-reload 를 해야 한다(실제로 그랬다).
 # 헬퍼(/usr/local/sbin/portfolio-sync-units)가 아직 없는 서버에서는 조용히 건너뛴다 -
@@ -136,6 +146,7 @@ if should chat     && [ "${rc}" -eq 0 ]; then deploy_one chat     || rc=1; fi
 if should docqa    && [ "${rc}" -eq 0 ]; then deploy_one docqa    || rc=1; fi
 if should exchange && [ "${rc}" -eq 0 ]; then deploy_one exchange || rc=1; fi
 if should loandoc  && [ "${rc}" -eq 0 ]; then deploy_one loandoc  || rc=1; fi
+if should ticker   && [ "${rc}" -eq 0 ]; then deploy_ticker       || rc=1; fi
 if should intro    && [ "${rc}" -eq 0 ]; then deploy_intro        || rc=1; fi
 
 if [ "${rc}" -eq 0 ]; then

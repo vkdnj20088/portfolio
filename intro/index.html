@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>최종은 (JONGEUN CHOI) - 풀스택 개발자 포트폴리오</title>
-<meta name="description" content="프론트엔드 5명을 리딩하며 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은. IT 경력 12년+, 검증(QA) 조율(PM) 구현(개발)을 모두 거친 개발 리더의 포트폴리오.">
+<meta name="description" content="프론트엔드 5명을 리딩해 온, 웹 앱 백엔드를 아우르는 풀스택 개발자 최종은. IT 경력 12년+, 검증(QA) 조율(PM) 구현(개발)을 모두 거친 개발 리더의 포트폴리오.">
 <meta name="author" content="최종은 (JONGEUN CHOI)">
 
 <meta property="og:type" content="website">
@@ -13,7 +13,7 @@
 <!-- 미리보기 카드 문구는 헤드라인과 같이 움직여야 한다 - 직전 라운드에 본문만 고쳐서 이 줄에는
      두 라운드 전 헤드라인("백엔드와 인프라까지 직접 구현")이 남아 있었다. 링크를 메일이나
      메신저로 받은 사람은 페이지보다 이 문장을 먼저 읽는다. -->
-<meta property="og:description" content="프론트엔드 5명을 리딩하며 코드 리뷰와 표준 설계를 맡고, 막히는 지점은 API·인프라까지 직접 끝냅니다. IT 경력 12년+, 레거시 현대화로 Lighthouse 성능 60에서 99.">
+<meta property="og:description" content="프론트엔드 5명을 리딩하며 코드 리뷰와 표준 설계를 맡았고, 막히는 지점은 API·인프라까지 직접 끝냅니다. IT 경력 12년+, 레거시 현대화로 Lighthouse 성능 60에서 99.">
 <meta property="og:locale" content="ko_KR">
 <!-- 미리보기 카드. 페이지 안의 링크는 지금 호스트에서 조립하지만 이 값들만은 절대 URL 이어야
      한다 - 카드를 만드는 것은 브라우저가 아니라 외부 크롤러(메신저, 메일, SNS)이고, 그쪽에는
@@ -23,7 +23,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/jpeg">
-<meta property="og:image:alt" content="최종은 포트폴리오 - 라이브 데모 여덟 개와 12년+ 경력 요약">
+<meta property="og:image:alt" content="최종은 포트폴리오 - 라이브 데모 아홉 개와 12년+ 경력 요약">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="최종은 (JONGEUN CHOI) - 풀스택 개발자 포트폴리오">
 <meta name="twitter:description" content="검증 조율 구현을 모두 거친 개발 리더. IT 경력 12년+.">
@@ -37,16 +37,17 @@
   최종은 포트폴리오 인트로(랜딩) - 자체완결 정적 HTML. 빌드 도구 없이 그대로 서빙한다.
   외부 의존은 Google Fonts(CDN) 하나. 카운트업/등장 애니메이션은 바닐라 JS.
 
-  하단 Demos 섹션의 여덟 카드는 한 서버에 함께 배포된다. 도메인 없이 IP 로만 접속하는 구성이라
+  하단 Demos 섹션의 아홉 카드는 한 서버에 함께 배포된다. 도메인 없이 IP 로만 접속하는 구성이라
   서브도메인을 쓸 수 없고(SNI 없음), 앱들이 모두 /api/* 를 써 경로로도 못 나눠서 **포트로** 나눈다:
     01 FRONTEND    거래소 목업        portfolio_exchange_next  :9445 /exchange/BTC
-    02 BACKEND·AI  대출 서류 분류     portfolio_python_fastapi :9446 /
-    03 FULL-STACK  AI 챗봇 목업       portfolio_react_next     :9443 /
-    04 FULL-STACK  문서 근거 QA       portfolio_react_next     :9444 /
-    05 FULL-STACK  시맨틱 검색        portfolio_react_next     :9444 /search
-    06 BACKEND     파일 확장자 차단    portfolio_jquery_spring  :8443 /
-    07 BACKEND     IP 차단            portfolio_jquery_spring  :8443 /ip.html
-    08 BACKEND     작업 릴레이         portfolio_jquery_spring  :8443 /relay.html
+    02 FULL-STACK  AI 챗봇            portfolio_react_next     :9443 /
+    03 BACKEND·AI  대출 서류 분류     portfolio_python_fastapi :9446 /
+    04 FRONTEND·APP 실시간 관심종목    portfolio_flutter        :9447 / (정적 - Flutter web)
+    05 FULL-STACK  문서 근거 QA       portfolio_react_next     :9444 /
+    06 FULL-STACK  시맨틱 검색        portfolio_react_next     :9444 /search
+    07 BACKEND     파일 확장자 차단    portfolio_jquery_spring  :8443 /
+    08 BACKEND     IP 차단            portfolio_jquery_spring  :8443 /ip.html
+    09 BACKEND     작업 릴레이         portfolio_jquery_spring  :8443 /relay.html
   인트로 자신은 같은 서버의 443(루트)에 있다. 그래서 링크에 IP 를 적어 두지 않고 "지금 페이지의
   호스트 + 데모별 포트" 로 조립한다(아래 DEMO_PORTS) - 서버 IP 가 바뀌어도 고칠 곳이 없다.
   로컬에서는 각 카드의 data-demo-url(개발 포트)을 쓰고, 링크로 승격하지 않는다(죽은 링크 방지).
@@ -429,7 +430,7 @@
   .index-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--paper-faint); border-bottom: 1px solid var(--line); padding-bottom: 0.9rem; margin-bottom: 0.2rem; }
   ol.works { list-style: none; }
   /* 카드 목록 밖의 한 줄(품질 지표 링크). 카드가 아니라 각주라 크기를 한 단 낮추고 테두리를
-     주지 않는다 - 아홉 번째 카드처럼 보이면 "선택된 작업 08"과 어긋난다. */
+     주지 않는다 - 열 번째 카드처럼 보이면 "선택된 작업 09"와 어긋난다. */
   .works-extra { margin-top: 1.6rem; max-width: 62ch; font-size: 0.92rem; line-height: 1.7; color: var(--paper-dim); }
   .works-extra b { color: var(--paper); font-weight: 600; }
   .wx-lab { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--paper-faint); margin-right: 0.55rem; }
@@ -617,13 +618,13 @@
              리딩과 직접 실행 둘로 읽힌다 - 혼자 다 끝내는 리드는 스케일하지 않는 신호다.
              리딩의 구체(코드 리뷰·표준 설계)는 아래 About 이 받는다: 여기 넣으면 55자가 되어
              540px 까지 3줄이다(44자인 지금도 360px 에서만 3줄). -->
-        <p class="headline reveal">프론트엔드 5명을 리딩하며, 팀이 막히는 지점은 <b>API·인프라까지 직접 끝냅니다</b></p>
+        <p class="headline reveal">프론트엔드 5명을 리딩했고, 팀이 막히는 지점은 <b>API·인프라까지 직접 끝냅니다</b></p>
         <!-- 뒤 문장은 "어떻게 확인할 수 있나" 다(QA/PM 3축 서술은 아래 About 이 담당한다 -
              직전까지 두 곳이 "품질을 검증(QA)하고 일정을 조율(PM)" 을 그대로 반복했다).
              앞 문장을 새로 얹은 이유: 검증 초대만으로는 README 를 열지 않는 독자에게 이 문단이
              아무것도 주지 않는다. "다시 열리게 만들어 왔습니다" 로 쓰면 짧지만 15명 조직의
              재런칭을 1인칭으로 흡수한다 - 맡은 범위(프론트엔드)를 적는다. -->
-        <p class="sub reveal">느렸던 화면을 빠르게 만들고, 멈췄던 서비스를 다시 여는 재런칭에 프론트엔드를 맡았습니다. 아래 여덟 데모는 실제로 돌아가고, 각 README 에 <b>하지 않은 선택까지</b> 남겼습니다.</p>
+        <p class="sub reveal">느렸던 화면을 빠르게 만들고, 멈췄던 서비스를 다시 여는 재런칭에 프론트엔드를 맡았습니다. 아래 아홉 데모는 실제로 돌아가고, 각 README 에 <b>하지 않은 선택까지</b> 남겼습니다.</p>
 
         <dl class="stats reveal" aria-label="핵심 지표">
           <div class="stat">
@@ -631,7 +632,7 @@
                  12.8년은 12년 9.6개월을 뜻한다 - 개월 수를 소수점 뒤에 그대로 붙인 표기였다.
                  애초에 경력은 소수로 말하지 않는다. 큰 숫자는 12년+ 로 두고 정확한 값은 라벨에 적는다. -->
             <dd class="num"><span data-count="12" data-career-years>12</span><span class="unit">년+</span></dd>
-            <dt class="lab">IT 총 경력 (<span data-career="total">12년 8개월</span>)</dt>
+            <dt class="lab">IT 총 경력 (<span data-career="total">12년 9개월</span>)</dt>
           </div>
           <!-- 개인 커밋 1,700+ 은 이 줄에서 뺐다. 커밋 수는 볼륨 지표라 읽는 사람에 따라
                "주도했다" 와 "커밋을 안 뭉갠다" 로 갈리고, 같은 값이 아래 프라뱅 배지에 있어
@@ -671,31 +672,32 @@
           <div>
             <h2 class="sec reveal" id="about-h">검증하고, 조율하고, <span style="color:var(--acid);font-style:italic">직접 만듭니다</span></h2>
             <p class="lead reveal">품질을 <span class="hl">검증(QA)</span>하고 일정을 <span class="hl">조율(PM)</span>하며 제품을 <span class="hl">구현(개발)</span>하는 세 축을 모두 거쳤습니다. 그래서 만들기 전에 어떻게 검증할지와 무엇을 먼저 낼지를 함께 정합니다.</p>
-            <!-- 연대기 순(QA -> PM -> 개발 -> 지금)이었는데 현재를 앞으로 돌렸다. 평가자가 먼저
-                 알고 싶은 것은 "지금 무엇을 하는 사람인가" 이고, 과거는 그 판단의 근거로 뒤에
-                 오는 편이 읽힌다. 한 문단 217자를 둘로 나눠 56ch 컨테이너에서 8줄 벽이 되지 않게 했다. -->
+            <!-- 연대기 순(QA -> PM -> 개발 -> 최근)이었는데 최신 경력을 앞으로 돌렸다. 평가자가
+                 먼저 알고 싶은 것은 "무엇을 하던 사람인가" 이고, 과거는 그 판단의 근거로 뒤에
+                 오는 편이 읽힌다. 한 문단 217자를 둘로 나눠 56ch 컨테이너에서 8줄 벽이 되지 않게 했다.
+                 2026-08 퇴사 반영으로 진행형("지금은 ~ 맡고 있습니다")을 과거형으로 바꿨다. -->
             <!-- "리딩" 은 그 자체로는 아무 정보가 없다(회의를 주재했는지 코드를 봤는지 모른다).
                  무엇으로 리딩하는지를 적는다 - 기술 조직이 가장 먼저 확인하는 값이다. -->
-            <p class="body reveal">지금은 가상자산거래소에서 프론트엔드 파트 5명을 리딩하며, <b>코드 리뷰와 표준 설계</b>를 맡고 있습니다. 백엔드 8명과 함께 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발하고, 중단됐던 서비스를 신규 마켓과 함께 재설계해 재런칭했습니다.</p>
+            <p class="body reveal">직전에는 가상자산거래소에서 프론트엔드 파트 5명을 리딩하며, <b>코드 리뷰와 표준 설계</b>를 맡았습니다. 백엔드 8명과 함께 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발하고, 중단됐던 서비스를 신규 마켓과 함께 재설계해 재런칭했습니다.</p>
             <!-- 끝 문장이 데모·README 였다. 같은 말을 히어로·데모 섹션·연락처에서 이미 세 번 하므로
                  그 자리를 재직 이력에 준다. 페이지 표기 관례(시작월·종료월 포함)로 실측하면
-                 61+37+44+10 = 152개월 / 4개사 = 38개월 - 진행 중인 현 재직을 포함해도 3년을 넘는다. -->
+                 61+37+44+11 = 153개월 / 4개사 = 38개월 - 마지막 재직(11개월)을 포함해도 3년을 넘는다. -->
             <p class="body reveal">그 앞에는 System QA <span data-career="qa">3년</span>으로 동시접속 20만 규모 라이브 서비스의 품질과 인프라를 검증했고, Tech PM <span data-career="pm">2년 1개월</span>로 4개국 고객사의 현지화 일정을 조율했습니다. 네 곳 모두 운영 중인 서비스였고, <b>한 회사에 평균 3년 이상</b> 있었습니다.</p>
             <div class="contact-inline reveal">
               <a href="mailto:vkdnj20088@gmail.com">vkdnj20088@gmail.com</a>
             </div>
           </div>
-          <div class="compo reveal" role="img" aria-label="경력 구성: 프론트엔드 7년 7개월(그중 풀스택 개발 10개월, 프론트엔드 파트 리딩 10개월), System QA 3년, Tech PM 2년 1개월">
-            <p class="t">경력 구성 / <span data-career="total">12년 8개월</span></p>
+          <div class="compo reveal" role="img" aria-label="경력 구성: 프론트엔드 7년 8개월(그중 풀스택 개발 11개월, 프론트엔드 파트 리딩 11개월), System QA 3년, Tech PM 2년 1개월">
+            <p class="t">경력 구성 / <span data-career="total">12년 9개월</span></p>
             <div class="bar" aria-hidden="true">
               <i class="fe"></i><i class="qa"></i><i class="pm"></i>
             </div>
             <ul>
-              <li><span class="sw fe" aria-hidden="true"></span>프론트엔드 개발 <b data-career="fe">7년 7개월</b></li>
-              <!-- 현재 회사(2025.10~) 기간이라 위 7년 7개월 "안"에 있다. 별도 항목으로 세우면
-                   총 12년 8개월과 어긋나 중복 계상으로 읽히므로 하위에 "그중"으로 붙인다. -->
-              <li class="sub">그중 풀스택 개발 <b data-career="fullstack">10개월</b></li>
-              <li class="sub">그중 프론트엔드 파트 리딩 <b data-career="lead">10개월</b></li>
+              <li><span class="sw fe" aria-hidden="true"></span>프론트엔드 개발 <b data-career="fe">7년 8개월</b></li>
+              <!-- 프라뱅(2025.10~2026.08) 기간이라 위 7년 8개월 "안"에 있다. 별도 항목으로 세우면
+                   총 12년 9개월과 어긋나 중복 계상으로 읽히므로 하위에 "그중"으로 붙인다. -->
+              <li class="sub">그중 풀스택 개발 <b data-career="fullstack">11개월</b></li>
+              <li class="sub">그중 프론트엔드 파트 리딩 <b data-career="lead">11개월</b></li>
               <li><span class="sw qa" aria-hidden="true"></span>System QA <b data-career="qa">3년</b></li>
               <li><span class="sw pm" aria-hidden="true"></span>Tech PM <b data-career="pm">2년 1개월</b></li>
             </ul>
@@ -739,10 +741,11 @@
              Full-stack 3 / Backend 2 다(라벨을 올릴 때 이 줄을 안 고쳤다). 한 화면 안에서
              페이지가 자기 말을 반박하던 자리다. 개수 대신 범위로 적는다: 서버측 관심사가 있는
              카드가 일곱(fs 3 + be 4), 클라이언트 전용이 하나(거래소)다. -->
-        <p class="sub reveal" style="max-width:52ch;color:var(--paper-dim);margin-bottom:2.5rem">직접 설계하고 구현한 코드 데모입니다. 여덟 개 모두 라이브로 열려 있고, 화면만이 아니라 API · 저장 · 정책까지 직접 만든 것이 일곱 개입니다.</p>
+        <p class="sub reveal" style="max-width:52ch;color:var(--paper-dim);margin-bottom:2.5rem">직접 설계하고 구현한 코드 데모입니다. 아홉 개 모두 라이브로 열려 있고, 화면만이 아니라 API · 저장 · 정책까지 직접 만든 것이 일곱 개입니다.</p>
 
-        <div class="index-head reveal"><span>선택된 작업</span><span>08</span></div>
+        <div class="index-head reveal"><span>선택된 작업</span><span>09</span></div>
         <ol class="works">
+
           <li>
             <!-- 카드는 마크업상 링크가 아니다. 데모들은 인트로와 같은 호스트의 다른 포트에 살아서,
                  IP 를 박아 두는 대신 스크립트가 "지금 페이지의 호스트 + 포트"로 링크를 만들어 승격한다
@@ -752,7 +755,7 @@
               <div class="wbody">
                 <span class="cat">Frontend</span>
                 <h3 class="wtitle">거래소 목업</h3>
-                <!-- 여덟 장 중 이 카드만 이해관계 절을 앞에 붙이지 않았다. 첫 문장이 이미
+                <!-- 아홉 장 중 이 카드만 이해관계 절을 앞에 붙이지 않았다. 첫 문장이 이미
                      "실무에서 한 일을 다시 만들었다" 라 그 역할을 하고 있다. 길이만 줄인다. -->
                 <p class="wdesc">실무에서 호가창을 10단&#8594;20단으로 늘리고 차트를 옮겼던 작업을 공개 가능한 형태로 다시 만들었습니다. Mock 스트림이 시세·분봉·호가를 함께 갱신하고, 스탑 주문은 새 엔진이 아니라 체결 상태기계의 트리거 상태로 넣었습니다. 거래 화면과 입출금·보유자산까지 세 화면입니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>lightweight-charts</span><span>zustand</span><span>실시간 Mock</span></div>
@@ -763,8 +766,29 @@
           </li>
 
           <li>
-            <div class="work pending reveal" data-track="be" data-demo="loandoc" data-demo-url="http://localhost:8000/" aria-label="대출 서류 분류">
+            <!-- 챗을 문서QA 쌍 앞에 둔다 - AI 블록(02~05) 안에서 실 LLM 연동이 실재하는
+                 카드(대출 분류의 폴백, 챗의 키 게이트)가 측정·목업 카드보다 먼저 읽히게. -->
+            <div class="work pending reveal" data-track="fs" data-demo="chat" data-demo-url="http://localhost:3000/" aria-label="AI 챗봇 목업">
               <span class="idx">02</span>
+              <div class="wbody">
+                <!-- 대출 분류 카드가 "Backend · AI" 인데 이 카드만 AI 표시가 없었다.
+                     둘 다 실제 LLM 연동이 실재하는(키 게이트) 카드라 라벨을 맞춘다. -->
+                <span class="cat">Full-stack &#183; AI</span>
+                <h3 class="wtitle">AI 챗봇</h3>
+                <!-- "목업" 이라는 제목과 "실제 LLM" 이 한 카드에 있으면 모순으로 읽힌다 -
+                     키 게이트(있으면 LLM, 없으면 결정적 목업)라는 사실 자체가 판단 포인트라
+                     리드 문장이 그 경계를 직접 말하게 한다. -->
+                <p class="wdesc">실시간 UI 는 데모에서만 잘 돌고 실제 네트워크에서 깨집니다. 전송 계층만 바꿔 Mock · 실제 SSE · 실제 LLM(서버에 키가 있을 때만) 을 오가도록 경계를 그었고, 마크다운은 걸러내는 대신 파싱하지 않아 안전 경계를 좁혔습니다. 연속 요청은 토큰 버킷으로 막고 남은 시간을 화면에 돌려줍니다.</p>
+                <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>SSE</span><span>Claude API 키 게이트</span><span>대화 검색</span><span>접근성</span></div>
+              </div>
+              <img class="wthumb" src="img/demo-04-chat.jpg" srcset="img/demo-04-chat-400.jpg 400w, img/demo-04-chat-800.jpg 800w, img/demo-04-chat.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <div class="wstatus"><span class="soon">로컬</span></div>
+            </div>
+          </li>
+
+          <li>
+            <div class="work pending reveal" data-track="be" data-demo="loandoc" data-demo-url="http://localhost:8000/" aria-label="대출 서류 분류">
+              <span class="idx">03</span>
               <div class="wbody">
                 <span class="cat">Backend · AI</span>
                 <h3 class="wtitle">대출 서류 분류 파이프라인</h3>
@@ -779,29 +803,25 @@
           </li>
 
           <li>
-            <!-- 챗을 문서QA 쌍 앞에 둔다 - AI 블록(02~05) 안에서 실 LLM 연동이 실재하는
-                 카드(대출 분류의 폴백, 챗의 키 게이트)가 측정·목업 카드보다 먼저 읽히게. -->
-            <div class="work pending reveal" data-track="fs" data-demo="chat" data-demo-url="http://localhost:3000/" aria-label="AI 챗봇 목업">
-              <span class="idx">03</span>
+            <div class="work pending reveal" data-track="fe" data-demo="ticker" data-demo-url="http://localhost:3060/" aria-label="실시간 관심종목">
+              <span class="idx">04</span>
               <div class="wbody">
-                <!-- 대출 분류 카드가 "Backend · AI" 인데 이 카드만 AI 표시가 없었다.
-                     둘 다 실제 LLM 연동이 실재하는(키 게이트) 카드라 라벨을 맞춘다. -->
-                <span class="cat">Full-stack &#183; AI</span>
-                <h3 class="wtitle">AI 챗봇 목업</h3>
-                <!-- "목업" 이라는 제목과 "실제 LLM" 이 한 카드에 있으면 모순으로 읽힌다 -
-                     키 게이트(있으면 LLM, 없으면 결정적 목업)라는 사실 자체가 판단 포인트라
-                     리드 문장이 그 경계를 직접 말하게 한다. -->
-                <p class="wdesc">실시간 UI 는 데모에서만 잘 돌고 실제 네트워크에서 깨집니다. 전송 계층만 바꿔 Mock · 실제 SSE · 실제 LLM(서버에 키가 있을 때만) 을 오가도록 경계를 그었고, 마크다운은 걸러내는 대신 파싱하지 않아 안전 경계를 좁혔습니다. 연속 요청은 토큰 버킷으로 막고 남은 시간을 화면에 돌려줍니다.</p>
-                <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>SSE</span><span>Claude API 키 게이트</span><span>대화 검색</span><span>접근성</span></div>
+                <span class="cat">Frontend · App</span>
+                <h3 class="wtitle">실시간 관심종목 (Flutter)</h3>
+                <!-- 판단 포인트는 최적화 기법이 아니라 구조다 - 값 반영(즉시)과 화면 통지(격리)의
+                     분리. 성능 수치는 전부 결정론 벤치(PERF.md 재현 커맨드)가 뒷받침한다 -
+                     §0(결정적 동작)의 Flutter 판. 상단 계측이 주장을 화면 스스로 증명하게 한다. -->
+                <p class="wdesc">2,000종목이 초당 최대 15,000건씩 갱신되는 관심종목 목록입니다. tick 은 도착 즉시 상태에 반영해 정합성을 지키고, 화면 통지만 종목 단위로 격리해 rebuild 는 보이는 행의 몫만 일어납니다. 상단 계측이 유입 대비 rebuild 의 격차를 실시간으로 보여주고, 순진 구현(baseline)과의 프레임 실측 비교를 문서로 공개합니다.</p>
+                <div class="wstack"><span>Flutter 3.44</span><span>Dart</span><span>런타임 패키지 0개</span><span>종목별 ValueListenable</span><span>결정론 벤치마크</span><span>CustomPainter</span></div>
               </div>
-              <img class="wthumb" src="img/demo-04-chat.jpg" srcset="img/demo-04-chat-400.jpg 400w, img/demo-04-chat-800.jpg 800w, img/demo-04-chat.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
+              <img class="wthumb" src="img/demo-09-ticker.jpg" srcset="img/demo-09-ticker-400.jpg 400w, img/demo-09-ticker-800.jpg 800w, img/demo-09-ticker.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
             </div>
           </li>
 
           <li>
             <div class="work pending reveal" data-track="fs" data-demo="docqa-qa" data-demo-url="http://localhost:3030/" aria-label="문서 근거 QA">
-              <span class="idx">04</span>
+              <span class="idx">05</span>
               <div class="wbody">
                 <span class="cat">Full-stack</span>
                 <h3 class="wtitle">문서 근거 QA (검색 + 추출형 MRC)</h3>
@@ -816,7 +836,7 @@
           <li>
             <!-- docqa 앱의 두 번째 표면(같은 앱 /search 라우트)이라 바로 위 카드에 붙여 둔다. -->
             <div class="work pending reveal" data-track="fs" data-demo="docqa-search" data-demo-url="http://localhost:3030/search" aria-label="시맨틱 검색">
-              <span class="idx">05</span>
+              <span class="idx">06</span>
               <div class="wbody">
                 <span class="cat">Full-stack</span>
                 <h3 class="wtitle">시맨틱 검색</h3>
@@ -830,7 +850,7 @@
 
           <li>
             <div class="work pending reveal" data-track="be" data-demo="files" data-demo-url="http://localhost:8080/" aria-label="파일 확장자 차단">
-              <span class="idx">06</span>
+              <span class="idx">07</span>
               <div class="wbody">
                 <span class="cat">Backend</span>
                 <h3 class="wtitle">파일 확장자 차단</h3>
@@ -846,7 +866,7 @@
           <li>
             <!-- 파일차단/IP차단/릴레이 세 카드는 같은 Spring 앱의 세 화면이다(포트 하나, 경로만 다르다). -->
             <div class="work pending reveal" data-track="be" data-demo="ip" data-demo-url="http://localhost:8081/ip.html" aria-label="IP 접근 제어">
-              <span class="idx">07</span>
+              <span class="idx">08</span>
               <div class="wbody">
                 <span class="cat">Backend</span>
                 <h3 class="wtitle">IP 차단</h3>
@@ -865,7 +885,7 @@
 
           <li>
             <div class="work pending reveal" data-track="be" data-demo="relay" data-demo-url="http://localhost:8080/relay.html" aria-label="작업 릴레이">
-              <span class="idx">08</span>
+              <span class="idx">09</span>
               <div class="wbody">
                 <span class="cat">Backend</span>
                 <h3 class="wtitle">작업 릴레이</h3>
@@ -881,9 +901,9 @@
 
         </ol>
 
-        <!-- 카드 여덟 장 밖에 한 줄을 둔다. 문서QA 의 품질 지표 화면은 이 포트폴리오에서 판단
+        <!-- 카드 아홉 장 밖에 한 줄을 둔다. 문서QA 의 품질 지표 화면은 이 포트폴리오에서 판단
              근거가 가장 많이 적힌 곳인데(자기 오답 건수까지 공개한다) 앱 안쪽 탭이라 카드에서
-             들어온 사람이 못 보고 나간다. 아홉 번째 카드로 만들면 "선택된 작업 08"과 데모 개수
+             들어온 사람이 못 보고 나간다. 열 번째 카드로 만들면 "선택된 작업 09"와 데모 개수
              문구를 모두 흔들어서, 링크 한 줄로 둔다. -->
         <p class="works-extra reveal">
           <span class="wx-lab">덧붙여</span>
@@ -910,11 +930,11 @@
 
           <article class="tl-item live reveal">
             <div class="tl-head">
-              <span class="co">프라뱅<span class="now">재직 중</span></span>
-              <span class="tl-period">2025.10 - 현재</span>
+              <span class="co">프라뱅</span>
+              <span class="tl-period">2025.10 - 2026.08 (11개월)</span>
             </div>
             <p class="tl-role">IT개발부 과장<span class="sep">/</span>Front-end 파트장<span class="sep">/</span>Full-stack</p>
-            <p class="tl-desc">블록체인 가상자산거래소. 15명 규모 개발 조직에서 프론트엔드 파트 5명을 리딩하며 백엔드 8명과 협업합니다. 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발했고, 중단됐던 서비스를 USDT 마켓 등 신규 기능과 함께 재설계해 2026.02 재런칭했습니다.</p>
+            <p class="tl-desc">블록체인 가상자산거래소. 15명 규모 개발 조직에서 프론트엔드 파트 5명을 리딩하며 백엔드 8명과 협업했습니다. 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발했고, 중단됐던 서비스를 USDT 마켓 등 신규 기능과 함께 재설계해 2026.02 재런칭했습니다.</p>
             <div class="tl-metrics">
               <span class="badge">개인 커밋 <b>1,700+</b> (약 36%)</span>
               <span class="badge">jQuery 2 &#8594; <b>jQuery 4 + TS</b> 전면 전환</span>
@@ -1044,7 +1064,7 @@
         <h2 class="sec reveal" id="contact-h">연락처</h2>
         <!-- "문의는 이메일로 주세요" 는 무엇을 찾는 사람인지 알려주지 않는다. 응답 시간 약속은
              넣지 않았다 - 첫 접점에서 지키지 못하는 약속이 가장 비싸다. -->
-        <p class="sub reveal" style="max-width:46ch;color:var(--paper-dim)">프론트엔드와 서버를 함께 볼 사람이 필요한 자리라면 언제든 연락 주세요. 이 페이지와 데모 여덟 개의 코드가 GitHub 에 열려 있고, 설계 판단과 하지 않은 선택의 이유는 각 README 에 있습니다.</p>
+        <p class="sub reveal" style="max-width:46ch;color:var(--paper-dim)">프론트엔드와 서버를 함께 볼 사람이 필요한 자리라면 언제든 연락 주세요. 이 페이지와 데모 아홉 개의 코드가 GitHub 에 열려 있고, 설계 판단과 하지 않은 선택의 이유는 각 README 에 있습니다.</p>
         <div class="contact-wrap two reveal">
           <a class="cc" href="mailto:vkdnj20088@gmail.com"><span class="k">Email</span><span class="v">vkdnj20088@gmail.com</span></a>
           <a class="cc" href="https://github.com/vkdnj20088/portfolio" rel="noopener noreferrer"><span class="k">GitHub</span><span class="v">github.com/vkdnj20088/portfolio</span></a>
@@ -1092,6 +1112,8 @@
         ip:             { port: 8443, sub: 'ip',       path: '/ip.html', subPath: '/' },
         relay:          { port: 8443, sub: 'guard',    path: '/relay.html' },
         loandoc:        { port: 9446, sub: 'loandoc',  path: '/' },
+        // Flutter web 정적 배포 - 유닛 없이 nginx 가 직접 서빙한다(인트로와 같은 방식).
+        ticker:         { port: 9447, sub: 'ticker',   path: '/' },
         // 카드가 아닌 링크 하나(품질 지표)도 같은 표를 쓴다. 문서QA 앱의 세 번째 화면이라
         // 포트는 docqa 와 같고 경로만 다르다.
         'docqa-eval':   { port: 9444, sub: 'docqa',    path: '/eval' }
@@ -1176,7 +1198,7 @@
 
       /*
        * 데모에서 돌아온 사람 표시. 복귀 링크가 `?from=<키>#demos` 로 보내오면 그 카드에
-       * "방금 본 데모" 를 단다 - 자기가 무엇을 봤는지는 알지만, 여덟 개 중 무엇이 남았는지는
+       * "방금 본 데모" 를 단다 - 자기가 무엇을 봤는지는 알지만, 아홉 개 중 무엇이 남았는지는
        * 목록을 다시 훑어야 알 수 있었다.
        *
        * referrer 가 아니라 쿼리인 이유: 복귀 링크를 보내는 표면 모두 `Referrer-Policy:
@@ -1353,7 +1375,7 @@
         archeage:   ['2012-11', '2017-11'],
         dreamspoon: ['2018-04', '2021-04'],
         twinkple:   ['2021-04', '2024-11'],
-        pravang:    ['2025-10', null]
+        pravang:    ['2025-10', '2026-08']   // 2026-08-07 퇴사 - 종료월 포함 11개월
       };
       // 아키에이지 61개월의 내부 분할. System QA 로 시작해 Tech PM 으로 전향했다.
       var QA_MONTHS = 36;
@@ -1386,7 +1408,7 @@
       var archeage = months(JOBS.archeage);
       var pm       = archeage - QA_MONTHS;
 
-      // 풀스택과 파트 리딩은 둘 다 현재 회사 재직 기간과 같다. 달라지면 여기만 고치면 된다.
+      // 풀스택과 파트 리딩은 둘 다 프라뱅 재직 기간과 같다. 달라지면 여기만 고치면 된다.
       var TEXT = {
         total: ko(archeage + fe), fe: ko(fe),
         qa: ko(QA_MONTHS), pm: ko(pm),
