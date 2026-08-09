@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .extract import extract_pages
-from .llm import LlmClassifier, LlmResult
+from .llm import CacheMiss, LlmClassifier, LlmResult
 from .render import render_page_png
 from .rules import RuleResult, classify_text
 
@@ -131,10 +131,15 @@ def classify_pdf(
         # 스레드 제약 — 렌더는 페이지당 ~100ms라 직렬이어도 병목이 아니다).
         # ex.map은 입력 순서대로 결과를 돌려주고 응답 캐시는 요청 해시별
         # 독립 파일이라, 병렬화해도 산출물 결정성은 그대로다.
-        def _judge(r: PageRecord) -> tuple[str, LlmResult]:
-            if r.text_chars < VISION_TEXT_THRESHOLD:
-                return "image", llm.classify(image_png=render_page_png(pdf_path, r.page))
-            return "text", llm.classify(text=texts[r.page - 1])
+        # 캐시 전용(키 없는 배포)에서 캐시에 없는 입력은 None 으로 돌려 룰 판정을 남긴다.
+        # 예외를 그대로 올리면 방문자가 자기 PDF 를 올린 정상 경로가 500 이 된다.
+        def _judge(r: PageRecord) -> tuple[str, LlmResult | None]:
+            try:
+                if r.text_chars < VISION_TEXT_THRESHOLD:
+                    return "image", llm.classify(image_png=render_page_png(pdf_path, r.page))
+                return "text", llm.classify(text=texts[r.page - 1])
+            except CacheMiss:
+                return "none", None
 
         if targets:
             with ThreadPoolExecutor(
@@ -142,6 +147,8 @@ def classify_pdf(
             ) as ex:
                 outcomes = list(ex.map(_judge, targets))
             for r, (kind, result) in zip(targets, outcomes):
+                if result is None:
+                    continue  # 캐시에 없다 - 이 페이지는 룰 판정(저신뢰)으로 남는다
                 r.llm_input = kind
                 r.llm_label = result.label
                 r.llm_confidence = result.confidence

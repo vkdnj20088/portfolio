@@ -784,7 +784,9 @@
             <div class="work pending reveal" data-track="fs" data-demo="chat" data-demo-url="http://localhost:3000/" aria-label="AI 챗봇 목업">
               <span class="idx">03</span>
               <div class="wbody">
-                <span class="cat">Full-stack</span>
+                <!-- 대출 분류 카드가 "Backend · AI" 인데 이 카드만 AI 표시가 없었다.
+                     둘 다 실제 LLM 연동이 실재하는(키 게이트) 카드라 라벨을 맞춘다. -->
+                <span class="cat">Full-stack &#183; AI</span>
                 <h3 class="wtitle">AI 챗봇 목업</h3>
                 <!-- "목업" 이라는 제목과 "실제 LLM" 이 한 카드에 있으면 모순으로 읽힌다 -
                      키 게이트(있으면 LLM, 없으면 결정적 목업)라는 사실 자체가 판단 포인트라
@@ -887,6 +889,16 @@
           <span class="wx-lab">덧붙여</span>
           문서QA 는 골드셋 33문항으로 잰 정확도와 <b>스스로 틀린 건수까지</b> 공개하는 품질 지표 화면을 따로 두고 있습니다.
           <a class="wx-link" data-demo-link="docqa-eval" href="#" hidden>품질 지표 열기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
+        </p>
+        <!-- LLM 두 데모(02 대출 분류 · 03 챗)는 배포에 API 키를 두지 않는다. 그래서 실시간
+             호출 장면은 화면으로 증명할 수 없고, 대신 (1) 실제 응답을 커밋해 재생하고
+             (2) 키를 넣고 돌린 로컬 실행을 짧은 영상으로 남긴다. 영상 파일이 아직 없으면
+             이 줄은 통째로 숨는다(아래 스크립트) - 없는 링크를 내미는 것보다 낫다. -->
+        <p class="works-extra reveal" id="llm-clips" hidden>
+          <span class="wx-lab">실행 영상</span>
+          배포에는 API 키를 두지 않아 <b>실시간 호출은 로컬에서만</b> 돕니다. 키를 넣고 돌린 장면을 짧게 남겼습니다.
+          <a class="wx-link" data-clip="loandoc" href="img/clip-loandoc-llm.mp4" hidden>대출 분류 &mdash; LLM 폴백 <span class="arrow" aria-hidden="true">&#8599;</span></a>
+          <a class="wx-link" data-clip="chat" href="img/clip-chat-llm.mp4" hidden>챗 &mdash; 실제 LLM 응답 <span class="arrow" aria-hidden="true">&#8599;</span></a>
         </p>
       </section>
 
@@ -1134,6 +1146,22 @@
         if (card.tagName === 'A') { card.setAttribute('href', url); return; }
         upgradeToLink(card, url);
       });
+
+      // 실행 영상 링크. 파일이 실제로 있을 때만 드러낸다 - 녹화는 사람이 나중에 넣는 자산이라,
+      // 없는 동안 링크가 보이면 404 를 내미는 꼴이 된다. HEAD 로 존재만 확인한다(본문을 받지
+      // 않으므로 영상 용량과 무관하다). 하나라도 있으면 문단을 켠다.
+      (function () {
+        var clips = Array.prototype.slice.call(document.querySelectorAll('a[data-clip]'));
+        if (!clips.length) return;
+        var para = document.getElementById('llm-clips');
+        var pending = clips.length;
+        clips.forEach(function (a) {
+          fetch(a.getAttribute('href'), { method: 'HEAD' })
+            .then(function (res) { if (res.ok) { a.hidden = false; para.hidden = false; } })
+            .catch(function () { /* 없으면 숨은 채로 둔다 */ })
+            .then(function () { pending--; });
+        });
+      })();
 
       // 카드 밖 링크(품질 지표). 카드는 전체가 <a> 로 승격되므로 그 안에 링크를 또 넣을 수 없다 -
       // 목록 밖에 한 줄로 둔다. 카드와 같은 이유로 로컬에서는 주소를 만들지 않고 감춰 둔다.

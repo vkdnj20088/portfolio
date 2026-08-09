@@ -54,6 +54,11 @@ _viz_lock = threading.Lock()  # matplotlib 전역 상태는 스레드 안전하�
 # 업로드에 바로 쓸 수 있는 합성 샘플을 데모가 직접 나눠 준다.
 DEMO_DIR = Path(__file__).resolve().parent.parent / "demo"
 
+# 커밋된 LLM 응답 캐시. 배포에 API 키를 두지 않는다는 원칙을 지키면서도, 동봉 샘플에
+# 대해서는 **실제 Claude 가 내린 판정**을 보여주기 위한 산출물이다(요청 해시 -> 응답 JSON).
+# 없으면 룰 단독으로 떨어질 뿐 배포는 그대로 뜬다 - 생성은 scripts/make_llm_cache.py.
+DEMO_CACHE_DIR = DEMO_DIR / "llm-cache"
+
 app = FastAPI(
     title="loandoc",
     description="대출 서류 패키지 페이지 분류·그룹핑 API",
@@ -87,12 +92,19 @@ def api_classify(
     if reason:
         raise HTTPException(415, reason)
 
-    cache_dir = os.environ.get("LOANDOC_CACHE") or None
+    # 캐시 경로 우선순위: 환경변수 > 커밋된 데모 캐시. 후자가 A안의 핵심이다 -
+    # 배포에 키를 두지 않으면서도, 동봉 샘플에 대해서는 **실제 Claude 가 내린 판정**을
+    # 그대로 재생한다. 커밋된 응답이 곧 산출물이고, 재현성 장치이기도 하다.
+    cache_dir = os.environ.get("LOANDOC_CACHE") or (
+        str(DEMO_CACHE_DIR) if DEMO_CACHE_DIR.is_dir() else None)
+    has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
     llm_client = None
-    if llm == "auto" and os.environ.get("ANTHROPIC_API_KEY"):
+    if llm == "auto" and (has_key or cache_dir):
         from loandoc.llm import LlmClassifier
 
-        llm_client = LlmClassifier(model=model, cache_dir=cache_dir)
+        # 키가 없으면 캐시 전용 - 캐시에 없는 입력(방문자 PDF)은 룰 판정으로 남는다.
+        llm_client = LlmClassifier(model=model, cache_dir=cache_dir,
+                                   cache_only=not has_key)
 
     tmp = Path(tempfile.mkdtemp(prefix="loandoc-"))
     try:
@@ -120,7 +132,13 @@ def api_classify(
         groups = group_runs(records)
         documents = reconstruct_documents(records)
         payload = build_payload(pdf_path.name, records, groups, documents)
-        payload["llm_used"] = llm_client is not None
+        # "사용/미사용" 이분법으로는 이 데모의 실제 상태를 말할 수 없다. 배포에는 키가 없고,
+        # 그래도 동봉 샘플에는 실제 Claude 판정이 붙는다(커밋된 응답 재생). 화면이 그 차이를
+        # 그대로 말하도록 모드와 적용 면수를 함께 싣는다.
+        llm_pages = sum(1 for r in records if r.stage == "llm")
+        payload["llm_used"] = llm_pages > 0
+        payload["llm_pages"] = llm_pages
+        payload["llm_mode"] = ("live" if has_key else "cached") if llm_client else "off"
 
         if include_viz:
             viz_path = tmp / "viz.png"
@@ -262,6 +280,24 @@ _INDEX_TEMPLATE = """<!doctype html>
   .tag--ai { background: var(--paper); border-color: var(--paper); color: var(--ink); font-weight: 700; }
   .tag--low { color: var(--paper-faint); }
 
+  /* 인트로 복귀 고정 버튼 - 다른 세 데모(거래소/챗/Guard)와 같은 중립 다크 알약.
+     이 앱만 없어서 데모를 보고 나온 사람이 주소창을 고쳐야 다음 데모로 갈 수 있었다.
+     기본은 숨김이고, 주소를 만들 수 있을 때만(아래 스크립트) 드러낸다 - 로컬에서는
+     인트로 위치를 알 수 없어 죽은 링크가 되기 때문이다. */
+  .portfolio-home {
+    position: fixed; right: 18px; bottom: 18px; z-index: 1000;
+    display: none; align-items: center; gap: 7px;
+    padding: 8px 13px; border-radius: 8px;
+    background: rgba(18, 18, 18, 0.92); color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 12.5px; font-weight: 600; text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  .portfolio-home:hover, .portfolio-home:focus-visible {
+    background: rgba(30, 30, 30, 0.96); border-color: rgba(255, 255, 255, 0.4);
+  }
+  .portfolio-home[href] { display: inline-flex; }
+
   @media (max-width: 760px) {
     .wrap { padding: 40px 20px 56px; }
     .stats { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
@@ -302,6 +338,8 @@ _INDEX_TEMPLATE = """<!doctype html>
 
   <div id="out"></div>
 </div>
+<!-- href 는 스크립트가 채운다(위 CSS 의 [href] 규칙으로 그때 비로소 보인다). -->
+<a class="portfolio-home" id="phome" rel="noopener noreferrer"><span aria-hidden="true">&#8592;</span> 포트폴리오</a>
 <script>
 const PALETTE = __PALETTE__;
 const TEXTCOL = __TEXTCOL__;
@@ -387,7 +425,17 @@ async function classify(file) {
     const res = await fetch(`/api/classify?llm=${llm}`, { method: "POST", body: fd });
     if (!res.ok) { status.textContent = `오류 ${res.status} — ${esc(await res.text())}`; return; }
     const d = await res.json();
-    status.textContent = `완료 — ${d.num_pages}페이지 · LLM ${d.llm_used ? "사용" : "미사용"}`;
+  // 모드를 그대로 말한다. cached 는 "배포에 키가 없는데도 실제 판정이 붙은" 상태라
+  // 한 줄로 설명하지 않으면 방문자가 실시간 호출로 오해한다.
+  const LLM_NOTE = {
+    live: (n) => `LLM 판정 ${n}면 (실시간 호출)`,
+    cached: (n) => n > 0
+      ? `LLM 판정 ${n}면 — 실제 Claude 응답을 캐시에서 재생(서버에 키 없음)`
+      : "LLM 미적용 — 이 입력은 커밋된 캐시에 없어 룰 단독으로 판정했습니다",
+    off: () => "LLM 미사용 (룰 단독)",
+  };
+  const note = (LLM_NOTE[d.llm_mode] || LLM_NOTE.off)(d.llm_pages || 0);
+  status.textContent = `완료 — ${d.num_pages}페이지 · ${note}`;
     renderResult(d);
   } catch (err) {
     // fetch가 응답 없이 실패하면 대부분 서버 미기동/연결 끊김이다
@@ -412,6 +460,31 @@ async function runSample() {
 document.getElementById("runsample").addEventListener("click", runSample);
 // ?sample=1 로 진입하면 자동 실행한다(결과 화면으로 바로 데려가는 딥링크).
 if (new URLSearchParams(location.search).get("sample") === "1") runSample();
+
+// 인트로 복귀 링크를 **지금 호스트에서 조립**한다. 다른 세 데모(거래소 lib/portfolioHome.ts,
+// 챗 @chat/ui, Guard config.ts)와 같은 규칙의 네 번째 벌이다 - 빌드 상수로 두면 도메인을
+// 붙이거나 서버가 바뀔 때마다 네 곳이 조용히 옛 주소를 가리킨다.
+//   - 서브도메인 배포: 첫 라벨(loandoc.)을 뗀다.
+//   - IP 배포:        포트를 뗀다(인트로는 443).
+//   - 로컬:           인트로 위치를 알 수 없으므로 링크를 만들지 않는다(버튼은 숨은 채).
+// 목적지가 루트가 아니라 #demos 인 이유는 인트로가 긴 한 장이라 목록이 한참 아래 있어서다.
+// ?from=loandoc 은 인트로가 그 카드에 "방금 본 데모" 표식을 다는 데 쓴다(카드의 data-demo 와
+// 같은 값). referrer 를 쓰지 않는 것은 이 앱도 Referrer-Policy: no-referrer 이기 때문이다.
+(function () {
+  const h = location.hostname;
+  // 정규식 대신 목록 비교인 이유: 이 스크립트는 파이썬 문자열 안에 산다. 정규식이 점이나
+  // 대괄호를 escape 하려고 쓰는 역슬래시는 파이썬에게 알 수 없는 이스케이프라
+  // SyntaxWarning 을 내고 언젠가 오류가 된다(이 주석 자체도 같은 제약을 받는다).
+  if (location.protocol === "file:" ||
+      ["localhost", "127.0.0.1", "::1", "[::1]"].indexOf(h) >= 0) return;
+  const path = "/?from=loandoc#demos";
+  const labels = h.split(".");
+  // 끝이 알파벳이 아니면 IP 리터럴이다(IPv6 포함) - 서브도메인을 붙이거나 뗄 수 없다.
+  const isIp = !/[a-z]$/i.test(h) || h.indexOf(":") >= 0;
+  const origin = isIp ? "https://" + h
+    : "https://" + (labels.length > 2 ? labels.slice(1).join(".") : h);
+  document.getElementById("phome").setAttribute("href", origin + path);
+})();
 </script>
 </body>
 </html>"""
@@ -426,18 +499,32 @@ _INDEX_BASE = (
 
 _LLM_CHECKBOX = ('<label class="chk"><input type="checkbox" id="nollm"> '
                  "LLM 폴백 끄기 (룰만)</label>")
+# 키도 캐시도 없을 때. 룰 단독이라는 사실만 밝힌다.
 _NO_LLM_NOTE = (" 이 배포는 LLM API 키를 두지 않아 <b>룰 단독</b>으로 동작합니다"
                 " &mdash; 룰이 확정하지 못한 페이지는 저신뢰 추정으로 표시됩니다.")
+# 키는 없지만 커밋된 캐시가 있을 때(포트폴리오 배포의 기본). 실제 판정을 보여 주면서도
+# 실시간 호출로 오해하지 않게, 무엇이 재생이고 무엇이 룰인지 경계를 문장이 직접 말한다.
+_CACHED_LLM_NOTE = (
+    " 이 배포는 LLM API 키를 두지 않습니다. 대신 <b>동봉 샘플</b>에 한해 실제 Claude 가 내린"
+    " 판정을 커밋해 두고 그대로 재생합니다 &mdash; 직접 올리신 PDF 는 캐시에 없으므로"
+    " <b>룰 단독</b>으로 판정합니다.")
 
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
-    # 키가 없는 배포(포트폴리오 기본)에서는 LLM 토글을 보여주지 않는다 -
-    # 동작하지 않는 컨트롤은 노이즈다. 대신 룰 단독 모드임을 문장으로 밝힌다.
+    # 토글은 실제로 끌 것이 있을 때만 보여 준다 - 동작하지 않는 컨트롤은 노이즈다.
+    # 캐시 재생 모드에서도 끄기는 의미가 있다(룰 단독과 나란히 비교하는 것이 이 데모의 요점).
     has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    has_cache = DEMO_CACHE_DIR.is_dir()
+    if has_key:
+        note = ""
+    elif has_cache:
+        note = _CACHED_LLM_NOTE
+    else:
+        note = _NO_LLM_NOTE
     return (_INDEX_BASE
-            .replace("__LLMCHK__", _LLM_CHECKBOX if has_key else "")
-            .replace("__LLMNOTE__", "" if has_key else _NO_LLM_NOTE))
+            .replace("__LLMCHK__", _LLM_CHECKBOX if (has_key or has_cache) else "")
+            .replace("__LLMNOTE__", note))
 
 
 @app.get("/sample.pdf")

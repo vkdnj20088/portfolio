@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from 'react';
 
-/** 응답 생성의 실체. mock = 결정적 목업(pickReply), llm = 실제 LLM(서버 로컬 키). */
-export type ReplyMode = 'mock' | 'llm';
+/**
+ * 응답 생성의 실체.
+ *   mock    결정적 목업(pickReply)
+ *   sampled 추천 질문은 **커밋된 실제 LLM 응답** 재생, 그 밖은 목업(무키 배포의 기본)
+ *   llm     실제 LLM 실시간 호출(서버 로컬 키)
+ */
+export type ReplyMode = 'mock' | 'sampled' | 'llm';
 
 /**
  * 화면이 §0 문구("응답은 결정적 목업")를 말하기 전에 그 문장이 참인지 확인하는 훅.
@@ -25,7 +30,7 @@ export function useReplyMode(): ReplyMode {
     fetch('/api/reply', { method: 'GET', signal: controller.signal })
       .then((res) => (res.ok ? (res.json() as Promise<{ mode?: unknown }>) : null))
       .then((data) => {
-        if (data?.mode === 'llm') setMode('llm');
+        if (data?.mode === 'llm' || data?.mode === 'sampled') setMode(data.mode);
       })
       .catch(() => {
         // 조회 실패는 표기를 바꾸지 않는다 - 기본(목업)이 안전한 쪽이다.

@@ -2,6 +2,7 @@ import { pickReply } from '@chat/chat-domain';
 import { problemResponse } from '@chat/ui';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { isLlmMode, streamAnthropicReply } from '@/lib/server/anthropicReply';
+import { findLlmSample, hasLlmSamples } from '@/lib/server/llmSamples';
 import { replyCache, streamGeneration } from '@/lib/server/replyCache';
 
 /**
@@ -19,11 +20,16 @@ import { replyCache, streamGeneration } from '@/lib/server/replyCache';
 export const dynamic = 'force-dynamic';
 
 /**
- * 응답 모드 조회 - 화면(§0 문구)이 "결정적 목업"과 "실제 LLM" 중 무엇을 말할지 결정하는 근거.
- * 키는 서버 런타임 환경이라 빌드 산출물로는 알 수 없으므로, 클라이언트가 이 값을 물어본다.
+ * 응답 모드 조회 - 화면(§0 문구)이 무엇을 말할지 결정하는 근거. 키는 서버 런타임 환경이라
+ * 빌드 산출물로는 알 수 없으므로 클라이언트가 물어본다.
+ *
+ *   llm     로컬 키로 실시간 호출
+ *   sampled 키는 없지만 커밋된 실제 LLM 응답이 있다(추천 질문에 한해 재생)
+ *   mock    결정적 목업뿐
  */
 export function GET(): Response {
-  return Response.json({ mode: isLlmMode() ? 'llm' : 'mock' });
+  const mode = isLlmMode() ? 'llm' : hasLlmSamples() ? 'sampled' : 'mock';
+  return Response.json({ mode });
 }
 
 interface ReplyRequest {
@@ -78,7 +84,11 @@ export async function POST(req: Request): Promise<Response> {
     return llmResponse(text, seq, req.signal);
   }
 
-  const reply = pickReply(text, seq);
+  // 키가 없는 배포. 커밋된 실제 LLM 응답이 있는 질문이면 그것을 재생하고, 없으면 목업으로
+  // 떨어진다. 어느 쪽이든 아래 스트리밍 코드가 같아서 소비 계약은 그대로다 - 재생본도
+  // 어절 단위로 흐르므로 화면 거동이 목업과 다르지 않다.
+  const sample = findLlmSample(text);
+  const reply = sample ? sample.reply : pickReply(text, seq);
   const words = reply.split(' ');
   const gap = Math.max(1, Math.floor(REPLY_BUDGET_MS / Math.max(1, words.length)));
   const encoder = new TextEncoder();

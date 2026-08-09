@@ -89,13 +89,43 @@ class LlmResult:
     usage_output: int = 0
 
 
-class LlmClassifier:
-    def __init__(self, model: str = DEFAULT_MODEL, cache_dir: str | Path | None = None):
-        import anthropic  # 지연 임포트: --no-llm 실행은 SDK 없이도 가능해야 함
+class CacheMiss(LookupError):
+    """캐시 전용 모드인데 이 입력의 응답이 커밋된 캐시에 없다.
 
+    호출자(classify_pdf)가 잡아서 그 페이지를 룰 판정으로 남긴다 - 키 없는 공개 배포에서
+    방문자가 자기 PDF 를 올리는 정상적인 경로이므로, 오류가 아니라 분기다.
+    """
+
+
+class LlmClassifier:
+    """LLM 폴백 분류기. **키 없이 캐시만으로도 동작한다**(cache_only).
+
+    캐시 전용 모드가 있는 이유: 공개 배포에는 API 키를 두지 않는다는 원칙을 지키면서도,
+    동봉 샘플에 대해서는 *실제로 Claude 가 내린 판정* 을 보여주고 싶기 때문이다. 응답을
+    커밋해 두면 키 없는 서버가 그것을 그대로 재생한다 - 캐시가 결정성 장치이자 산출물이다.
+    캐시에 없는 입력(방문자가 올린 PDF)은 CacheMiss 로 알리고 룰 판정만 남긴다.
+    """
+
+    def __init__(self, model: str = DEFAULT_MODEL, cache_dir: str | Path | None = None,
+                 cache_only: bool = False):
         self.model = model
         self.cache_dir = Path(cache_dir) / "llm" if cache_dir else None
-        self.client = anthropic.Anthropic()
+        self.cache_only = cache_only
+        self._client = None
+        if cache_only and self.cache_dir is None:
+            raise ValueError("cache_only 모드에는 cache_dir 이 필요하다")
+
+    @property
+    def client(self):
+        """SDK 클라이언트를 **처음 필요할 때** 만든다.
+
+        생성자에서 만들면 키가 없는 순간 예외라, 캐시만 재생하는 경로까지 막힌다.
+        지연 임포트도 같은 이유로 유지한다(--no-llm 실행은 SDK 없이도 되어야 한다)."""
+        if self._client is None:
+            import anthropic
+
+            self._client = anthropic.Anthropic()
+        return self._client
 
     def classify(self, text: str | None = None, image_png: bytes | None = None) -> LlmResult:
         if not text and not image_png:
@@ -113,6 +143,10 @@ class LlmClassifier:
             if cache_file.exists():
                 data = json.loads(cache_file.read_text(encoding="utf-8"))
                 return LlmResult(**{**data, "cached": True})  # usage 포함 복원
+
+        if self.cache_only:
+            # 키가 없는 배포다. API 를 부를 수 없으므로 호출자가 룰 판정으로 남기게 알린다.
+            raise CacheMiss(key)
 
         if image_png:
             content = [

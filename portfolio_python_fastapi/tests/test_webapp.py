@@ -95,22 +95,45 @@ class TestWebApp(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["pdf"], "upload.pdf")
 
-    def test_index_page_identity_and_notice(self):
-        # 귀속 → 역할 → 데모 고지 위계가 화면에 있어야 한다(다른 데모와 통일).
+    def _index_without_key(self, cache: bool):
+        """키 없는 랜딩을 캐시 유무별로 받아 온다.
+
+        캐시 존재 여부를 커밋된 demo/llm-cache 의 현재 상태에 맡기지 않는다 - 산출물을
+        생성하기 전과 후에 이 판정이 뒤집히면, 화면 문구를 지키려던 테스트가 산출물
+        유무를 알려 주는 테스트로 바뀐다.
+        """
         import os
+        from pathlib import Path
         from unittest.mock import patch
 
+        from webapp import app as webapp
+
+        target = webapp.DEMO_CACHE_DIR if cache else Path("/nonexistent-llm-cache")
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("ANTHROPIC_API_KEY", None)
-            res = self.client.get("/")
+            with patch.object(webapp, "DEMO_CACHE_DIR", target):
+                return self.client.get("/")
+
+    def test_index_page_identity_and_notice(self):
+        # 귀속 → 역할 → 데모 고지 위계가 화면에 있어야 한다(다른 데모와 통일).
+        res = self._index_without_key(cache=False)
         self.assertEqual(res.status_code, 200)
         self.assertIn("JC LoanDoc", res.text)
         self.assertIn("최종은의 Python + FastAPI 포트폴리오", res.text)
         self.assertIn("IT 경력 12년+", res.text)
         self.assertIn("실서비스가 아닌 데모", res.text)
-        # 키 없는 배포: LLM 토글은 감추고 룰 단독 문구를 밝힌다
+        # 키도 캐시도 없는 배포: 끌 것이 없으므로 토글을 감추고 룰 단독임을 밝힌다
         self.assertNotIn('id="nollm"', res.text)
         self.assertIn("룰 단독", res.text)
+
+    def test_index_page_with_cache_announces_replay(self):
+        # 키는 없지만 커밋된 응답이 있는 배포(포트폴리오 기본). 재생임을 화면이 직접 말하고,
+        # 룰 단독과 나란히 비교할 수 있게 토글은 남긴다.
+        res = self._index_without_key(cache=True)
+        self.assertIn("실제 Claude", res.text)
+        self.assertIn("재생", res.text)
+        self.assertIn("룰 단독", res.text)  # 방문자 PDF 는 캐시에 없다는 경계도 함께
+        self.assertIn('id="nollm"', res.text)
 
     def test_index_page_with_key_shows_llm_toggle(self):
         import os
