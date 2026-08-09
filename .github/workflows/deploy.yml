@@ -249,13 +249,22 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --wasm --base-href /
+          # --no-web-resources-cdn: 이 플래그가 없으면 부트스트랩이 렌더러(skwasm)를
+          # www.gstatic.com 에서 받아온다. 산출물 안에 canvaskit/ 이 이미 들어 있어도
+          # 그렇다 - 파일 유무가 아니라 빌드 설정(useLocalCanvasKit)이 결정한다.
+          # 우리 CSP 는 그 출처를 허용하지 않으므로 엔진이 아예 부팅하지 못한다(흰 화면).
+          flutter build web --wasm --no-web-resources-cdn --base-href /
           DEST="${GITHUB_WORKSPACE}/dist-ticker/ticker"
           mkdir -p "${DEST}"
           cp -a build/web/. "${DEST}/"
           # 압축이 빠졌거나 빌드가 반쪽이면 여기서 멈춘다.
           test -f "${DEST}/index.html" && test -f "${DEST}/flutter_service_worker.js" \
             || { echo "::error::ticker web 산출물이 불완전합니다"; exit 1; }
+          # 렌더러가 로컬로 잡혔는지까지 확인한다. 위 플래그를 누가 지우면 빌드는 멀쩡히
+          # 성공하고 배포도 통과한 뒤 브라우저에서만 깨지므로, 여기서 잡는다.
+          test -f "${DEST}/canvaskit/skwasm.wasm" \
+            && grep -q '"useLocalCanvasKit":true' "${DEST}/flutter_bootstrap.js" \
+            || { echo "::error::렌더러가 CDN 을 가리킵니다 (--no-web-resources-cdn 확인)"; exit 1; }
       - name: ticker 산출물 아카이브
         run: tar -czf dist-ticker.tar.gz -C dist-ticker .
       - uses: actions/upload-artifact@v4

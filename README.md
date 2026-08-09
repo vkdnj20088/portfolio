@@ -162,7 +162,7 @@ Flutter + Dart 포트폴리오. 2,000종목 / 초당 최대 15,000건 갱신 fee
 - **정합성은 도착 즉시, 화면은 프레임 단위** - 종목별 timestampMs 단조 강제로 역순 tick 을 기각하고, 통지만 종목 단위 GatedNotifier 로 격리합니다. 매 tick 전체 재정렬/재합산 경로가 없습니다(순위는 O(log n) 증분, 시총은 BigInt 델타).
 - **주장을 화면이 증명** - 목록 상단 계측이 "초당 수신 N건 vs 행 rebuild 유발 K회"를 1초 주기로 표시합니다. 수치의 계약은 테스트가 고정합니다.
 - **런타임 외부 패키지 0개** - 상태관리/차트/한글검색 라이브러리 없이 ValueListenable · CustomPainter · 유니코드 산술로 직접 구현했습니다. 근거와 기각한 대안 7건은 DESIGN.md 에 있습니다.
-- **배포는 정적** - `flutter build web --wasm` 산출물을 nginx 가 직접 서빙합니다(첫 정적 앱 데모). 첫 로드 전송량과 웹의 한계(SEO·시맨틱스)는 README 에 수치·사실 그대로 공개합니다.
+- **배포는 정적** - `flutter build web --wasm --no-web-resources-cdn` 산출물을 nginx 가 직접 서빙합니다(첫 정적 앱 데모). 렌더러까지 동봉해 서드파티 CDN 에 의존하지 않습니다. 첫 로드 전송량과 웹의 한계(SEO·시맨틱스)는 README 에 수치·사실 그대로 공개합니다.
 - 상세: [portfolio_flutter/README.md](portfolio_flutter/README.md) · [DESIGN.md](portfolio_flutter/DESIGN.md) · [PERF.md](portfolio_flutter/PERF.md)
 
 로컬 실행 (Flutter 3.44+):
@@ -171,7 +171,7 @@ Flutter + Dart 포트폴리오. 2,000종목 / 초당 최대 15,000건 갱신 fee
 cd portfolio_flutter
 flutter pub get
 flutter run --profile -d macos        # 성능 확인은 profile 로 (debug 는 훨씬 느림)
-# 웹으로 보려면: flutter build web --wasm && python3 -m http.server 3060 --directory build/web
+# 웹으로 보려면: flutter build web --wasm --no-web-resources-cdn && python3 -m http.server 3060 --directory build/web
 ```
 
 ---

@@ -43,5 +43,6 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test integration_test test_driver
       - run: flutter analyze
       - run: flutter test
-      # 배포 산출물과 같은 형태(wasm)로 빌드가 깨지지 않는지까지 확인한다.
-      - run: flutter build web --wasm
+      # 배포 산출물과 **같은 플래그로** 빌드가 깨지지 않는지까지 확인한다.
+      # (--no-web-resources-cdn 의 근거는 deploy.yml 의 ticker 빌드 주석에)
+      - run: flutter build web --wasm --no-web-resources-cdn

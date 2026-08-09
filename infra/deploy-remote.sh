@@ -104,7 +104,16 @@ deploy_ticker() {
   echo "== ticker: 전송 =="
   rsync -az --delete -e "ssh ${SSH_OPTS}" "dist/ticker/" "${USER}@${HOST}:/var/www/ticker/"
   echo "== ticker: 헬스 게이트 =="
-  $SSH "curl -fsSk -o /dev/null 'https://127.0.0.1:9447/'"
+  # index 가 200 이라는 것만으로는 부족하다 - index 200 + 자산 200 인데 화면은 하얀
+  # 사고를 실제로 겪었다(모듈 스크립트가 octet-stream 으로 나갔고, 렌더러는 CDN 을
+  # 가리켰다). 그래서 "부팅에 필요한 조건"까지 확인한다.
+  $SSH "set -e
+    curl -fsSk -o /dev/null 'https://127.0.0.1:9447/'
+    curl -fsSkI 'https://127.0.0.1:9447/main.dart.mjs' | tr -d '\r' \
+      | grep -qi '^content-type:.*javascript'
+    curl -fsSk -o /dev/null 'https://127.0.0.1:9447/canvaskit/skwasm.wasm'
+    curl -fsSk 'https://127.0.0.1:9447/flutter_bootstrap.js' \
+      | grep -q '\"useLocalCanvasKit\":true'"
 }
 
 # systemd 유닛을 저장소 기준으로 맞춘다. 이게 없으면 유닛(예: JVM 플래그)을 고쳐도 서버에는

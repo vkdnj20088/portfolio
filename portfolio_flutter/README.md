@@ -45,8 +45,9 @@ flutter test
 # 부하 상한(15,000건/s 지속) 여력만 따로 보기 - 5초, PERF.md §6-1
 flutter test test/throughput_test.dart
 
-# web 빌드 (배포와 같은 형태)
-flutter build web --wasm
+# web 빌드 (배포와 같은 플래그. --no-web-resources-cdn 을 빼면 렌더러를 gstatic 에서
+# 받아오고, 배포 CSP 는 그 출처를 막으므로 서버에서만 흰 화면이 됩니다)
+flutter build web --wasm --no-web-resources-cdn
 python3 -m http.server 3060 --directory build/web   # http://localhost:3060
 ```
 
@@ -135,12 +136,20 @@ web --wasm` 산출물을 nginx가 정적으로 서빙하고(인트로와 같은 
 헬스 게이트/롤백도 없습니다 - 갱신 판정은 `flutter_service_worker.js`가 하므로
 nginx가 진입 문서와 서비스워커를 no-store로 내보냅니다(infra/nginx 주석 참조).
 
-**첫 로드 전송량 (gzip 실측, 빌드 산출물 기준):**
+렌더러(skwasm/CanvasKit)는 **동봉본을 씁니다.** Flutter 기본값은 이것을
+`www.gstatic.com` 에서 받아오는 것이라 빌드에 `--no-web-resources-cdn` 을 붙였고,
+CSP 도 그 출처를 열지 않았습니다 - 렌더러 코드의 출처가 서드파티 CDN 이 되는 것과
+그 CDN 의 가용성에 데모가 묶이는 것을 피하려는 선택입니다(대가는 아래 전송량입니다).
+
+**첫 로드 전송량 (gzip 실측, 배포와 같은 압축 수준):**
 
 | 경로 | 구성 | 전송량 |
 |---|---|---|
-| WasmGC 지원 브라우저 | main.dart.wasm 749KB + skwasm.wasm 1,532KB + 로더/JS 28KB | **약 2.3MB** |
-| 폴백(JS 컴파일) | main.dart.js 710KB + canvaskit.wasm 2,899KB + 로더/JS 31KB | 약 3.6MB |
+| WasmGC 지원 브라우저 | main.dart.wasm 733KB + skwasm.wasm 1,499KB + 로더/JS 26KB | **약 2.2MB** |
+| 폴백(JS 컴파일) | main.dart.js 698KB + canvaskit.wasm 2,835KB + 로더/JS 6KB | 약 3.5MB |
+
+(nginx 기본 압축 수준 1로는 각각 약 2.5MB / 3.9MB 입니다. 자산이 커서 차이가
+무시할 수 없어 ticker 블록만 `gzip_comp_level 6` 으로 올렸습니다.)
 
 Next 데모들(수십~수백 KB)과 자릿수가 다른 이 크기는 Flutter web 의 구조적
 비용(렌더러 엔진 동봉)이고, 숨기는 대신 여기 적어 둡니다. 파일명에 해시가 없어
