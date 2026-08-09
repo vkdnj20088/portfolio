@@ -1,0 +1,35 @@
+{
+    "name": "JC Ticker - 실시간 관심종목",
+    "short_name": "JC Ticker",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#17171C",
+    "theme_color": "#17171C",
+    "description": "2,000종목 실시간 관심종목 데모 - 초당 최대 15,000건 갱신을 60fps로 처리",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+name: jc_ticker
+description: "JC Ticker - 2,000종목 실시간 관심종목 데모 (런타임 외부 패키지 0개)"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 런타임 외부 패키지는 두지 않는다 (DESIGN.md 7절). flutter create가 넣어주는
+  # cupertino_icons도 쓰지 않아 제거했다.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
