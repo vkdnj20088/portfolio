@@ -7,6 +7,21 @@ export { extractAnswer, CONFIDENCE_THRESHOLD, RETRIEVAL_FLOOR, MRC_TOP_K } from 
 export { evaluate } from './eval/evaluate';
 export type { EvalReport, EvalRow, RetrievalScore } from './eval/evaluate';
 export { GOLDSET } from './eval/goldset';
+export {
+  compareLlmBaseline,
+  hasLlmBaseline,
+  llmBaselineArtifact,
+  candidatesFor,
+  staleCases,
+} from './eval/llmBaseline';
+export type {
+  LlmBaselineArtifact,
+  LlmBaselineCase,
+  LlmComparison,
+  LlmComparisonRow,
+  SideScore,
+  Verdict,
+} from './eval/llmBaseline';
 export { evaluateFollowUp, validateFollowUpGoldset, FOLLOWUP_GOLDSET } from './eval/followup';
 export type { FollowUpCase, FollowUpReport, FollowUpScore } from './eval/followup';
 export type { EvalCase, EvalSplit } from './eval/goldset';

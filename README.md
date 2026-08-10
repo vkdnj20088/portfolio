@@ -1,8 +1,7 @@
 # 포트폴리오 - 프론트엔드 / 백엔드 상보 세트
 
 프론트엔드와 백엔드, 두 축의 개인 포트폴리오 저장소입니다.
-한쪽은 프론트엔드와 UX, 다른 한쪽은 백엔드와 보안 및 인프라에 무게를 두어,
-합치면 풀스택 폭을 한 링크로 보여주는 구성입니다.
+한쪽은 프론트엔드와 UX 에, 다른 한쪽은 백엔드와 보안, 인프라에 무게를 두었습니다.
 
 ## 개발자 소개
 
@@ -10,7 +9,7 @@
 검증(QA)과 조율(PM), 구현(개발)을 모두 거친 개발 리더로, IT 경력 12년 넘게
 프론트엔드를 중심으로 화면부터 서버, 인프라와 보안까지 하나의 흐름으로 다뤄 왔습니다.
 
-- 경력 구성(2026-08 기준): 프론트엔드 개발 7년 8개월(그중 풀스택 개발 11개월 · 프론트엔드 파트 리딩 11개월), System QA 3년, Tech PM 2년 1개월
+- 경력 구성(2026-08 기준): 프론트엔드 개발 7년 8개월(그중 풀스택 개발 11개월 / 프론트엔드 파트 리딩 11개월), System QA 3년, Tech PM 2년 1개월
 - 대표 성과: 거래소 웹 개인 커밋 1,700+ (약 36%), Brotli 전송량 최대 86% 절감, Lighthouse 성능 60 -> 99 / SEO 80 -> 100, 글로벌 앱 다운로드 50만+
 - 인트로 페이지: **[jongeunchoi.dev](https://jongeunchoi.dev/)** - 경력, 기술 스택, 대표 프로젝트와 아래 데모를 한 화면에 모은 랜딩
 
@@ -18,14 +17,20 @@
 
 | 폴더 | 데모 | 스택 | 무게중심 | 라이브 | 테스트 |
 |------|------|------|----------|--------|--------|
-| `portfolio_react_next` | LLM 챗봇 목업 | Next 16 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성, 키 게이트 LLM 전송 | [chat](https://chat.jongeunchoi.dev/) | 단위 149 + e2e 4 |
-| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 16 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거·인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 55 |
+| `portfolio_react_next` | LLM 챗봇 목업 | Next 16 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성, 키 게이트 LLM 전송 | [chat](https://chat.jongeunchoi.dev/) | 단위 159 + e2e 4 |
+| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 16 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거/인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 82 + 에이전트 코어 34 |
 | `portfolio_exchange_next` | 가상자산 거래소 목업 | Next 16 / React 19 / TS, lightweight-charts | 매칭엔진, 실시간, 성능, 멀티탭 | [exchange](https://exchange.jongeunchoi.dev/) | 단위 54(RTL 포함) |
-| `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 + 작업 릴레이 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) · [ip](https://ip.jongeunchoi.dev/) · [relay](https://guard.jongeunchoi.dev/relay.html) | 백엔드 189 + 통합 6종 24 + 프론트 33 |
+| `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 + 작업 릴레이 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) / [ip](https://ip.jongeunchoi.dev/) / [relay](https://guard.jongeunchoi.dev/relay.html) | 백엔드 189 + 통합 6종 24 + 프론트 33 |
 | `portfolio_python_fastapi` | 대출 서류 분류 파이프라인 (JC LoanDoc) | Python 3 / FastAPI, pypdf | 문서 파이프라인, 룰 + LLM 폴백 하이브리드, 재현성 | [loandoc](https://loandoc.jongeunchoi.dev/) | 단위 59 + E2E 스모크 |
-| `portfolio_flutter` | 실시간 관심종목 (JC Ticker) | Flutter 3.44 / Dart, 런타임 외부 패키지 0개 | 고빈도 갱신 성능, rebuild 격리, 결정론 벤치마크 | [ticker](https://ticker.jongeunchoi.dev/) | 단위·위젯 52 + 성능 가드 3 |
+| `portfolio_flutter` | 실시간 관심종목 (JC Ticker) | Flutter 3.44 / Dart, 런타임 외부 패키지 0개 | 고빈도 갱신 성능, rebuild 격리, 결정론 벤치마크 | [ticker](https://ticker.jongeunchoi.dev/) | 단위/위젯 52 + 성능 가드 4 |
 
-아홉 데모가 한 대의 EC2 에 삽니다(인트로는 apex, 데모는 서브도메인 여덟 - 문서 QA 와 시맨틱 검색이 한 앱의 두 화면이고, 작업 릴레이는 guard. 서브도메인의 경로입니다). 각 폴더는 독립적으로 빌드, 실행, 배포됩니다. 상세 설계와 단계별 기록, 각 기능의 "무엇을 왜" 는 각 폴더의 README 에 절 단위로 있습니다. 인트로의 데모 링크는 주소를 적어 두지 않고 **지금 페이지의 호스트에서 조립**합니다 - 도메인이면 서브도메인을, IP 면 포트를 만들어 붙이므로 어느 쪽으로 접속해도 맞고 서버가 바뀌어도 고칠 곳이 없습니다(로컬에서는 각 카드의 개발 포트를 씁니다).
+아홉 데모는 한 대의 EC2 에서 함께 돌아갑니다. 인트로가 apex 이고 데모는 서브도메인 여덟 개인데,
+문서 QA 와 시맨틱 검색이 한 앱의 두 화면이고 작업 릴레이는 guard 서브도메인의 한 경로이기 때문입니다.
+각 폴더는 독립적으로 빌드, 실행, 배포됩니다. 설계 근거와 단계별 기록은 각 폴더의 README 에 절 단위로 있습니다.
+
+인트로의 데모 링크는 주소를 하드코딩하지 않고 지금 페이지의 호스트에서 조립합니다. 도메인이면
+서브도메인을, IP 면 포트를 붙이므로 어느 쪽으로 접속해도 맞고 서버 주소가 바뀌어도 고칠 곳이
+없습니다(로컬에서는 각 카드의 개발 포트를 씁니다).
 
 ## 화면
 
@@ -33,7 +38,7 @@
 |---|---|
 | **거래소** - 호가 20단, 캔들, 주문 폼, 체결 | **AI 챗봇** - 어절 스트리밍, 대화 검색, 키 게이트 LLM |
 | <img src="intro/img/demo-01-exchange.jpg" alt="거래소 목업 - 실시간 호가와 캔들 차트"> | <img src="intro/img/demo-04-chat.jpg" alt="AI 챗봇 - 스트리밍 응답과 대화"> |
-| **대출 서류 분류** - 업로드 즉시 페이지 분류·그룹핑 | **실시간 관심종목** - 2,000종목 고빈도 갱신, 실행 중 계측 |
+| **대출 서류 분류** - 업로드 즉시 페이지 분류/그룹핑 | **실시간 관심종목** - 2,000종목 고빈도 갱신, 실행 중 계측 |
 | <img src="intro/img/demo-07-loandoc.jpg" alt="대출 서류 분류 - 판정 결과와 그룹핑 타임라인"> | <img src="intro/img/demo-09-ticker.jpg" alt="실시간 관심종목 - 2,000종목 목록과 Top-20, 수신 대비 rebuild 계측"> |
 | **문서 근거 QA** - 근거 문장 인용 + 품질 지표 | **시맨틱 검색** - 동의어 확장 랭킹 |
 | <img src="intro/img/demo-02-docqa.jpg" alt="문서 근거 QA - 답변과 근거 문장 하이라이트"> | <img src="intro/img/demo-03-search.jpg" alt="시맨틱 검색 - 확장 결과와 점수 비교"> |
@@ -73,7 +78,9 @@ pnpm dev          # http://localhost:3000
 
 - `/` **근거 QA** - 리트리벌 -> **추출형 MRC**(생성이 아니라 문단에서 오려내기) -> 근거 span 하이라이트 + 인용 + 스트리밍. 근거가 약하면 지어내지 않고 "정답 없음".
 - `/search` **시맨틱 검색** - 동의어 확장 랭킹과 **키워드 점수 대비**. "휴가 규정"은 시맨틱 5건 중 4건이 정확 일치로는 못 찾을 문단입니다.
-- `/eval` **품질 지표** - 직접 라벨링한 **골드셋 33문항**으로 Recall@k·MRR·답변 정확도·**불응답 정확도**를 재고, 오답과 과잉 불응답까지 같은 표에 공개합니다. 이 수치는 테스트의 **회귀 게이트**이기도 합니다.
+- `/eval` **품질 지표** - 직접 라벨링한 **골드셋 33문항**으로 Recall@k/MRR/답변 정확도/**불응답 정확도**를 재고, 오답과 과잉 불응답까지 같은 표에 공개합니다. 이 수치는 테스트의 **회귀 게이트**이기도 합니다.
+- `/eval` **LLM 독해 대조군** - 같은 골드셋에 같은 검색 결과를 주고 **읽는 쪽만** LLM 으로 바꾼 판정을 나란히 놓습니다. 우열표가 아니라 무엇이 다른가를 보는 표이고, LLM 이 더 맞힌 문항도 감추지 않습니다. 배포에 키를 두지 않으므로 키 보유자가 1회 수집해 커밋한 판정을 재생합니다(챗/loandoc 과 같은 장치).
+- `/agent` **에이전트 실행 되짚기** - 데모가 아니라 **아홉 데모 위의 층**입니다(인트로 카드는 아홉 그대로). 도구를 쓰는 에이전트가 문서 검색/근거 QA/IP 접근 제어를 도구로 불러 다단계 과제를 풀고, 실행 전체가 span 트리로 남습니다. **모델 응답은 커밋된 것을 재생하지만 도구는 지금 다시 실행해** 출력을 대조합니다. traceId 가 `X-Request-Id` 로 나가 Spring 로그와 같은 ID 로 이어집니다.
 - **실 LLM/벡터DB 없이**, 답변이 인용 문단과 축자 일치하는지 매 응답 대조(`verifyGrounding`)해 배지로 노출합니다 - 지어낸 말이 섞이면 즉시 드러납니다. "근거 문장을 잘못 고를 수 있다"는 한계는 숨기지 않고 `/eval` 에 수치로 둡니다.
 - 답변은 실제 SSE(`POST /api/answer`)로 받고, 전송이 죽으면 같은 계약의 mock 으로 **중복 없이 이어받아** 강등합니다(전송은 배지에 정직하게 표시).
 - 상세: [portfolio_react_next/README.md](portfolio_react_next/README.md) 의 부록
@@ -134,7 +141,7 @@ Python + FastAPI 포트폴리오. 페이지 단위로 섞인 대출 서류 PDF �
 페이지별 유형 판별(URLA/소득/신용/권원/기타)과 문서 그룹핑을 수행합니다.
 자동 인수심사(AUS)로 가는 파이프라인의 앞단 문제를 다룹니다.
 
-- **2단 하이브리드** - 표준 양식의 고정 문구를 시그니처 룰로 먼저 확정하고(결정적·무비용·감사 가능), 룰이 못 정한 페이지만 LLM 폴백(텍스트/비전)에 맡깁니다. 두 판정은 독립입니다(앵커링 방지).
+- **2단 하이브리드** - 표준 양식의 고정 문구를 시그니처 룰로 먼저 확정하고(결정적/무비용/감사 가능), 룰이 못 정한 페이지만 LLM 폴백(텍스트/비전)에 맡깁니다. 두 판정은 독립입니다(앵커링 방지).
 - **인입 게이트** - 파싱 전에 파일 내용(매직넘버)으로 거르고, 실행파일 위장은 구체적 사유로 거절합니다. 파일 확장자 차단 데모와 같은 원칙("내용 검사를 정책 검사보다 먼저")의 파이썬판입니다.
 - **배포 데모는 LLM 키 없이 룰 단독** - 공개 서버에 상용 API 키를 두지 않습니다(시크릿 없음 원칙). 화면 데이터는 전부 합성 픽스처이고 업로드는 처리 후 즉시 삭제됩니다.
 - 속성 기반 테스트(hypothesis)와 E2E 스모크(합성 픽스처, 재현성 바이트 대조)를 갖춥니다.
@@ -154,16 +161,16 @@ uvicorn webapp.app:app --port 8000    # http://localhost:8000
 ## portfolio_flutter - 실시간 관심종목 (JC Ticker)
 
 Flutter + Dart 포트폴리오. 2,000종목 / 초당 최대 15,000건 갱신 feed 위에서
-60fps를 유지하는 관심종목 앱입니다. 거래소 데모와 소재(시세)는 같지만 축이
-다릅니다 - 거래소가 화면 폭(호가·캔들·매칭·멀티탭)을 증명한다면, 이 데모는
-**측정 방법론**(결정론 벤치마크, baseline 대비 before/after, 성능-신선도 스윕,
-성능 회귀 가드)을 증명합니다.
+60fps를 유지하는 관심종목 앱입니다. 거래소 데모와 소재는 같은 시세지만 보여주는
+것이 다릅니다. 거래소가 호가, 캔들, 매칭, 멀티탭으로 화면의 폭을 다뤘다면 이
+데모는 측정 방법을 다룹니다 - 결정론 벤치마크, baseline 과의 before/after,
+성능-신선도 스윕, 성능 회귀 가드입니다.
 
 - **정합성은 도착 즉시, 화면은 프레임 단위** - 종목별 timestampMs 단조 강제로 역순 tick 을 기각하고, 통지만 종목 단위 GatedNotifier 로 격리합니다. 매 tick 전체 재정렬/재합산 경로가 없습니다(순위는 O(log n) 증분, 시총은 BigInt 델타).
 - **주장을 화면이 증명** - 목록 상단 계측이 "초당 수신 N건 vs 행 rebuild 유발 K회"를 1초 주기로 표시합니다. 수치의 계약은 테스트가 고정합니다.
-- **런타임 외부 패키지 0개** - 상태관리/차트/한글검색 라이브러리 없이 ValueListenable · CustomPainter · 유니코드 산술로 직접 구현했습니다. 근거와 기각한 대안 7건은 DESIGN.md 에 있습니다.
-- **배포는 정적** - `flutter build web --wasm --no-web-resources-cdn` 산출물을 nginx 가 직접 서빙합니다(첫 정적 앱 데모). 렌더러까지 동봉해 서드파티 CDN 에 의존하지 않습니다. 첫 로드 전송량과 웹의 한계(SEO·시맨틱스)는 README 에 수치·사실 그대로 공개합니다.
-- 상세: [portfolio_flutter/README.md](portfolio_flutter/README.md) · [DESIGN.md](portfolio_flutter/DESIGN.md) · [PERF.md](portfolio_flutter/PERF.md)
+- **런타임 외부 패키지 0개** - 상태관리/차트/한글검색 라이브러리 없이 ValueListenable / CustomPainter / 유니코드 산술로 직접 구현했습니다. 근거와 기각한 대안 7건은 DESIGN.md 에 있습니다.
+- **배포는 정적** - `flutter build web --wasm --no-web-resources-cdn` 산출물을 nginx 가 직접 서빙합니다(첫 정적 앱 데모). 렌더러까지 동봉해 서드파티 CDN 에 의존하지 않습니다. 첫 로드 전송량과 웹의 한계(SEO/시맨틱스)는 README 에 수치/사실 그대로 공개합니다.
+- 상세: [portfolio_flutter/README.md](portfolio_flutter/README.md) / [DESIGN.md](portfolio_flutter/DESIGN.md) / [PERF.md](portfolio_flutter/PERF.md)
 
 로컬 실행 (Flutter 3.44+):
 
@@ -176,16 +183,16 @@ flutter run --profile -d macos        # 성능 확인은 profile 로 (debug 는 
 
 ---
 
-## 역량 축 - 아홉 데모를 관통하는 설계 서사
+## 아홉 데모에 공통으로 적용한 것
 
-개별 기능을 넘어, 여러 데모를 **하나의 표준으로 다스린다**는 관점이 이 포트폴리오의 축입니다.
-각 항목의 코드 근거는 해당 앱 README 의 해당 절에 있습니다.
+기능 하나하나보다, 같은 표준을 여러 데모에 일관되게 적용했는지가 이 포트폴리오에서
+보여주려는 부분입니다. 각 항목의 코드 근거는 해당 앱 README 의 해당 절에 있습니다.
 
 - **관측성 대칭** - IP 모듈에 넣은 Micrometer 계량/상관 ID(MDC)/구조화 로그/안전한 actuator 노출을, 같은 표준으로 파일 검증 경로에도 이식했습니다. 상관 ID 필터는 한 번 만들어 전 모듈이 공유합니다.
-- **테스트 3방향 심화** - 예제 테스트에서 **속성 기반**(jqwik: 정규화 멱등/임의 입력 무크래시)으로, 고립 테스트에서 **실경로 통합 IT**(실제 MySQL GET_LOCK 이 서비스 임계 구역을 직렬화)로, 순수 로직에서 **컴포넌트/RTL/프론트 단위**로 위를 채웠습니다.
+- **테스트를 세 방향으로 넓힘** - 예제 테스트에 속성 기반(jqwik: 정규화 멱등, 임의 입력 무크래시)을 더하고, 고립 테스트에 실경로 통합 IT(실제 MySQL GET_LOCK 이 서비스 임계 구역을 직렬화하는지)를 더하고, 순수 로직에 컴포넌트/RTL 단위를 더했습니다.
 - **API 성숙** - 부분수정(PUT) + 낙관적 락(@Version) + OpenAPI(springdoc) 로 IP 어드민을 파일차단 모듈과 대칭 수준으로 끌어올렸습니다.
 - **재사용 패턴** - 리스트 가상화(windowing)와 키셋 페이지네이션을 재사용 가능한 순수 유틸로 뽑아 앱 사이에 이식했습니다.
-- **키 없는 배포에서 LLM 을 증명하는 법** - 두 AI 데모(대출 분류·챗)는 공개 서버에 API 키를
+- **키 없는 배포에서 LLM 을 증명하는 법** - 두 AI 데모(대출 분류/챗)는 공개 서버에 API 키를
   두지 않습니다. 그러면 "연동 코드는 실재한다"는 말이 배포에서는 확인되지 않으므로, **실제
   응답을 산출물로 커밋해 재생**합니다(대출 분류는 요청 해시별 판정 캐시, 챗은 추천 질문별
   응답). 재생임을 화면이 밝히고, 그 밖의 입력은 룰/목업이 답한다고 말합니다 - 재생을
@@ -236,7 +243,7 @@ https://docqa.jongeunchoi.dev/      JC DocuQA        (+ /search, /eval)
 https://chat.jongeunchoi.dev/       JC Chat
 https://file.jongeunchoi.dev/       파일 확장자 차단
 https://ip.jongeunchoi.dev/         IP 접근 제어
-https://guard.jongeunchoi.dev/relay.html  작업 릴레이 (파일·IP 와 같은 앱)
+https://guard.jongeunchoi.dev/relay.html  작업 릴레이 (파일/IP 와 같은 앱)
 https://loandoc.jongeunchoi.dev/    대출 서류 분류 (JC LoanDoc)
 https://ticker.jongeunchoi.dev/     실시간 관심종목 (JC Ticker, 정적 서빙)
 ```

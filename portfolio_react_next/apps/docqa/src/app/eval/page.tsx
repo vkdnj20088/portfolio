@@ -1,7 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CONFIDENCE_THRESHOLD, evaluate } from '@chat/search-domain';
+import {
+  CONFIDENCE_THRESHOLD,
+  compareLlmBaseline,
+  evaluate,
+  hasLlmBaseline,
+  staleCases,
+} from '@chat/search-domain';
+import type { LlmComparisonRow } from '@chat/search-domain';
 import { AppShell } from '@/components/AppShell';
 
 /**
@@ -106,6 +113,8 @@ export default function EvalPage() {
 
         <ThresholdSweep />
 
+        <LlmContrast />
+
         <h2 className="evalH2">문항별 상세</h2>
         <div className="tableWrap">
           <table className="evalTable">
@@ -158,6 +167,159 @@ function outcome(gold: string | null, answered: string | null, ok: boolean): str
   if (gold === null) return ok ? '침묵(정답)' : `지어냄 ${answered}`;
   if (answered === null) return '침묵(과잉)';
   return ok ? '정답' : `오답 ${answered}`;
+}
+
+/**
+ * LLM 독해 대조군.
+ *
+ * 이 데모는 "답을 생성하지 않고 코퍼스에서 추출하므로 구조적으로 지어내지 않는다"고 말한다.
+ * 구조로 얻은 성질이라면 같은 문제를 생성 모델에 시켰을 때 무엇이 달라지는지를 같은 골드셋으로
+ * 보여야 그 말이 선다. 그래서 이 절은 **우열표가 아니다** - 어느 쪽이 낫다가 아니라 무엇이
+ * 다른가를 본다. LLM 이 더 맞힌 문항도 같은 표에 그대로 남긴다(그것을 감추면 이 데모가 파는
+ * 정직함과 어긋난다).
+ *
+ * 대조는 검색을 고정하고 읽기만 바꾼다 - 양쪽 모두 같은 semantic 상위 5건을 받는다.
+ * 그래서 차이는 검색 품질이 아니라 독해·불응답 판단에서 온다.
+ *
+ * 배포에 키가 없으므로(§0) 런타임 호출은 없다. 키를 가진 사람이 한 번 수집해 커밋한 판정을
+ * 재생할 뿐이고, 수집 전이면 그 사실을 그대로 적는다.
+ */
+function LlmContrast() {
+  const cmp = useMemo(() => compareLlmBaseline(REPORT), []);
+  const stale = useMemo(() => staleCases(), []);
+
+  if (!hasLlmBaseline()) {
+    return (
+      <>
+        <h2 className="evalH2">LLM 독해와의 대조 - 아직 수집 전</h2>
+        <p className="evalNote">
+          이 배포에는 API 키가 없습니다. 대조군은 키를 가진 사람이 골드셋 {cmp.cases}문항을 한 번
+          받아 커밋한 판정을 재생하는 방식인데, 그 산출물이 아직 비어 있습니다. 실시간 호출인 척
+          채워 넣는 대신 비어 있다고 적어 둡니다.
+        </p>
+      </>
+    );
+  }
+
+  const disagreed = cmp.rows.filter((r) => r.ruleAnswered !== r.llmAnswered);
+  const answerableN = cmp.rule.answered + cmp.rule.overAbstained;
+  const unanswerableN = cmp.rule.abstained + cmp.rule.hallucinated;
+
+  return (
+    <>
+      <h2 className="evalH2">규칙 기반 독해와 LLM 독해는 무엇이 다른가</h2>
+      <p className="evalNote">
+        같은 질문에 <b>같은 검색 결과</b>({cmp.mode === 'semantic' ? '시맨틱' : '키워드'} 상위{' '}
+        {cmp.depth}건)를 주고 <b>읽는 쪽만</b> 바꿔 채점했습니다. 그래서 아래 차이는 검색 품질이
+        아니라 독해와 불응답 판단에서 옵니다. 어느 쪽이 낫다는 표가 아니라 무엇이 다른가를 보는
+        표입니다 - {cmp.covered}문항 중 판정이 갈린 것은 {cmp.disagreements}건입니다.
+      </p>
+
+      <div className="tableWrap">
+        <table className="evalTable">
+          <caption className="srOnly">규칙 기반 독해와 LLM 독해의 지표 대조</caption>
+          <thead>
+            <tr>
+              <th scope="col">지표</th>
+              <th scope="col">규칙 기반(배포본)</th>
+              <th scope="col">LLM 베이스라인</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ContrastRow
+              label={`답변 정확도 (답 있는 ${answerableN}문항)`}
+              rule={`${pct(cmp.rule.correct / (answerableN || 1))} (${cmp.rule.correct}건)`}
+              llm={`${pct(cmp.llm.correct / (answerableN || 1))} (${cmp.llm.correct}건)`}
+            />
+            <ContrastRow
+              label="오답 (틀린 근거로 답함)"
+              rule={`${cmp.rule.wrong}건`}
+              llm={`${cmp.llm.wrong}건`}
+            />
+            <ContrastRow
+              label="과잉 불응답 (답이 있는데 침묵)"
+              rule={`${cmp.rule.overAbstained}건`}
+              llm={`${cmp.llm.overAbstained}건`}
+            />
+            <ContrastRow
+              label={`올바른 침묵 (답 없는 ${unanswerableN}문항)`}
+              rule={`${cmp.rule.abstained}/${unanswerableN}`}
+              llm={`${cmp.llm.abstained}/${unanswerableN}`}
+            />
+            <ContrastRow
+              label="지어냄 (답이 없는데 답함)"
+              rule={`${cmp.rule.hallucinated}건`}
+              llm={`${cmp.llm.hallucinated}건`}
+            />
+          </tbody>
+        </table>
+      </div>
+      <p className="evalNote">
+        {cmp.model} · {cmp.generatedAt.slice(0, 10)} 수집 · 골드셋 {cmp.cases}문항 중 {cmp.covered}
+        문항 대조.
+        {cmp.covered < cmp.cases
+          ? ` 나머지 ${cmp.cases - cmp.covered}문항은 형식 밖 응답이라 수집에서 제외했습니다 - 침묵으로 세면 없는 실패를 만들게 됩니다.`
+          : ''}
+        {stale.length > 0
+          ? ` 코퍼스가 바뀌어 후보 구성이 달라진 문항이 ${stale.length}건 있습니다 - 그만큼 이 대조는 낡았습니다.`
+          : ''}
+      </p>
+
+      {disagreed.length > 0 && (
+        <>
+          <h3 className="evalH3">판정이 갈린 문항</h3>
+          <div className="tableWrap">
+            <table className="evalTable">
+              <caption className="srOnly">두 경로의 판정이 갈린 문항</caption>
+              <thead>
+                <tr>
+                  <th scope="col">질문</th>
+                  <th scope="col">유형</th>
+                  <th scope="col">규칙</th>
+                  <th scope="col">LLM</th>
+                  <th scope="col">누가 맞았나</th>
+                </tr>
+              </thead>
+              <tbody>
+                {disagreed.map((r) => (
+                  <tr key={r.q}>
+                    <th scope="row" className="q">
+                      {r.q}
+                    </th>
+                    <td>{splitLabel(r.split)}</td>
+                    <td className={r.ruleOk ? 'ok' : 'bad'}>{r.ruleAnswered ?? '침묵'}</td>
+                    <td className={r.llmOk ? 'ok' : 'bad'}>{r.llmAnswered ?? '침묵'}</td>
+                    <td>{verdictLabel(r.verdict)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="evalNote">
+            정답 문단은 위 &ldquo;문항별 상세&rdquo; 표의 골드 라벨과 같습니다. 침묵이 정답인
+            문항(답 없음)에서는 &ldquo;침묵&rdquo;이 맞은 판정입니다.
+          </p>
+        </>
+      )}
+    </>
+  );
+}
+
+function ContrastRow({ label, rule, llm }: { label: string; rule: string; llm: string }) {
+  return (
+    <tr>
+      <th scope="row">{label}</th>
+      <td>{rule}</td>
+      <td>{llm}</td>
+    </tr>
+  );
+}
+
+function verdictLabel(v: LlmComparisonRow['verdict']): string {
+  if (v === 'both') return '둘 다';
+  if (v === 'ruleOnly') return '규칙만';
+  if (v === 'llmOnly') return 'LLM 만';
+  return '둘 다 틀림';
 }
 
 /** 임계값을 훑을 구간. 0.29 아래는 응답률이 이미 100% 이고, 0.65 위는 거의 다 침묵한다. */

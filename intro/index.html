@@ -13,7 +13,7 @@
 <!-- 미리보기 카드 문구는 헤드라인과 같이 움직여야 한다 - 직전 라운드에 본문만 고쳐서 이 줄에는
      두 라운드 전 헤드라인("백엔드와 인프라까지 직접 구현")이 남아 있었다. 링크를 메일이나
      메신저로 받은 사람은 페이지보다 이 문장을 먼저 읽는다. -->
-<meta property="og:description" content="프론트엔드 5명을 리딩하며 코드 리뷰와 표준 설계를 맡았고, 막히는 지점은 API·인프라까지 직접 끝냅니다. IT 경력 12년+, 레거시 현대화로 Lighthouse 성능 60에서 99.">
+<meta property="og:description" content="프론트엔드 5명을 리딩하며 코드 리뷰와 표준 설계를 맡았고, 막히는 지점은 API/인프라까지 직접 끝냅니다. IT 경력 12년+, 레거시 현대화로 Lighthouse 성능 60에서 99.">
 <meta property="og:locale" content="ko_KR">
 <!-- 미리보기 카드. 페이지 안의 링크는 지금 호스트에서 조립하지만 이 값들만은 절대 URL 이어야
      한다 - 카드를 만드는 것은 브라우저가 아니라 외부 크롤러(메신저, 메일, SNS)이고, 그쪽에는
@@ -41,8 +41,8 @@
   서브도메인을 쓸 수 없고(SNI 없음), 앱들이 모두 /api/* 를 써 경로로도 못 나눠서 **포트로** 나눈다:
     01 FRONTEND    거래소 목업        portfolio_exchange_next  :9445 /exchange/BTC
     02 FULL-STACK  AI 챗봇            portfolio_react_next     :9443 /
-    03 BACKEND·AI  대출 서류 분류     portfolio_python_fastapi :9446 /
-    04 FRONTEND·APP 실시간 관심종목    portfolio_flutter        :9447 / (정적 - Flutter web)
+    03 BACKEND/AI  대출 서류 분류     portfolio_python_fastapi :9446 /
+    04 FRONTEND/APP 실시간 관심종목    portfolio_flutter        :9447 / (정적 - Flutter web)
     05 FULL-STACK  문서 근거 QA       portfolio_react_next     :9444 /
     06 FULL-STACK  시맨틱 검색        portfolio_react_next     :9444 /search
     07 BACKEND     파일 확장자 차단    portfolio_jquery_spring  :8443 /
@@ -101,9 +101,9 @@
        직전까지 네 곳(상단 내비, 타임라인 링크, 데모 카드, 연락처 카드)이 `outline: none` 으로
        링을 지우고 hover 스타일을 포커스 표시로 함께 썼다. 실측해 보니 표시의 세기가 갈렸다.
 
-         데모 카드    inset 1px · acid 40% -> 실효 #566826, 대비 3.18:1 (색은 통과, 1px 는 얇다)
+         데모 카드    inset 1px / acid 40% -> 실효 #566826, 대비 3.18:1 (색은 통과, 1px 는 얇다)
          연락처 카드  배경 --ink -> --ink-2 뿐 -> 대비 1.04:1 (눈으로 구별되지 않는다)
-         내비·타임라인 글자색 + 1px 밑줄 (읽히지만 hover 와 동일해 구분이 없다)
+         내비/타임라인 글자색 + 1px 밑줄 (읽히지만 hover 와 동일해 구분이 없다)
 
        --acid 링은 배경 대비 15.22:1 이고 2px 이라 세 경우 모두를 대체한다. hover 연출은 그대로
        두고 포커스에만 링을 더했다 - 마우스 사용자 경험은 바뀌지 않고 키보드 사용자만 얻는다.
@@ -121,7 +121,7 @@
      "막히는 지 / 점은" 처럼 낱말이 갈린다 - 좁은 화면에서 특히 자주 난다.
      break-word 를 함께 두는 이유: keep-all 만 있으면 끊을 자리가 없는 긴 토큰(주소 등)이
      칸을 밀고 나간다. 어절 우선, 불가능하면 그때만 강제 분리.
-     처음엔 산문 컨테이너만 열거해서 섹션 리드(#demos)·카드 제목·직책 줄이 빠졌다.
+     처음엔 산문 컨테이너만 열거해서 섹션 리드(#demos)/카드 제목/직책 줄이 빠졌다.
      한글이 들어가는 자리는 모두 대상이다 - 360px 에서 "론트엔|드", "추출|형" 이 갈렸다. */
   .headline, .hero .sub, .about p.lead, .about p.body,
   .wdesc, .tl-desc, .pblock p, .lab, #contact .sub,
@@ -282,14 +282,14 @@
     color: var(--acid); line-height: 1; letter-spacing: -0.01em;
   }
   .stat .num .unit { font-size: 0.55em; color: var(--paper-dim); margin-left: 0.15em; }
-  /* 숫자 앞에 붙는 라벨. `60 → 99` 처럼 단위가 없는 값은 큰 글자만 보면 무엇의 수치인지 알 수
+  /* 숫자 앞에 붙는 라벨. `60 -> 99` 처럼 단위가 없는 값은 큰 글자만 보면 무엇의 수치인지 알 수
      없다 - 라벨(.lab)은 그 아래에 있어서 훑는 사람은 숫자를 먼저 본다. .unit 은 margin-left 라
      앞에 못 쓰므로 방향만 뒤집은 짝을 둔다. 카운트업이 textContent 를 덮으므로 이 span 은
      [data-count] 안이 아니라 형제로 놓는다. */
   .stat .num .pre { font-size: 0.55em; color: var(--paper-dim); margin-right: 0.3em; }
   .stat .lab { margin-top: 0.6rem; font-size: 0.72rem; color: var(--paper-dim); line-height: 1.45; }
   /* 4열 -> 2열 전환을 720px 에서 900px 로 올렸다. 720~900px 구간에서 한 칸 폭이 140~160px 밖에
-     안 되어 "성능 60 → 99" 가 두 줄로 흐르고 라벨도 3줄까지 늘어져 그리드가 들쭉날쭉했다(실측).
+     안 되어 "성능 60 -> 99" 가 두 줄로 흐르고 라벨도 3줄까지 늘어져 그리드가 들쭉날쭉했다(실측).
      숫자에 nowrap 을 걸면 줄바꿈 대신 가로 넘침이 되므로, 칸을 넓히는 쪽이 맞다. */
   @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 
@@ -453,7 +453,7 @@
   .work[data-track="fe"] .cat { color: var(--acid-deep); }
   /* 풀스택은 프론트/백엔드 어느 쪽 색도 아니어야 한다. 직전까지 트랙이 둘뿐이라 route handler 와
      미들웨어를 가진 데모까지 Frontend 로 묶여 있었고, 목록을 훑으면 "Frontend 4 : Backend 2" 로
-     읽혀 히어로의 "API·인프라까지" 라는 문장과 어긋났다. --acid 는 --acid-deep 보다 밝아
+     읽혀 히어로의 "API/인프라까지" 라는 문장과 어긋났다. --acid 는 --acid-deep 보다 밝아
      프론트 위에 한 겹 더 있다는 관계가 색으로도 읽힌다(잉크 대비 15.22:1). */
   .work[data-track="fs"] .cat { color: var(--acid); }
   .work[data-track="be"] .cat { color: var(--warn); }
@@ -611,14 +611,14 @@
       <header class="hero" id="hero">
         <!-- "Lead" 는 영어 일반명사라 직책이 흐릿하다. 아래 타임라인이 "IT개발부 과장 /
              Front-end 파트장" 으로 적고 있으니 hero 도 같은 표기를 쓴다. -->
-        <p class="kicker reveal"><span class="dot" aria-hidden="true"></span>Front-end 파트장 · Full-stack</p>
+        <p class="kicker reveal"><span class="dot" aria-hidden="true"></span>Front-end 파트장 / Full-stack</p>
         <h1 class="name reveal">최종<em>은</em></h1>
         <p class="romaja reveal">Jongeun Choi</p>
         <!-- "막히는 지점은" 의 주어가 계속 나였다. 막히는 주체를 팀으로 두면 같은 문장이
              리딩과 직접 실행 둘로 읽힌다 - 혼자 다 끝내는 리드는 스케일하지 않는 신호다.
-             리딩의 구체(코드 리뷰·표준 설계)는 아래 About 이 받는다: 여기 넣으면 55자가 되어
+             리딩의 구체(코드 리뷰/표준 설계)는 아래 About 이 받는다: 여기 넣으면 55자가 되어
              540px 까지 3줄이다(44자인 지금도 360px 에서만 3줄). -->
-        <p class="headline reveal">프론트엔드 5명을 리딩했고, 팀이 막히는 지점은 <b>API·인프라까지 직접 끝냅니다</b></p>
+        <p class="headline reveal">프론트엔드 5명을 리딩했고, 팀이 막히는 지점은 <b>API/인프라까지 직접 끝냅니다</b></p>
         <!-- 뒤 문장은 "어떻게 확인할 수 있나" 다(QA/PM 3축 서술은 아래 About 이 담당한다 -
              직전까지 두 곳이 "품질을 검증(QA)하고 일정을 조율(PM)" 을 그대로 반복했다).
              앞 문장을 새로 얹은 이유: 검증 초대만으로는 README 를 열지 않는 독자에게 이 문단이
@@ -643,13 +643,13 @@
             <!-- "담당" 은 회사 앱인지 내가 만든 것인지 가른다. 프론트엔드 전담이 사실이다. -->
             <dt class="lab">직접 만든 앱 글로벌 다운로드 (해외 유저 75%)</dt>
           </div>
-          <!-- Brotli 86% 와 Lighthouse 60→99 는 같은 프로젝트(거래소 현대화)의 두 얼굴이라
+          <!-- Brotli 86% 와 Lighthouse 60->99 는 같은 프로젝트(거래소 현대화)의 두 얼굴이라
                4칸 중 2칸을 한 프로젝트가 먹고 있었다. 하나로 합쳐 축이 겹치지 않게 한다. -->
           <div class="stat">
-            <dd class="num"><span class="pre">성능</span><span data-count="60">60</span> <span class="unit" style="color:var(--acid)">&#8594; 99</span></dd>
-            <dt class="lab">Lighthouse · 전송량 86% 절감</dt>
+            <dd class="num"><span class="pre">성능</span><span data-count="60">60</span> <span class="unit" style="color:var(--acid)">-> 99</span></dd>
+            <dt class="lab">Lighthouse / 전송량 86% 절감</dt>
           </div>
-          <!-- "시스템 4 관통" 이 있던 자리다. 네 칸이 경력(HR) / 규모(CEO) / 기술 성과(개발자·CTO)
+          <!-- "시스템 4 관통" 이 있던 자리다. 네 칸이 경력(HR) / 규모(CEO) / 기술 성과(개발자/CTO)
                까지 오면서도 조직 축이 없어서, 헤드라인이 첫 줄에 내세운 리딩이 정작 지표에서는
                빠져 있었다. 관통 범위는 바로 아래 About 과 타임라인이 같은 말("네 시스템을 관통해")
                로 두 번 더 받고 kicker 의 Full-stack 도 같은 축이라, 네 칸 중 유일하게 겹치던
@@ -660,7 +660,7 @@
             <dd class="num"><span data-count="5">5</span><span class="unit">명</span></dd>
             <!-- "리딩" 만으로는 회의를 주재했는지 코드를 봤는지 모른다. About 이 쓰는 구체를
                  그대로 괄호에 넣어 표기가 갈라지지 않게 한다. -->
-            <dt class="lab">프론트엔드 파트 리딩 (코드 리뷰 · 표준 설계)</dt>
+            <dt class="lab">프론트엔드 파트 리딩 (코드 리뷰 / 표준 설계)</dt>
           </div>
         </dl>
       </header>
@@ -678,9 +678,9 @@
                  2026-08 퇴사 반영으로 진행형("지금은 ~ 맡고 있습니다")을 과거형으로 바꿨다. -->
             <!-- "리딩" 은 그 자체로는 아무 정보가 없다(회의를 주재했는지 코드를 봤는지 모른다).
                  무엇으로 리딩하는지를 적는다 - 기술 조직이 가장 먼저 확인하는 값이다. -->
-            <p class="body reveal">직전에는 가상자산거래소에서 프론트엔드 파트 5명을 리딩하며, <b>코드 리뷰와 표준 설계</b>를 맡았습니다. 백엔드 8명과 함께 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발하고, 중단됐던 서비스를 신규 마켓과 함께 재설계해 재런칭했습니다.</p>
-            <!-- 끝 문장이 데모·README 였다. 같은 말을 히어로·데모 섹션·연락처에서 이미 세 번 하므로
-                 그 자리를 재직 이력에 준다. 페이지 표기 관례(시작월·종료월 포함)로 실측하면
+            <p class="body reveal">직전에는 가상자산거래소에서 프론트엔드 파트 5명을 리딩하며, <b>코드 리뷰와 표준 설계</b>를 맡았습니다. 백엔드 8명과 함께 웹, 백오피스, 모바일 앱, 백엔드 API <b>네 시스템을 관통해</b> 개발하고, 중단됐던 서비스를 신규 마켓과 함께 재설계해 재런칭했습니다.</p>
+            <!-- 끝 문장이 데모/README 였다. 같은 말을 히어로/데모 섹션/연락처에서 이미 세 번 하므로
+                 그 자리를 재직 이력에 준다. 페이지 표기 관례(시작월/종료월 포함)로 실측하면
                  61+37+44+11 = 153개월 / 4개사 = 38개월 - 마지막 재직(11개월)을 포함해도 3년을 넘는다. -->
             <p class="body reveal">그 앞에는 System QA <span data-career="qa">3년</span>으로 동시접속 20만 규모 라이브 서비스의 품질과 인프라를 검증했고, Tech PM <span data-career="pm">2년 1개월</span>로 4개국 고객사의 현지화 일정을 조율했습니다. 네 곳 모두 운영 중인 서비스였고, <b>한 회사에 평균 3년 이상</b> 있었습니다.</p>
             <div class="contact-inline reveal">
@@ -741,7 +741,7 @@
              Full-stack 3 / Backend 2 다(라벨을 올릴 때 이 줄을 안 고쳤다). 한 화면 안에서
              페이지가 자기 말을 반박하던 자리다. 개수 대신 범위로 적는다: 서버측 관심사가 있는
              카드가 일곱(fs 3 + be 4), 클라이언트 전용이 하나(거래소)다. -->
-        <p class="sub reveal" style="max-width:52ch;color:var(--paper-dim);margin-bottom:2.5rem">직접 설계하고 구현한 코드 데모입니다. 아홉 개 모두 라이브로 열려 있고, 화면만이 아니라 API · 저장 · 정책까지 직접 만든 것이 일곱 개입니다.</p>
+        <p class="sub reveal" style="max-width:52ch;color:var(--paper-dim);margin-bottom:2.5rem">직접 설계하고 구현한 코드 데모입니다. 아홉 개 모두 라이브로 열려 있고, 화면만이 아니라 API, 저장, 정책까지 직접 만든 것이 일곱 개입니다.</p>
 
         <div class="index-head reveal"><span>선택된 작업</span><span>09</span></div>
         <ol class="works">
@@ -757,7 +757,7 @@
                 <h3 class="wtitle">거래소 목업</h3>
                 <!-- 아홉 장 중 이 카드만 이해관계 절을 앞에 붙이지 않았다. 첫 문장이 이미
                      "실무에서 한 일을 다시 만들었다" 라 그 역할을 하고 있다. 길이만 줄인다. -->
-                <p class="wdesc">실무에서 호가창을 10단&#8594;20단으로 늘리고 차트를 옮겼던 작업을 공개 가능한 형태로 다시 만들었습니다. Mock 스트림이 시세·분봉·호가를 함께 갱신하고, 스탑 주문은 새 엔진이 아니라 체결 상태기계의 트리거 상태로 넣었습니다. 거래 화면과 입출금·보유자산까지 세 화면입니다.</p>
+                <p class="wdesc">실무에서 호가창을 10단->20단으로 늘리고 차트를 옮겼던 작업을 공개 가능한 형태로 다시 만들었습니다. Mock 스트림이 시세/분봉/호가를 함께 갱신하고, 스탑 주문은 새 엔진이 아니라 체결 상태기계의 트리거 상태로 넣었습니다. 거래 화면과 입출금/보유자산까지 세 화면입니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>lightweight-charts</span><span>zustand</span><span>실시간 Mock</span></div>
               </div>
               <img class="wthumb" src="img/demo-01-exchange.jpg" srcset="img/demo-01-exchange-400.jpg 400w, img/demo-01-exchange-800.jpg 800w, img/demo-01-exchange.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -767,18 +767,18 @@
 
           <li>
             <!-- 챗을 문서QA 쌍 앞에 둔다 - AI 블록(02~05) 안에서 실 LLM 연동이 실재하는
-                 카드(대출 분류의 폴백, 챗의 키 게이트)가 측정·목업 카드보다 먼저 읽히게. -->
+                 카드(대출 분류의 폴백, 챗의 키 게이트)가 측정/목업 카드보다 먼저 읽히게. -->
             <div class="work pending reveal" data-track="fs" data-demo="chat" data-demo-url="http://localhost:3000/" aria-label="AI 챗봇 목업">
               <span class="idx">02</span>
               <div class="wbody">
-                <!-- 대출 분류 카드가 "Backend · AI" 인데 이 카드만 AI 표시가 없었다.
+                <!-- 대출 분류 카드가 "Backend / AI" 인데 이 카드만 AI 표시가 없었다.
                      둘 다 실제 LLM 연동이 실재하는(키 게이트) 카드라 라벨을 맞춘다. -->
                 <span class="cat">Full-stack &#183; AI</span>
                 <h3 class="wtitle">AI 챗봇</h3>
                 <!-- "목업" 이라는 제목과 "실제 LLM" 이 한 카드에 있으면 모순으로 읽힌다 -
                      키 게이트(있으면 LLM, 없으면 결정적 목업)라는 사실 자체가 판단 포인트라
                      리드 문장이 그 경계를 직접 말하게 한다. -->
-                <p class="wdesc">실시간 UI 는 데모에서만 잘 돌고 실제 네트워크에서 깨집니다. 전송 계층만 바꿔 Mock · 실제 SSE · 실제 LLM(서버에 키가 있을 때만) 을 오가도록 경계를 그었고, 마크다운은 걸러내는 대신 파싱하지 않아 안전 경계를 좁혔습니다. 연속 요청은 토큰 버킷으로 막고 남은 시간을 화면에 돌려줍니다.</p>
+                <p class="wdesc">실시간 UI 는 데모에서만 잘 돌고 실제 네트워크에서 깨집니다. 전송 계층만 바꿔 Mock / 실제 SSE / 실제 LLM(서버에 키가 있을 때만) 을 오가도록 경계를 그었고, 마크다운은 걸러내는 대신 파싱하지 않아 안전 경계를 좁혔습니다. 연속 요청은 토큰 버킷으로 막고 남은 시간을 화면에 돌려줍니다.</p>
                 <div class="wstack"><span>Next.js 16</span><span>React 19</span><span>TypeScript</span><span>SSE</span><span>Claude API 키 게이트</span><span>대화 검색</span><span>접근성</span></div>
               </div>
               <img class="wthumb" src="img/demo-04-chat.jpg" srcset="img/demo-04-chat-400.jpg 400w, img/demo-04-chat-800.jpg 800w, img/demo-04-chat.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
@@ -790,7 +790,7 @@
             <div class="work pending reveal" data-track="be" data-demo="loandoc" data-demo-url="http://localhost:8000/" aria-label="대출 서류 분류">
               <span class="idx">03</span>
               <div class="wbody">
-                <span class="cat">Backend · AI</span>
+                <span class="cat">Backend / AI</span>
                 <h3 class="wtitle">대출 서류 분류 파이프라인</h3>
                 <!-- AI 를 "폴백" 으로 쓴 이유가 이 카드의 본문이다 - 전 페이지 LLM 이 아니라
                      룰 우선 + 저신뢰만 위임. 근거가 페이지 단위로 남는다는 것이 판단 포인트. -->
@@ -806,7 +806,7 @@
             <div class="work pending reveal" data-track="fe" data-demo="ticker" data-demo-url="http://localhost:3060/" aria-label="실시간 관심종목">
               <span class="idx">04</span>
               <div class="wbody">
-                <span class="cat">Frontend · App</span>
+                <span class="cat">Frontend / App</span>
                 <h3 class="wtitle">실시간 관심종목 (Flutter)</h3>
                 <!-- 판단 포인트는 최적화 기법이 아니라 구조다 - 값 반영(즉시)과 화면 통지(격리)의
                      분리. 성능 수치는 전부 결정론 벤치(PERF.md 재현 커맨드)가 뒷받침한다 -
@@ -876,7 +876,7 @@
                      "100만 건" 은 되살리지 않는다. 배포된 데모의 규칙은 몇 건뿐이고, 목록이
                      커서로 넘어간다는 사실은 그 화면이 자기 캡션에서 말한다. -->
                 <p class="wdesc">차단 규칙에는 늘 예외가 붙고, 예외가 붙는 순간 왜 막혔는지 아무도 모릅니다. 허용 목록이 아니라 정책 엔진으로 만든 이유입니다. 시뮬레이터에 IP 를 넣으면 어떤 규칙이 왜 이겼고 나머지는 왜 건너뛰었는지 평가 순서대로 보이고, 시점을 옮기면 판정이 달라집니다.</p>
-                <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>키셋 페이지네이션</span><span>정책 평가</span><span>UTC 저장·기기 TZ 표기</span></div>
+                <div class="wstack"><span>Spring Boot 4</span><span>Java 21</span><span>MySQL</span><span>jQuery 4</span><span>키셋 페이지네이션</span><span>정책 평가</span><span>UTC 저장/기기 TZ 표기</span></div>
               </div>
               <img class="wthumb" src="img/demo-06-ip.jpg" srcset="img/demo-06-ip-400.jpg 400w, img/demo-06-ip-800.jpg 800w, img/demo-06-ip.jpg 1200w" sizes="(min-width: 1024px) 250px, (min-width: 641px) 420px, 80vw" alt="" width="1200" height="750" loading="lazy" decoding="async">
               <div class="wstatus"><span class="soon">로컬</span></div>
@@ -901,6 +901,16 @@
 
         </ol>
 
+        <!-- 아홉 카드 위에 올라가는 "층" 한 줄. 카드로 만들지 않는 이유는 아래 품질 지표
+             줄과 같다 - 열 번째 카드가 되면 "선택된 작업 09"와 데모 개수 문구가 전부 흔들린다.
+             그리고 이건 열 번째 데모가 아니라 앞의 데모들을 도구로 부르는 층이라, 개수에
+             넣지 않는 편이 사실에도 맞는다. -->
+        <p class="works-extra reveal">
+          <span class="wx-lab">그 위에</span>
+          도구를 쓰는 에이전트가 위 데모들(문서 검색, 근거 QA, IP 접근 제어)을 <b>도구로 불러</b> 다단계 과제를 풉니다.
+          실행 전체가 span 트리로 남고, 도구가 실패한 실행과 예산에 걸려 멈춘 실행도 같은 방식으로 되짚습니다.
+          <a class="wx-link" data-demo-link="docqa-agent" href="#" hidden>에이전트 실행 되짚기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
+        </p>
         <!-- 카드 아홉 장 밖에 한 줄을 둔다. 문서QA 의 품질 지표 화면은 이 포트폴리오에서 판단
              근거가 가장 많이 적힌 곳인데(자기 오답 건수까지 공개한다) 앱 안쪽 탭이라 카드에서
              들어온 사람이 못 보고 나간다. 열 번째 카드로 만들면 "선택된 작업 09"와 데모 개수
@@ -910,7 +920,7 @@
           문서QA 는 골드셋 33문항으로 잰 정확도와 <b>스스로 틀린 건수까지</b> 공개하는 품질 지표 화면을 따로 두고 있습니다.
           <a class="wx-link" data-demo-link="docqa-eval" href="#" hidden>품질 지표 열기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
         </p>
-        <!-- LLM 두 데모(02 대출 분류 · 03 챗)는 배포에 API 키를 두지 않는다. 그래서 실시간
+        <!-- LLM 두 데모(02 대출 분류 / 03 챗)는 배포에 API 키를 두지 않는다. 그래서 실시간
              호출 장면은 화면으로 증명할 수 없고, 대신 (1) 실제 응답을 커밋해 재생하고
              (2) 키를 넣고 돌린 로컬 실행을 짧은 영상으로 남긴다. 영상 파일이 아직 없으면
              이 줄은 통째로 숨는다(아래 스크립트) - 없는 링크를 내미는 것보다 낫다. -->
@@ -934,34 +944,34 @@
               <span class="tl-period">2025.10 - 2026.08 (11개월)</span>
             </div>
             <p class="tl-role">IT개발부 과장<span class="sep">/</span>Front-end 파트장<span class="sep">/</span>Full-stack</p>
-            <p class="tl-desc">블록체인 가상자산거래소. 15명 규모 개발 조직에서 프론트엔드 파트 5명을 리딩하며 백엔드 8명과 협업했습니다. 웹 · 백오피스 · 모바일 앱 · 백엔드 API <b>네 시스템을 관통해</b> 개발했고, 중단됐던 서비스를 USDT 마켓 등 신규 기능과 함께 재설계해 2026.02 재런칭했습니다.</p>
+            <p class="tl-desc">블록체인 가상자산거래소. 15명 규모 개발 조직에서 프론트엔드 파트 5명을 리딩하며 백엔드 8명과 협업했습니다. 웹, 백오피스, 모바일 앱, 백엔드 API <b>네 시스템을 관통해</b> 개발했고, 중단됐던 서비스를 USDT 마켓 등 신규 기능과 함께 재설계해 2026.02 재런칭했습니다.</p>
             <div class="tl-metrics">
               <span class="badge">개인 커밋 <b>1,700+</b> (약 36%)</span>
-              <span class="badge">jQuery 2 &#8594; <b>jQuery 4 + TS</b> 전면 전환</span>
+              <span class="badge">jQuery 2 -> <b>jQuery 4 + TS</b> 전면 전환</span>
               <span class="badge warn">2026.02 <b>재런칭</b></span>
             </div>
             <div class="tl-projects">
               <p class="lbl">대표 프로젝트</p>
               <article class="tl-proj">
-                <div class="ph"><span class="pt">거래소 프론트엔드 현대화</span><span class="ptag">Frontend · 성능</span></div>
+                <div class="ph"><span class="pt">거래소 프론트엔드 현대화</span><span class="ptag">Frontend / 성능</span></div>
                 <div class="pblock problem"><span class="k">문제</span><p>10년 된 jQuery 2 레거시로 로딩이 느리고 성능 점수가 60점대에 머물렀습니다.</p></div>
-                <div class="pblock"><span class="k">해결</span><p><b>jQuery 4 + TypeScript</b>로 전면 전환하고, Webpack 번들 통합(layout 4&#8594;1, exchange 6&#8594;1), <b>Brotli</b> 사전압축, 이미지 최적화(SVG&#8594;WebP, 3.9MB&#8594;278KB)를 함께 적용했습니다.</p></div>
-                <div class="pblock result"><span class="k">결과</span><p>전송량 최대 <b>86% 절감</b>, Lighthouse 성능 <b>60&#8594;99</b>, SEO <b>80&#8594;100</b>을 달성했고, 개인 커밋 <b>1,700+</b>로 2026.02 재런칭했습니다.</p></div>
-                <div class="pmetrics"><span class="badge"><b>-86%</b> 전송량</span><span class="badge"><b>60&#8594;99</b></span><span class="badge"><b>SEO 80&#8594;100</b></span></div>
+                <div class="pblock"><span class="k">해결</span><p><b>jQuery 4 + TypeScript</b>로 전면 전환하고, Webpack 번들 통합(layout 4->1, exchange 6->1), <b>Brotli</b> 사전압축, 이미지 최적화(SVG->WebP, 3.9MB->278KB)를 함께 적용했습니다.</p></div>
+                <div class="pblock result"><span class="k">결과</span><p>전송량 최대 <b>86% 절감</b>, Lighthouse 성능 <b>60->99</b>, SEO <b>80->100</b>을 달성했고, 개인 커밋 <b>1,700+</b>로 2026.02 재런칭했습니다.</p></div>
+                <div class="pmetrics"><span class="badge"><b>-86%</b> 전송량</span><span class="badge"><b>60->99</b></span><span class="badge"><b>SEO 80->100</b></span></div>
               </article>
               <article class="tl-proj">
-                <div class="ph"><span class="pt">금융앱 보안 &amp; 하이브리드 아키텍처</span><span class="ptag">Mobile · 보안</span></div>
+                <div class="ph"><span class="pt">금융앱 보안 &amp; 하이브리드 아키텍처</span><span class="ptag">Mobile / 보안</span></div>
                 <div class="pblock problem"><span class="k">문제</span><p>앱 탭 전환이 3~5초 지연되고, 금융 보안 위협(MITM, 생체인증 레이스)과 콜드스타트 무한대기 장애가 있었습니다.</p></div>
                 <div class="pblock"><span class="k">해결</span><p><b>Flutter 멀티웹뷰</b> 아키텍처와 JS-Native 브릿지를 설계하고, <b>SSL 검증 강제</b>(MITM 방어), 생체인증 <b>TOCTOU 뮤텍스</b> 해소, freeRASP 디바이스 무결성을 적용했습니다.</p></div>
-                <div class="pblock result"><span class="k">결과</span><p>탭 전환을 <b>3~5초 &#8594; 즉시</b>로 줄이고 콜드스타트 장애를 해소했으며, 2026.06 <b>ISMS 갱신 심사</b>에 대응했습니다.</p></div>
-                <div class="pmetrics"><span class="badge"><b>3~5s &#8594; 0s</b></span><span class="badge warn"><b>MITM</b> 방어</span><span class="badge"><b>ISMS</b> 대응</span></div>
+                <div class="pblock result"><span class="k">결과</span><p>탭 전환을 <b>3~5초 -> 즉시</b>로 줄이고 콜드스타트 장애를 해소했으며, 2026.06 <b>ISMS 갱신 심사</b>에 대응했습니다.</p></div>
+                <div class="pmetrics"><span class="badge"><b>3~5s -> 0s</b></span><span class="badge warn"><b>MITM</b> 방어</span><span class="badge"><b>ISMS</b> 대응</span></div>
               </article>
               <article class="tl-proj">
-                <div class="ph"><span class="pt">실시간 거래 인프라 &amp; 차트</span><span class="ptag">Realtime · 인프라</span></div>
+                <div class="ph"><span class="pt">실시간 거래 인프라 &amp; 차트</span><span class="ptag">Realtime / 인프라</span></div>
                 <div class="pblock problem"><span class="k">문제</span><p>실시간 시세와 호가 갱신이 지연되고 차트가 구버전이며 호가창 깊이가 얕았습니다.</p></div>
-                <div class="pblock"><span class="k">해결</span><p><b>WebSocket(STOMP) 델타 렌더링</b>, TradingView 차트 <b>v26&#8594;v31</b> 마이그레이션, 호가창 <b>10단&#8594;20단</b>을 프론트부터 백엔드 Controller/Repository까지 관통해 구현했습니다.</p></div>
+                <div class="pblock"><span class="k">해결</span><p><b>WebSocket(STOMP) 델타 렌더링</b>, TradingView 차트 <b>v26->v31</b> 마이그레이션, 호가창 <b>10단->20단</b>을 프론트부터 백엔드 Controller/Repository까지 관통해 구현했습니다.</p></div>
                 <div class="pblock result"><span class="k">결과</span><p>지연 없는 실시간 시세 UI와 20단 호가를 제공하고, 백오피스 보안 인프라(서블릿 필터 + Spring Session, jsoup XSS Sanitizer)까지 직접 설계했습니다.</p></div>
-                <div class="pmetrics"><span class="badge"><b>10&#8594;20단</b> 호가</span><span class="badge"><b>STOMP</b> 델타</span><span class="badge"><b>v26&#8594;v31</b></span></div>
+                <div class="pmetrics"><span class="badge"><b>10->20단</b> 호가</span><span class="badge"><b>STOMP</b> 델타</span><span class="badge"><b>v26->v31</b></span></div>
               </article>
             </div>
             <div class="tl-site">
@@ -973,24 +983,24 @@
           <article class="tl-item reveal">
             <div class="tl-head">
               <span class="co">트윙플 (달라라네트워크)</span>
-              <span class="tl-period">2021.04 - 2024.11 · 3년 8개월</span>
+              <span class="tl-period">2021.04 - 2024.11, 3년 8개월</span>
             </div>
-            <p class="tl-role">Front-end 전담<span class="sep">/</span>QA · PM 겸임</p>
-            <p class="tl-desc">K-pop 비대면 오디션 앱. 해외 유저가 <b>75% 이상</b>인 서비스에서 프론트엔드를 전담하며 QA·PM 을 겸임했습니다. 상세는 아래 대표 프로젝트에 적었습니다.</p>
+            <p class="tl-role">Front-end 전담<span class="sep">/</span>QA, PM 겸임</p>
+            <p class="tl-desc">K-pop 비대면 오디션 앱. 해외 유저가 <b>75% 이상</b>인 서비스에서 프론트엔드를 전담하며 QA/PM 을 겸임했습니다. 상세는 아래 대표 프로젝트에 적었습니다.</p>
             <div class="tl-metrics">
               <span class="badge">글로벌 다운로드 <b>50만+</b></span>
               <span class="badge">해외 유저 <b>75%+</b></span>
               <span class="badge">다국어 <b>i18n</b> 초기 설계</span>
-              <span class="badge">Flutter 포팅 · <b>Vertex AI</b></span>
+              <span class="badge">Flutter 포팅 / <b>Vertex AI</b></span>
             </div>
             <div class="tl-projects">
               <p class="lbl">대표 프로젝트</p>
               <article class="tl-proj">
-                <div class="ph"><span class="pt">글로벌 K-pop 오디션 플랫폼</span><span class="ptag">Frontend · Global</span></div>
+                <div class="ph"><span class="pt">글로벌 K-pop 오디션 플랫폼</span><span class="ptag">Frontend / Global</span></div>
                 <div class="pblock problem"><span class="k">문제</span><p>해외 유저 <b>75% 이상</b>인 K-pop 비대면 오디션 앱을 프론트엔드 전반에서 구현하고, 오디션 평가 등 운영을 자동화해야 했습니다.</p></div>
-                <div class="pblock"><span class="k">해결</span><p>Angular · TypeScript · SCSS로 오디션 접수 · 영상 챌린지 · 커뮤니티 · 실시간 방송 투표 · 해외 결제까지 프론트엔드 전체를 구현하고, <b>다국어(i18n)</b>를 초기 설계에 반영했습니다. 마지막 6개월은 <b>Flutter 포팅</b>과 오디션 평가 <b>Vertex AI</b> 자동화를 이끌었습니다.</p></div>
+                <div class="pblock"><span class="k">해결</span><p>Angular, TypeScript, SCSS 로 오디션 접수, 영상 챌린지, 커뮤니티, 실시간 방송 투표, 해외 결제까지 프론트엔드 전체를 구현하고, <b>다국어(i18n)</b>를 초기 설계에 반영했습니다. 마지막 6개월은 <b>Flutter 포팅</b>과 오디션 평가 <b>Vertex AI</b> 자동화를 이끌었습니다.</p></div>
                 <div class="pblock result"><span class="k">결과</span><p>글로벌 다운로드 <b>50만+</b>, 해외 유저 <b>75%+</b> 환경을 안정적으로 지원했습니다.</p></div>
-                <div class="pmetrics"><span class="badge"><b>50만+</b> 다운로드</span><span class="badge"><b>해외 75%+</b></span><span class="badge"><b>i18n · Vertex AI</b></span></div>
+                <div class="pmetrics"><span class="badge"><b>50만+</b> 다운로드</span><span class="badge"><b>해외 75%+</b></span><span class="badge"><b>i18n / Vertex AI</b></span></div>
               </article>
             </div>
             <div class="tl-site">
@@ -1002,23 +1012,23 @@
           <article class="tl-item reveal">
             <div class="tl-head">
               <span class="co">소행성 (드림스푼스튜디오)</span>
-              <span class="tl-period">2018.04 - 2021.04 · 3년 1개월</span>
+              <span class="tl-period">2018.04 - 2021.04, 3년 1개월</span>
             </div>
-            <p class="tl-role">Front-end 전담<span class="sep">/</span>기획 · QA · PM 겸임</p>
+            <p class="tl-role">Front-end 전담<span class="sep">/</span>기획, QA, PM 겸임</p>
             <p class="tl-desc">GPS 기반 취미모임 앱. 기획자와 디자이너 없이 콘셉트 기획부터 UI/UX, 프론트엔드까지 <b>혼자</b> 맡았습니다.</p>
             <div class="tl-metrics">
               <span class="badge">다운로드 <b>10만+</b></span>
               <span class="badge"><b>1인</b> 기획 + FE 전담</span>
-              <span class="badge">위치 기반 · 실시간 채팅</span>
+              <span class="badge">위치 기반 / 실시간 채팅</span>
             </div>
             <div class="tl-projects">
               <p class="lbl">대표 프로젝트</p>
               <article class="tl-proj">
-                <div class="ph"><span class="pt">1인 기획 · FE GPS 취미모임 앱</span><span class="ptag">Product · Frontend</span></div>
-                <div class="pblock problem"><span class="k">문제</span><p>기획자·디자이너 없이 GPS 기반 취미모임 앱을 서비스 콘셉트부터 UI/UX, 프론트엔드까지 혼자 완성해야 했습니다.</p></div>
-                <div class="pblock"><span class="k">해결</span><p>서비스 콘셉트 <b>기획</b>과 <b>UI/UX 설계</b>를 직접 수행하고, Angular · TypeScript로 위치 기반 모임 탐색 · 채팅 커뮤니티 · 구독 기능을 구현했으며, GPS 네이티브는 <b>Cordova</b>로 연동했습니다.</p></div>
+                <div class="ph"><span class="pt">1인 기획 / FE GPS 취미모임 앱</span><span class="ptag">Product / Frontend</span></div>
+                <div class="pblock problem"><span class="k">문제</span><p>기획자/디자이너 없이 GPS 기반 취미모임 앱을 서비스 콘셉트부터 UI/UX, 프론트엔드까지 혼자 완성해야 했습니다.</p></div>
+                <div class="pblock"><span class="k">해결</span><p>서비스 콘셉트 <b>기획</b>과 <b>UI/UX 설계</b>를 직접 수행하고, Angular, TypeScript 로 위치 기반 모임 탐색, 채팅 커뮤니티, 구독 기능을 구현했으며, GPS 네이티브는 <b>Cordova</b>로 연동했습니다.</p></div>
                 <div class="pblock result"><span class="k">결과</span><p>다운로드 <b>10만+</b>, <b>1인</b> 기획 겸 프론트엔드 전담으로 서비스를 완주했습니다.</p></div>
-                <div class="pmetrics"><span class="badge"><b>10만+</b> 다운로드</span><span class="badge"><b>1인</b> 기획 + FE</span><span class="badge">위치 기반 · 실시간 채팅</span></div>
+                <div class="pmetrics"><span class="badge"><b>10만+</b> 다운로드</span><span class="badge"><b>1인</b> 기획 + FE</span><span class="badge">위치 기반 / 실시간 채팅</span></div>
               </article>
             </div>
             <div class="tl-site">
@@ -1030,9 +1040,9 @@
           <article class="tl-item reveal">
             <div class="tl-head">
               <span class="co">아키에이지 (엑스엘게임즈 - 카카오게임즈)</span>
-              <span class="tl-period">2012.11 - 2017.11 · 5년 1개월</span>
+              <span class="tl-period">2012.11 - 2017.11, 5년 1개월</span>
             </div>
-            <p class="tl-role">System QA (3년)<span class="sep">&#8594;</span>Tech PM (2년 1개월)</p>
+            <p class="tl-role">System QA (3년)<span class="sep">-></span>Tech PM (2년 1개월)</p>
             <p class="tl-desc">최고 동시접속 20만, 글로벌 누적 2,000만 가입 규모의 PC MMORPG 라이브 서비스. DB Log 인증 서버 등 인프라를 테스트하고 각 팀 산출물을 검수한 뒤 직접 빌드 배포했습니다. Tech PM 전향 후에는 일본 대만 미국 러시아 고객사를 대응하며 현지화 개발 일정을 조율했습니다.</p>
             <div class="tl-metrics">
               <span class="badge">최고 동시접속 <b>20만</b></span>
@@ -1042,7 +1052,7 @@
             <div class="tl-projects">
               <p class="lbl">대표 프로젝트</p>
               <article class="tl-proj">
-                <div class="ph"><span class="pt">글로벌 라이브 서비스 품질 &amp; 조율</span><span class="ptag">Global · QA to PM</span></div>
+                <div class="ph"><span class="pt">글로벌 라이브 서비스 품질 &amp; 조율</span><span class="ptag">Global / QA to PM</span></div>
                 <div class="pblock problem"><span class="k">문제</span><p>동시접속 20만 규모 MMORPG의 품질 검증과 다국가 현지화 일정 조율이 필요했습니다.</p></div>
                 <div class="pblock"><span class="k">해결</span><p>DB Log 인증 서버 <b>인프라 QA</b>와 산출물 검수 후 직접 빌드 배포했고, Tech PM 전향 후 일본 대만 미국 러시아 <b>4개국 고객사</b>의 현지화 개발 일정을 조율했습니다.</p></div>
                 <div class="pblock result"><span class="k">결과</span><p>동시접속 <b>20만</b>, 누적 가입 <b>2,000만</b> 규모의 라이브 서비스를 안정적으로 운영 지원했습니다.</p></div>
@@ -1072,8 +1082,8 @@
       </section>
 
       <footer>
-        <!-- 히어로 kicker·타임라인과 직함이 세 가지로 갈려 있었다(Lead / 파트장 / Developer). -->
-        <span>최종은 (Jongeun Choi) - Front-end 파트장 · Full-stack</span>
+        <!-- 히어로 kicker/타임라인과 직함이 세 가지로 갈려 있었다(Lead / 파트장 / Developer). -->
+        <span>최종은 (Jongeun Choi) - Front-end 파트장 / Full-stack</span>
         <span>Portfolio 2026</span>
       </footer>
 
@@ -1116,7 +1126,10 @@
         ticker:         { port: 9447, sub: 'ticker',   path: '/' },
         // 카드가 아닌 링크 하나(품질 지표)도 같은 표를 쓴다. 문서QA 앱의 세 번째 화면이라
         // 포트는 docqa 와 같고 경로만 다르다.
-        'docqa-eval':   { port: 9444, sub: 'docqa',    path: '/eval' }
+        'docqa-eval':   { port: 9444, sub: 'docqa',    path: '/eval' },
+        // 에이전트 실행 되짚기. 데모 카드가 아니라 아홉 데모 위에 올라가는 층이라
+        // 카드 목록(data-demo)에는 없고 이 표에만 있다 - 개수 문구를 흔들지 않는다.
+        'docqa-agent':  { port: 9444, sub: 'docqa',    path: '/agent' }
       };
       var IS_LOCAL = location.protocol === 'file:' ||
         /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);

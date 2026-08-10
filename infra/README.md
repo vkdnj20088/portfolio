@@ -2,20 +2,20 @@
 
 한 대의 EC2 에서 인트로 랜딩과 데모를 함께 서빙하기 위한 코드화된 인프라입니다.
 화면은 아홉이지만 프로세스는 다섯입니다 - 문서 QA 와 시맨틱 검색이 한 앱(docqa)의 두 라우트이고,
-파일 차단 · IP 접근 제어 · 작업 릴레이가 한 앱(guard)의 세 화면이며, 관심종목(ticker)은 정적 산출물이라 프로세스가 없습니다.
+파일 차단 / IP 접근 제어 / 작업 릴레이가 한 앱(guard)의 세 화면이며, 관심종목(ticker)은 정적 산출물이라 프로세스가 없습니다.
 nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 버전관리 파일로 둡니다.
 
 ## 구성
 
 | 파일 | 역할 |
 |------|------|
-| `nginx/portfolio.conf` | 포트별 리버스 프록시(443 인트로 · 8443 Guard · 9443 Chat · 9444 DocuQA · 9445 Exchange · 9446 LoanDoc) + 80 ACME/리다이렉트 |
+| `nginx/portfolio.conf` | 포트별 리버스 프록시(443 인트로 / 8443 Guard / 9443 Chat / 9444 DocuQA / 9445 Exchange / 9446 LoanDoc) + 80 ACME/리다이렉트 |
 | `nginx/portfolio-domain.conf` | **도메인(SNI) 기반** 라우팅 - 443 한 포트에서 서브도메인으로 가릅니다. 위 설정과 **함께** 켭니다 |
 | `nginx/snippets/tls-domain.conf` | 도메인 인증서(표준 90일) 경로 - 도메인 블록들이 공유 |
 | `nginx/snippets/hsts.conf` | HSTS 한 줄. `add_header` 를 쓰는 location 마다 다시 include 해야 합니다(아래 참고) |
 | `nginx/conf.d/portfolio-hardening.conf` | http 컨텍스트 드롭인 - 버전 은닉, slowloris 타임아웃, rate limit 존, upstream keepalive |
-| `issue-cert-domain.sh` | 도메인 인증서 발급(apex+www+서브 7개 SAN) + 도메인 설정 활성화 |
-| `apply-hardening.sh` | 위 드롭인·스니펫·사이트 설정 배치 + 검증 + 실패 시 자동 원복 |
+| `issue-cert-domain.sh` | 도메인 인증서 발급(apex + 스크립트의 `SUBS` 목록이 그대로 SAN) + 도메인 설정 활성화 |
+| `apply-hardening.sh` | 위 드롭인/스니펫/사이트 설정 배치 + 검증 + 실패 시 자동 원복 |
 | `nginx/snippets/tls-ip.conf` | 포트 블록들이 공유하는 TLS 설정 - **인증서 경로가 여기 한 곳에만** 있습니다 |
 | `nginx/snippets/proxy-app.conf` | 앱 프록시 공통 헤더 |
 | `systemd/portfolio-chat.service` | Next standalone `node apps/chat/server.js` (127.0.0.1:3000) |
@@ -25,15 +25,15 @@ nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 
 | `systemd/portfolio-loandoc.service` | FastAPI uvicorn, 릴리스 내 venv (127.0.0.1:8000) |
 | `env/*.env.example` | `/etc/portfolio/*.env` 템플릿(시크릿은 서버에서만, 미커밋) |
 | `nginx/portfolio-bootstrap.conf` | 발급 전 80 전용 사이트(닭과 달걀 해소 - 아래 참고) |
-| `provision.sh` | 새 EC2 최초 1회(패키지·스왑·Docker MySQL·유저·유닛·nginx·인트로 웹루트) |
+| `provision.sh` | 새 EC2 최초 1회(패키지/스왑/Docker MySQL/유저/유닛/nginx/인트로 웹루트) |
 | `sync-units.sh` | 배포가 올린 systemd 유닛을 `/etc` 로 반영 + `daemon-reload` 하는 루트 헬퍼 |
 | `issue-cert-ip.sh` | IP 인증서 발급 + 스니펫에 경로 심기 + 통합 설정 활성화 + 6시간 갱신 타이머 |
-| `deploy-remote.sh` | 러너에서 실행: 전송 → 릴리스 교체 → 헬스 게이트 → 롤백 |
+| `deploy-remote.sh` | 러너에서 실행: 전송 -> 릴리스 교체 -> 헬스 게이트 -> 롤백 |
 | `../.github/workflows/deploy.yml` | 수동(workflow_dispatch) 배포 파이프라인 |
 
 ## 라우팅 (IP 리터럴, 도메인 없음)
 
-도메인이 없어 TLS 핸드셰이크에 **SNI 가 없습니다** → 서브도메인을 쓸 수 없습니다.
+도메인이 없어 TLS 핸드셰이크에 **SNI 가 없습니다** -> 서브도메인을 쓸 수 없습니다.
 그리고 앱들이 모두 `/api/*` 를 써서 **경로로도 못 나눕니다**(나누려면 앱마다 basePath 개조가 필요).
 그래서 **포트로** 나눕니다. 각 포트의 TLS 블록이 같은 IP 인증서 한 장을 공유합니다.
 
@@ -84,7 +84,7 @@ SNI 가 있는 요청은 도메인 블록이, 없는 요청(IP 리터럴 접속)
 인증서도 두 장이 공존합니다 - IP 인증서(6일, `tls-ip.conf`)와 도메인 인증서(90일, `tls-domain.conf`).
 서버 블록마다 자기 인증서를 지정하므로 서로 간섭하지 않습니다.
 
-> ⚠ **nginx `add_header` 상속 함정**: nginx 는 현재 레벨에 `add_header` 가 **하나라도 있으면 상위
+> **nginx `add_header` 상속 함정**: nginx 는 현재 레벨에 `add_header` 가 **하나라도 있으면 상위
 > 레벨의 `add_header` 를 통째로 버립니다**(누적이 아닙니다). 그래서 `Cache-Control` 을 붙이는
 > location(인트로 `/index.html`, 각 앱 `/_next/static/`)에서는 server 레벨 HSTS 가 조용히 사라집니다.
 > `snippets/hsts.conf` 를 그 location 마다 다시 include 하는 이유입니다.
@@ -120,7 +120,7 @@ sudo bash infra/apply-hardening.sh          # 도메인 사이트는 현재 설�
 | slowloris 타임아웃 | header 15s / body 30s / send 30s | 기본값 60초는 "느리게 흘리며 워커 붙잡기"에 관대하다 |
 | `limit_req` | `/api/*` 10r/s(burst 20), 업로드 1r/s(burst 10) | 무인증 공개 데모라 인증이 막아 줄 것이 없다 |
 | `limit_conn` | IP 당 40 연결 | SSE 가 오래 열려 있어 연결 고갈이 실재한다 |
-| XFF 위조 무효화 | `$proxy_add_x_forwarded_for` → `$remote_addr` | 아래 참고 |
+| XFF 위조 무효화 | `$proxy_add_x_forwarded_for` -> `$remote_addr` | 아래 참고 |
 | 닷파일 차단 | 인트로(정적) 블록만 `location ~ /\.` | 파일시스템을 직접 서빙하는 유일한 블록 |
 | upstream keepalive | 앱마다 `keepalive 32` + `Connection ""` | 요청마다 TCP 신설을 없앤다 |
 | 운영 도구 차단 | `/actuator` `/swagger-ui` `/v3/api-docs` `/h2-console` deny | 앱단 제한과 **이중**. 설정 한 줄로 열리는 표면이다 |
@@ -138,9 +138,9 @@ sudo bash infra/apply-hardening.sh          # 도메인 사이트는 현재 설�
 
 ### systemd 하드닝
 
-네 유닛 모두 같은 세트입니다(`NoNewPrivileges` · `PrivateTmp` · `ProtectSystem=strict` ·
-`ProtectHome` · `ReadWritePaths` · `RestrictSUIDSGID` · `ProtectKernelTunables` ·
-`ProtectControlGroups` · `LockPersonality`, 백엔드는 `RestrictAddressFamilies` 추가).
+네 유닛 모두 같은 세트입니다(`NoNewPrivileges` / `PrivateTmp` / `ProtectSystem=strict` /
+`ProtectHome` / `ReadWritePaths` / `RestrictSUIDSGID` / `ProtectKernelTunables` /
+`ProtectControlGroups` / `LockPersonality`, 백엔드는 `RestrictAddressFamilies` 추가).
 
 백엔드에 `PrivateTmp` 를 켜면 **격리 파일 적재 문제도 함께 사라집니다**. `quarantine-dir` 이
 비어 있으면 앱은 `{java.io.tmpdir}/quarantine` 을 쓰는데(application.yml), 그게 이 서비스만의
@@ -157,7 +157,7 @@ systemd 가 통째로 비웁니다. 데모라 격리본의 영속이 필요 없�
 - **HTTP/3(QUIC)** - nginx 재빌드가 필요하고, 단일 리전 저트래픽에서 체감이 marginal 한 수준입니다.
 - **fail2ban** - 저장소가 아니라 서버 ops 영역이고, 이미 `limit_req`/`limit_conn` 으로 같은
   공격면을 막습니다. 로그 기반 밴은 그 위의 한 겹이지 대체가 아닙니다.
-- **CDN·다중 upstream·mTLS** - 단일 리전 저트래픽이고, 무인증 공개가 의도한 설계라 해당하지 않습니다.
+- **CDN/다중 upstream/mTLS** - 단일 리전 저트래픽이고, 무인증 공개가 의도한 설계라 해당하지 않습니다.
 
 ### 데모 표본 복구 (portfolio-demo-reseed.timer)
 
@@ -204,7 +204,7 @@ IP 로 들어온 방문자에게 죽은 주소를 내미는 문제가 남았습�
 
 | 프로세스 | 조정 후 RSS(대략) | 어떻게 |
 |---|---|---|
-| Next × 3 | 각 70~110MB | `NODE_OPTIONS=--max-old-space-size=192` (유닛) |
+| Next x 3 | 각 70~110MB | `NODE_OPTIONS=--max-old-space-size=192` (유닛) |
 | Spring Boot | **289MB**(t4g.small 실측) | `-Xmx320m -XX:MaxMetaspaceSize=256m -XX:+UseSerialGC` |
 | MySQL 8 | 250~300MB | `--innodb-buffer-pool-size=96M --performance-schema=OFF` + 컨테이너 `--memory=640m` |
 | nginx + OS | ~200MB | |
@@ -233,7 +233,7 @@ vmstat 1 5                   # si/so(스왑 입출력)가 0 이 아니고 계속
 journalctl -k | grep -i oom  # OOM 킬 흔적이 있으면 즉시 상향
 ```
 
-올릴 때는 **인스턴스 타입만 t4g.medium 으로 변경**하면 됩니다(EBS 유지, 정지 → 타입 변경 → 시작).
+올릴 때는 **인스턴스 타입만 t4g.medium 으로 변경**하면 됩니다(EBS 유지, 정지 -> 타입 변경 -> 시작).
 설정은 그대로 둬도 되고, 여유가 생기면 JVM `-Xmx512m` / MySQL buffer pool `256M` 로 되돌리면 됩니다.
 
 ### arm64 주의 - 빌드 아키텍처를 서버와 맞춥니다
@@ -268,8 +268,8 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 
 ### 발급 전에는 왜 80 만 띄우나 (닭과 달걀)
 
-`portfolio.conf` 의 TLS 블록은 아직 없는 인증서 파일을 가리킵니다 → `nginx -t` 실패 → nginx 가 뜨지
-않음 → 80포트의 ACME 경로도 안 뜸 → **발급 자체가 불가능**. 그래서 `provision.sh` 는 80 전용
+`portfolio.conf` 의 TLS 블록은 아직 없는 인증서 파일을 가리킵니다 -> `nginx -t` 실패 -> nginx 가 뜨지
+않음 -> 80포트의 ACME 경로도 안 뜸 -> **발급 자체가 불가능**. 그래서 `provision.sh` 는 80 전용
 `portfolio-bootstrap` 만 켜 두고, `issue-cert-ip.sh` 가 발급을 마친 뒤 본 설정으로 교체합니다.
 교체가 실패하면 자동으로 부트스트랩으로 롤백해 **갱신 경로는 항상 살아 있습니다.**
 
@@ -277,7 +277,7 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 써 내려감)이라 이 구성에서는 443 default_server 가 충돌합니다. 그래서 **발급만 하는** 스크립트를
 따로 두었습니다.
 
-> ⚠ **생명선**: 80포트의 `location ^~ /.well-known/acme-challenge/` 블록은 절대 덮거나 리다이렉트
+> **생명선**: 80포트의 `location ^~ /.well-known/acme-challenge/` 블록은 절대 덮거나 리다이렉트
 > 뒤로 밀지 마세요. IP 인증서는 6일 주기 http-01 갱신이라, 이 경로가 막히면 갱신이 실패하고
 > 만료 시 **전 데모가 동시에** 내려갑니다.
 
@@ -293,7 +293,7 @@ sudo -E LE_EMAIL=you@example.com bash infra/issue-cert-ip.sh
 
 파이프라인은 백엔드 jar / Next standalone 3벌 / 인트로 정적 파일을 만들어 서버로 rsync 하고,
 `current` 심링크를 새 릴리스로 바꾼 뒤 재기동합니다. 이어 각 앱의 헬스 게이트
-(`/actuator/health` · 각 Next 루트)를 돌려, 실패하면 **직전 릴리스로 롤백**합니다.
+(`/actuator/health` / 각 Next 루트)를 돌려, 실패하면 **직전 릴리스로 롤백**합니다.
 
 데모 안의 "포트폴리오로 돌아가기" 링크는 인트로(443)를 가리켜야 하는데, 호스트가 시크릿이라
 빌드 산출물에는 자리표시자로 넣고 **배포 직전에 치환**합니다(빌드 로그에 IP 를 남기지 않습니다).

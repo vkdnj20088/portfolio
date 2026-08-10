@@ -1,12 +1,12 @@
 # JC Ticker - 실시간 관심종목 (Flutter)
 
 2,000종목 / 초당 최대 15,000건 갱신 feed 위에서 60fps를 유지하는 관심종목 앱입니다.
-계층·상태·에러 모델을 직접 설계했고, **핵심 산출물은 코드와 함께
-[DESIGN.md](DESIGN.md)(아키텍처 결정과 근거) / [PERF.md](PERF.md)(병목 분석과
-재현 가능한 before/after 수치)** 두 문서입니다.
+계층, 상태, 에러 모델을 직접 설계했습니다. 코드와 함께 읽을 문서가 둘 있습니다.
+[DESIGN.md](DESIGN.md) 는 설계 결정과 근거를, [PERF.md](PERF.md) 는 병목 분석과
+재현 가능한 before/after 수치를 담았습니다.
 
 라이브: **[ticker.jongeunchoi.dev](https://ticker.jongeunchoi.dev/)** (Flutter web 빌드,
-정적 서빙) · 같은 배포에서 [`?baseline=1`](https://ticker.jongeunchoi.dev/?baseline=1) 을
+정적 서빙). 같은 배포에서 [`?baseline=1`](https://ticker.jongeunchoi.dev/?baseline=1) 을
 붙이면 비교용 순진 구현으로 부팅됩니다.
 
 ## 구현 범위
@@ -37,7 +37,7 @@ flutter run --profile -d macos      # 또는 -d chrome / <ios/android 기기>
 # baseline(비교용 순진 구현)으로 실행
 flutter run --profile -d macos --dart-define=BASELINE=true
 
-# 정적 분석 / 포맷 / 테스트 (단위/위젯 52개 + 성능 회귀 가드 3개)
+# 정적 분석 / 포맷 / 테스트 (단위/위젯 52개 + 성능 회귀 가드 4개)
 flutter analyze
 dart format --output=none --set-exit-if-changed lib test integration_test test_driver
 flutter test
@@ -74,12 +74,14 @@ flutter drive --driver=test_driver/integration_test.dart \
 
 각 실행은 표준 출력에 `PERF_SUMMARY {...}` JSON 라인(구간별 프레임 build/raster
 avg/p50/p90/p99/worst/jank)과 `STORE_STATS {...}`(적용/기각/불변 tick 수)를
-남깁니다. 벤치 창은 전면에 두고 실행하세요 - 가려지면 raster에 측정 환경
-아티팩트가 생깁니다(PERF.md §1). macOS 주의 두 가지: 코드사인 오류("resource
-fork ... not allowed")가 나면 `xattr -cr . && flutter clean` 후 재시도하고,
-그래도 반복되면 저장소가 iCloud 동기화 경로(`~/Documents` 등) 안인지 확인하세요 -
-파일 프로바이더가 디렉터리에 붙이는 FinderInfo 확장속성을 codesign이 거부합니다
-(실측: 동기화 밖 경로로 복사하면 같은 소스가 그대로 빌드됩니다).
+남깁니다.
+
+벤치 창은 전면에 두고 실행합니다. 가려지면 raster 에 측정 환경 아티팩트가
+생깁니다(PERF.md §1). macOS 에서는 코드사인 오류("resource fork ... not allowed")가
+나기도 하는데, `xattr -cr . && flutter clean` 후 재시도해도 반복된다면 저장소가
+iCloud 동기화 경로(`~/Documents` 등) 안에 있는지 봅니다. 파일 프로바이더가
+디렉터리에 붙이는 FinderInfo 확장속성을 codesign 이 거부하는 것으로, 동기화 밖
+경로로 복사하면 같은 소스가 그대로 빌드됩니다.
 
 ## 프로젝트 구조
 
@@ -117,17 +119,22 @@ $ flutter analyze
 No issues found!
 
 $ flutter test
-00:10 +55: All tests passed!
+00:08 +56: All tests passed!
 ```
 
-(테스트 55개 = 단위/위젯 회귀 52개 + 성능 회귀 가드 3개. 성능 가드는 수치 라인을
-출력하면서 예산을 벗어나면 실패합니다 - `MICRO_BENCH`(증분 집계가 전량 재계산보다
-느려지면 실패), `THROUGHPUT_15K`(상한 부하에서 배치당 비용이 프레임 예산의 1/4을
-넘으면 실패), `SCALE_SWEEP`(물리적 최대 유입 120k건/s에서 프레임 예산을 넘으면
-실패). 그 외에 feed 파라미터 9개 변형에서의 불변식 검증, `start()` 벽시계 구동
-신선도 자동 증명(드래그 중 포함), 200초 분량 soak(tick 회계/자료구조 상수성),
-증분 순위와 전체 정렬의 fuzz 등가성 대조, 백그라운드 통지 정지/복원,
-`transientErrorProbability: 0.1` 구독 생존 검증을 포함합니다.)
+56개는 단위/위젯 회귀 52개와 성능 회귀 가드 4개입니다. 성능 가드는 수치 라인을
+출력하면서 예산을 벗어나면 실패합니다.
+
+- `MICRO_BENCH` - 증분 집계가 전량 재계산보다 느려지면 실패
+- `THROUGHPUT_15K` - 상한 부하에서 배치당 비용이 프레임 예산의 1/4을 넘으면 실패
+- `SCALE_SWEEP` - 물리적 최대 유입 120k건/s에서 프레임 예산을 넘으면 실패
+- `RANK_COST` - 순위 유지가 적용 비용의 최대 항목이 아니게 되면 실패. PERF.md
+  §2/§6의 "손잡이는 사실상 하나"라는 판단이 이 전제 위에 있습니다
+
+나머지 회귀 테스트는 feed 파라미터 9개 변형에서의 불변식 검증, `start()` 벽시계
+구동 신선도 자동 증명(드래그 중 포함), 200초 분량 soak(tick 회계와 자료구조
+상수성), 증분 순위와 전체 정렬의 fuzz 등가성 대조, 백그라운드 통지 정지/복원,
+`transientErrorProbability: 0.1` 에서의 구독 생존 검증입니다.
 
 ## 웹 데모 - 배포 형태와 한계
 
@@ -151,12 +158,12 @@ CSP 도 그 출처를 열지 않았습니다 - 렌더러 코드의 출처가 서
 (nginx 기본 압축 수준 1로는 각각 약 2.5MB / 3.9MB 입니다. 자산이 커서 차이가
 무시할 수 없어 ticker 블록만 `gzip_comp_level 6` 으로 올렸습니다.)
 
-Next 데모들(수십~수백 KB)과 자릿수가 다른 이 크기는 Flutter web 의 구조적
-비용(렌더러 엔진 동봉)이고, 숨기는 대신 여기 적어 둡니다. 파일명에 해시가 없어
-immutable 캐시는 걸 수 없지만 재방문은 304 재검증(본문 0바이트)으로 사실상
-공짜입니다.
+Next 데모들(수십~수백 KB)과 자릿수가 다릅니다. 렌더러 엔진을 함께 내려받는
+Flutter web 의 구조적 비용이라 줄일 방법이 없어 그대로 적어 둡니다. 파일명에
+해시가 없어 immutable 캐시는 걸 수 없지만, 재방문은 304 재검증(본문 0바이트)이라
+부담이 없습니다.
 
-**정직하게 적어 두는 한계와 취한 조치:**
+**한계와 취한 조치:**
 
 - **SEO 는 사실상 0입니다.** 캔버스 렌더링이라 크롤러가 읽을 텍스트가 없습니다.
   이 데모는 색인 대상이 아니므로(robots disallow, 다른 데모와 동일 정책) 문제로
@@ -165,8 +172,8 @@ immutable 캐시는 걸 수 없지만 재방문은 304 재검증(본문 0바이�
   트리를 요청 시(화면의 숨은 활성화 버튼) 생성합니다. 고빈도 시세 화면의 제대로 된
   낭독은 갱신 전달이 아니라 주기 요약(throttle) 낭독이라는 별도 설계가 필요해서,
   라벨만 붙이는 시늉은 하지 않았습니다(DESIGN.md §9와 같은 판단).
-- **키보드 경로** - 검색 입력, 행/타일 포커스 이동(Tab)과 활성화(Enter), 목록
-  스크롤(방향키)은 Flutter 기본 포커스 시스템으로 동작합니다.
+- **키보드 경로는 동작합니다.** 검색 입력, 행/타일 포커스 이동(Tab)과
+  활성화(Enter), 목록 스크롤(방향키)은 Flutter 기본 포커스 시스템을 씁니다.
 - **한글 폴백 폰트는 런타임 로드입니다.** 번들에 없는 글리프를 만나면
   fonts.gstatic.com 에서 글리프 구간 단위로 받아옵니다(ticker CSP 가 이 출처만
   허용). 폰트 전체 번들 대안은 항상 수 MB 를 추가해 기각했습니다.
@@ -182,9 +189,9 @@ immutable 캐시는 걸 수 없지만 재방문은 304 재검증(본문 0바이�
   **요구 변경별 영향 범위**, 테스트 전략.
 - [PERF.md](PERF.md) - 부하 특성 분석과 **적용 비용 내부 분해**, baseline 정의,
   재현 방법, **before/after 프레임 실측**, 통지 주기 스윕(성능-신선도),
-  스토어 통계 해석, **부하 상한 15,000건/s에서의 여력**. 수치의 측정 시점과
-  이식 후 달라진 두 지점은 그 문서 §0에 먼저 적어 두었습니다.
+  스토어 통계 해석, **부하 상한 15,000건/s에서의 여력**. 수치를 언제 어떤 트리에서
+  쟀는지, 측정 방법을 어디서 바꿨는지는 그 문서 §0에 먼저 적어 두었습니다.
 
-처음 보신다면 [DESIGN.md](DESIGN.md) §1(설계 요약 한 장) -> [PERF.md](PERF.md) §4(실측 표)
--> [quote_store.dart](lib/state/quote_store.dart)(정합성/집계/통지가 만나는 지점)
--> [DESIGN.md](DESIGN.md) §8(기각한 대안) 순서가 가장 빠릅니다.
+읽는 순서는 [DESIGN.md](DESIGN.md) §1(설계 요약 한 장), [PERF.md](PERF.md) §4(실측 표),
+[quote_store.dart](lib/state/quote_store.dart)(정합성/집계/통지가 만나는 지점),
+[DESIGN.md](DESIGN.md) §8(기각한 대안)을 권합니다.
