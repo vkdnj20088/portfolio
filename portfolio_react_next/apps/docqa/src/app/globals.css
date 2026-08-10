@@ -743,6 +743,13 @@ mark {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+/* LLM 대조 절 안의 하위 제목. h2 보다 한 단 작게 - 같은 절의 두 번째 표라는 뜻이다. */
+.evalH3 {
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-base);
+  letter-spacing: -0.01em;
+}
 .evalCards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -990,4 +997,279 @@ mark {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   line-height: var(--leading-normal);
+}
+
+/* ── 에이전트 실행 되짚기(/agent) ──────────────────────── */
+.agentEmpty {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+.agentEmpty h2 {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-base);
+}
+.agentEmpty p {
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--color-text-muted);
+}
+.agentEmpty p + p {
+  margin-top: var(--space-3);
+}
+
+.agentChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.agentChip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px var(--space-3);
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: inherit;
+  cursor: pointer;
+}
+.agentChip.isOn {
+  border-color: var(--color-link);
+  border-left-color: currentColor;
+}
+.agentChip .cTitle {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.agentChip .cState {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+/* 실행 상태별 색. 실패와 예산 초과와 불응답이 서로 다르게 보여야 한다. */
+.tone-ok {
+  border-left-color: var(--color-success);
+}
+.tone-warn {
+  border-left-color: #b8860b;
+}
+.tone-bad {
+  border-left-color: var(--color-link);
+}
+
+.agentRunHead {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+.rhTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.stateBadge {
+  padding: 3px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: 100px;
+  border: 1px solid var(--color-border);
+  border-left-width: 3px;
+}
+.replayNote {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.rhTask {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+.rhSummary {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--color-text-muted);
+}
+.rhMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+.rhMetrics dt {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.rhMetrics dd {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.budgetBar {
+  height: 6px;
+  margin-top: var(--space-3);
+  border-radius: 100px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.budgetBar span {
+  display: block;
+  height: 100%;
+  background: var(--color-link);
+}
+
+.agentSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.agentTree {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  overflow: hidden;
+}
+.spanRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px var(--space-3);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--text-xs);
+}
+.spanRow:last-child {
+  border-bottom: none;
+}
+.spanRow.isOn {
+  background: var(--color-surface);
+}
+/* 실패한 span 은 눈에 띄어야 한다 - 성공만 보이면 이 화면의 값이 절반이다. */
+.spanRow.isFailed {
+  box-shadow: inset 3px 0 0 var(--color-link);
+}
+.spanKind {
+  flex: none;
+  min-width: 4.5em;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+.spanName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.spanName .attempt {
+  margin-left: 6px;
+  font-style: normal;
+  font-size: 0.68rem;
+  color: var(--color-link);
+}
+.spanErr {
+  flex: none;
+  font-weight: 600;
+  color: var(--color-link);
+}
+.spanMs {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+.spanMs em {
+  font-style: normal;
+  opacity: 0.7;
+}
+.verifyBadge {
+  flex: none;
+  padding: 1px 7px;
+  font-size: 0.66rem;
+  border-radius: 100px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+.verifyBadge.v-verified {
+  color: var(--color-success);
+  border-color: currentColor;
+}
+.verifyBadge.v-mismatch {
+  color: var(--color-link);
+  border-color: currentColor;
+}
+
+.agentDetail {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+.spanDetail h3 {
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-3);
+}
+.sdMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.sdMeta dt {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.sdMeta dd {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sdError {
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-link);
+  color: var(--color-link);
+}
+.spanDetail details {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+}
+.spanDetail summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+.spanDetail pre {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  max-height: 260px;
+  overflow: auto;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 860px) {
+  /* 좁은 화면에서는 트리와 상세를 세로로 쌓는다. 두 칸을 유지하면 span 이름이 글자 단위로
+     쪼개져 트리가 읽히지 않는다. */
+  .agentSplit {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

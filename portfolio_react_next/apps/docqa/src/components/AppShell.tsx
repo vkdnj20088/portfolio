@@ -14,9 +14,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isSearch = pathname.startsWith('/search');
   const isEval = pathname.startsWith('/eval');
+  const isAgent = pathname.startsWith('/agent');
   // 인트로 카드의 data-demo 와 같은 키. 이 앱은 화면마다 다른 카드라 라우트에서 고른다.
   // 품질 지표(/eval)는 카드가 아니라 목록 밖 링크 한 줄이다 - 키는 보내되 표식은 붙지 않는다.
-  const demoKey = isEval ? 'docqa-eval' : isSearch ? 'docqa-search' : 'docqa-qa';
+  // /agent 는 데모 카드가 아니라 아홉 데모 위에 올라가는 층이라 인트로 카드 키가 없다.
+  // 카드가 없으므로 복귀 링크는 목록 자체로 보낸다(키를 지어내면 없는 카드를 강조하게 된다).
+  const demoKey = isAgent
+    ? 'docqa-qa'
+    : isEval
+      ? 'docqa-eval'
+      : isSearch
+        ? 'docqa-search'
+        : 'docqa-qa';
   const portfolioHome = usePortfolioHome(PORTFOLIO_FALLBACK, demoKey);
 
   const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
@@ -56,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </div>
         <nav className="nav" aria-label="제품">
-          <Link href="/" aria-current={!isSearch && !isEval ? 'page' : undefined}>
+          <Link href="/" aria-current={!isSearch && !isEval && !isAgent ? 'page' : undefined}>
             근거 QA
           </Link>
           <Link href="/search" aria-current={isSearch ? 'page' : undefined}>
@@ -64,6 +73,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <Link href="/eval" aria-current={isEval ? 'page' : undefined}>
             품질 지표
+          </Link>
+          <Link href="/agent" aria-current={isAgent ? 'page' : undefined}>
+            에이전트 실행
           </Link>
         </nav>
         <button

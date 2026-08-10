@@ -9,9 +9,12 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check:browser-support": "es-check es2022 \".next/static/chunks/**/*.js\""
+    "check:browser-support": "es-check es2022 \".next/static/chunks/**/*.js\"",
+    "make:llm-baseline": "tsx scripts/make-llm-baseline.ts",
+    "make:agent-traces": "tsx scripts/make-agent-traces.ts"
   },
   "dependencies": {
+    "@chat/agent-core": "workspace:*",
     "@chat/search-domain": "workspace:*",
     "@chat/ui": "workspace:*",
     "next": "16.2.12",
@@ -19,6 +22,8 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "tsx": "^4.20.6",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^26.1.2",

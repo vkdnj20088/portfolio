@@ -7,7 +7,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  transpilePackages: ['@chat/ui', '@chat/search-domain'],
+  transpilePackages: ['@chat/ui', '@chat/search-domain', '@chat/agent-core'],
   poweredByHeader: false,
   typescript: { ignoreBuildErrors: false },
   // eslint 키는 Next 16 에서 제거됐다. lint 는 turbo 태스크와 CI 가 직접 돌린다(챗 설정 참고).
