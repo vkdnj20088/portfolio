@@ -57,3 +57,18 @@ jobs:
       # 통합 테스트(Testcontainers, 실제 MySQL 8). GitHub 러너에 Docker 가 있어 그대로 돈다.
       # 기본 test 와 태그로 분리돼 있어(@Tag integration) 로컬 클론은 Docker 없이도 test 가 통과한다.
       - run: ./gradlew integrationTest --no-daemon
+
+      # 실패한 테스트의 **이름과 스택**을 남긴다. 콘솔 로그에는 컨테이너를 내린 뒤의 커넥션
+      # 오류가 수백 줄 쏟아져 정작 어느 테스트가 왜 깨졌는지가 묻힌다(실제로 그래서 원인을
+      # 못 짚었다). Docker 가 필요한 태스크라 로컬 재현도 쉽지 않으니, 판정 근거는 CI 가
+      # 파일로 남겨야 한다. test-results 의 XML 이 실패 메시지를 그대로 담는다.
+      # 정적 경로 + if: failure() 라 입력값 보간이 없다.
+      - name: integrationTest report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-report
+          path: |
+            portfolio_jquery_spring/build/reports/tests/integrationTest
+            portfolio_jquery_spring/build/test-results/integrationTest
+          if-no-files-found: ignore
