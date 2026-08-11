@@ -85,9 +85,9 @@ async function main() {
     const message = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      // 같은 입력에 같은 답이 나올 확률을 최대한 올린다. 그래도 바이트 단위 재현은 보장되지
-      // 않는다 - 그래서 결과를 **커밋**한다. 커밋된 파일이 "그때 이 모델이 이렇게 읽었다"는 기록이다.
-      temperature: 0,
+      // temperature 는 넘기지 않는다 - 이 모델은 그 파라미터를 받지 않는다(400). 넘길 수
+      // 있었더라도 바이트 단위 재현은 보장되지 않았다. 재현되지 않기 때문에 결과를 **커밋**하는
+      // 것이고, 커밋된 파일이 "그때 이 모델이 이렇게 읽었다"는 기록이다.
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `질문: ${c.q}\n\n후보 문단:\n${context}` }],
     });

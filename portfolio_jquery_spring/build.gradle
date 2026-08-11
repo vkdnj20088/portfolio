@@ -11,7 +11,13 @@ group = 'com.portfolio'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
+    // toolchain 으로 지정한다. sourceCompatibility 만 두면 "소스 레벨이 21"이라고 선언할 뿐
+    // 컴파일러를 고르지 않아서, 개발자 셸의 JAVA_HOME 이 더 낮으면 invalid source release: 21
+    // 로 죽는다(실제로 겪음 - ~/.bash_profile 이 JDK 17 을 가리키고 있었다).
+    // toolchain 은 설치된 JDK 중 21 을 Gradle 이 직접 골라 쓰므로 주변 환경에 기대지 않는다.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {

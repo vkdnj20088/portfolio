@@ -143,7 +143,9 @@ async function runScenario(scenario: Scenario): Promise<TraceArtifact> {
     const message = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      temperature: 0,
+      // temperature 는 넘기지 않는다 - 이 모델은 그 파라미터를 받지 않는다(400).
+      // 애초에 재현을 그 손잡이로 살 수 있는 것도 아니었다. 실행이 재현되지 않기 때문에
+      // 결과를 커밋하는 것이고, 커밋된 span 이 "그때 이렇게 돌았다"는 기록이다.
       system: SYSTEM_PROMPT,
       tools: anthropicTools,
       messages,
