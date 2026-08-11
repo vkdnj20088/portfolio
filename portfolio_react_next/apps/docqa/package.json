@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check:browser-support": "es-check es2022 \".next/static/chunks/**/*.js\"",
-    "make:llm-baseline": "tsx scripts/make-llm-baseline.ts",
-    "make:agent-traces": "tsx scripts/make-agent-traces.ts"
+    "make:llm-baseline": "tsx scripts/make-llm-baseline.ts && prettier --write ../../packages/search-domain/src/eval/llm-baseline.json",
+    "make:agent-traces": "tsx scripts/make-agent-traces.ts && prettier --write src/lib/agent/data/traces.json"
   },
   "dependencies": {
     "@chat/agent-core": "workspace:*",

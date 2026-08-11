@@ -146,4 +146,22 @@ describe('커밋된 산출물', () => {
   it('현재 다이제스트가 도구 정의에서 나온다', () => {
     expect(CURRENT_TOOLSET_DIGEST).toBe(toolsetDigest(TOOLS));
   });
+
+  it('성공으로 끝난 실행은 답이 비어 있지 않다', () => {
+    // 첫 수집에서 한 시나리오가 max_tokens 에 잘렸는데도 succeeded 로 남았다. 화면은 초록
+    // 배지에 빈 답을 띄웠고, "무엇을 했는지 되짚게 한다"는 이 층의 주장이 그 자리에서 깨진다.
+    // 수집기를 고쳤지만 그것만으로는 다음 수집이 같은 모양으로 들어오는 것을 막지 못한다.
+    for (const t of traceBundle().traces) {
+      if (t.finalState === 'succeeded') expect(t.summary.trim()).not.toBe('');
+    }
+  });
+
+  it('상한에 잘린 스텝이 있으면 성공으로 끝나지 않는다', () => {
+    for (const t of traceBundle().traces) {
+      const truncated = t.spans.some(
+        (s) => s.kind === 'step' && s.attrs['gen_ai.response.finish_reason'] === 'max_tokens',
+      );
+      if (truncated) expect(t.finalState).not.toBe('succeeded');
+    }
+  });
 });

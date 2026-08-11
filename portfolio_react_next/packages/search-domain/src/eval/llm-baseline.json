@@ -1,7 +1,200 @@
 {
-  "model": "",
-  "generatedAt": "",
+  "model": "claude-sonnet-5",
+  "generatedAt": "2026-08-11T01:25:18.670Z",
   "mode": "semantic",
   "depth": 5,
-  "cases": []
+  "cases": [
+    {
+      "q": "연차는 며칠 부여되나요?",
+      "answered": "HR-01-p1",
+      "raw": "HR-01-p1",
+      "candidates": ["HR-01-p1", "HR-01-p4", "HR-01-p5", "HR-01-p2", "HR-01-p3"]
+    },
+    {
+      "q": "반차는 어떻게 사용하나요?",
+      "answered": "HR-01-p2",
+      "raw": "HR-01-p2",
+      "candidates": ["HR-01-p2", "HR-01-p4", "HR-01-p5", "HR-01-p3", "HR-01-p1"]
+    },
+    {
+      "q": "병가는 며칠까지 쓸 수 있나요?",
+      "answered": "HR-01-p3",
+      "raw": "HR-01-p3",
+      "candidates": ["HR-01-p3", "HR-01-p4", "PROD-03-p1", "FAQ-01-p2", "HR-02-p3"]
+    },
+    {
+      "q": "경조사 휴가는 며칠인가요?",
+      "answered": "HR-01-p4",
+      "raw": "HR-01-p4",
+      "candidates": ["HR-01-p4", "HR-01-p3", "HR-01-p2", "HR-01-p1", "HR-01-p5"]
+    },
+    {
+      "q": "재택근무는 주 며칠까지 가능한가요?",
+      "answered": "HR-02-p2",
+      "raw": "HR-02-p2",
+      "candidates": ["HR-02-p2", "HR-02-p1", "SEC-02-p3", "INFRA-01-p3"]
+    },
+    {
+      "q": "초과근무는 어떻게 보상되나요?",
+      "answered": "HR-02-p3",
+      "raw": "HR-02-p3",
+      "candidates": ["HR-02-p3"]
+    },
+    {
+      "q": "비밀번호는 몇 자 이상이어야 하나요?",
+      "answered": "SEC-01-p1",
+      "raw": "SEC-01-p1",
+      "candidates": ["SEC-01-p1", "FAQ-01-p1", "SEC-01-p3", "SEC-01-p2"]
+    },
+    {
+      "q": "비밀번호는 얼마마다 변경해야 하나요?",
+      "answered": "SEC-01-p2",
+      "raw": "SEC-01-p2",
+      "candidates": ["SEC-01-p2", "SEC-01-p1", "FAQ-01-p1", "SEC-01-p3"]
+    },
+    {
+      "q": "지정가 주문은 어떻게 체결되나요?",
+      "answered": "PROD-01-p2",
+      "raw": "PROD-01-p2",
+      "candidates": ["PROD-01-p1", "PROD-01-p2", "PROD-01-p4"]
+    },
+    {
+      "q": "커스텀 확장자는 몇 개까지 등록하나요?",
+      "answered": "PROD-02-p2",
+      "raw": "PROD-02-p2",
+      "candidates": ["PROD-02-p2", "PROD-02-p1"]
+    },
+    {
+      "q": "경비 정산은 언제까지 청구해야 하나요?",
+      "answered": "HR-03-p1",
+      "raw": "HR-03-p1",
+      "candidates": ["HR-03-p1", "HR-03-p2", "HR-03-p4"]
+    },
+    {
+      "q": "자기계발비는 연 얼마까지 지원되나요?",
+      "answered": "HR-03-p3",
+      "raw": "HR-03-p3",
+      "candidates": ["HR-03-p3", "HR-03-p2", "HR-01-p3"]
+    },
+    {
+      "q": "온콜 담당자는 어떻게 정해지나요?",
+      "answered": "INFRA-01-p3",
+      "raw": "INFRA-01-p3",
+      "candidates": ["INFRA-01-p3", "FAQ-01-p4"]
+    },
+    {
+      "q": "프로덕션 배포는 언제 할 수 있나요?",
+      "answered": "INFRA-01-p1",
+      "raw": "INFRA-01-p1",
+      "candidates": ["INFRA-01-p1", "INFRA-01-p2", "INFRA-01-p4", "PROD-03-p1", "FAQ-01-p2"]
+    },
+    {
+      "q": "휴가는 며칠 받나요?",
+      "answered": "HR-01-p1",
+      "raw": "HR-01-p1",
+      "candidates": ["HR-01-p3", "HR-01-p4", "HR-01-p2", "HR-01-p1", "HR-01-p5"]
+    },
+    {
+      "q": "유급휴가 일수가 궁금합니다",
+      "answered": "HR-01-p1",
+      "raw": "HR-01-p1",
+      "candidates": ["HR-01-p1", "HR-01-p4", "HR-01-p5", "HR-01-p3", "HR-01-p2"]
+    },
+    {
+      "q": "암호 만드는 규칙이 어떻게 되나요?",
+      "answered": "SEC-01-p1",
+      "raw": "SEC-01-p1",
+      "candidates": ["SEC-01-p1", "FAQ-01-p1", "SEC-01-p3", "SEC-01-p2"]
+    },
+    {
+      "q": "원격 근무 신청은 어떻게 해요?",
+      "answered": "HR-02-p2",
+      "raw": "HR-02-p2",
+      "candidates": ["HR-02-p2", "SEC-02-p3", "HR-02-p4", "HR-01-p5"]
+    },
+    {
+      "q": "인출할 때 뭐가 필요해?",
+      "answered": "PROD-01-p3",
+      "raw": "PROD-01-p3",
+      "candidates": ["SEC-02-p4", "HR-03-p4", "PROD-01-p3"]
+    },
+    {
+      "q": "매수 주문은 어떻게 넣나요?",
+      "answered": "PROD-01-p1",
+      "raw": "PROD-01-p1",
+      "candidates": ["PROD-01-p1", "PROD-01-p4", "PROD-01-p2"]
+    },
+    {
+      "q": "릴리스는 언제 할 수 있나요?",
+      "answered": "INFRA-01-p1",
+      "raw": "INFRA-01-p1",
+      "candidates": ["INFRA-01-p2", "INFRA-01-p1", "PROD-03-p1", "INFRA-01-p4", "FAQ-01-p2"]
+    },
+    {
+      "q": "인시던트 1차 대응은 몇 분 안에 하나요?",
+      "answered": "INFRA-01-p3",
+      "raw": "INFRA-01-p3",
+      "candidates": ["INFRA-01-p3", "FAQ-01-p1", "HR-03-p2", "HR-01-p1", "FAQ-01-p2"]
+    },
+    {
+      "q": "노트북을 잃어버리면 어떻게 하나요?",
+      "answered": "SEC-02-p3",
+      "raw": "SEC-02-p3",
+      "candidates": ["HR-02-p4", "SEC-02-p3", "FAQ-01-p4", "FAQ-01-p2", "SEC-02-p1"]
+    },
+    {
+      "q": "세미나 참가비도 지원되나요?",
+      "answered": "HR-03-p3",
+      "raw": "HR-03-p3",
+      "candidates": ["HR-03-p3", "HR-03-p2"]
+    },
+    {
+      "q": "주차장은 몇 시까지 운영하나요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": ["HR-02-p2"]
+    },
+    {
+      "q": "대표이사 이름이 뭔가요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": ["PROD-02-p4", "PROD-03-p1"]
+    },
+    {
+      "q": "육아휴직은 얼마나 쓸 수 있나요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": ["PROD-03-p1", "FAQ-01-p2", "HR-02-p3", "FAQ-01-p1", "HR-02-p1"]
+    },
+    {
+      "q": "반려동물을 데려와도 되나요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": []
+    },
+    {
+      "q": "사내 헬스장은 어디에 있나요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": ["FAQ-01-p3", "FAQ-01-p2", "HR-02-p4", "FAQ-01-p4", "SEC-01-p3"]
+    },
+    {
+      "q": "퇴직금은 어떻게 계산되나요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": []
+    },
+    {
+      "q": "주식 배당은 언제 나오나요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": []
+    },
+    {
+      "q": "해외 지사는 몇 개인가요?",
+      "answered": null,
+      "raw": "없음",
+      "candidates": ["HR-03-p4"]
+    }
+  ]
 }

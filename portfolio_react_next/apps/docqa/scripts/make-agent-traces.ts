@@ -44,7 +44,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, '..', 'src', 'lib', 'agent', 'data', 'traces.json');
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
-const MAX_TOKENS = 1024;
+// 1024 로 두었더니 future-window 시나리오의 첫 스텝이 그 자리에서 잘렸다(stop_reason=max_tokens,
+// output_tokens 가 정확히 1024). 도구 인자를 쓰던 중 잘리면 그 블록이 응답에서 빠져 "도구도
+// 안 부르고 답도 없는" 빈 스텝이 남는다. 한 스텝이 도구 호출과 근거 요약을 함께 담기에 부족하지
+// 않은 값으로 올린다.
+const MAX_TOKENS = 4096;
 
 const SYSTEM_PROMPT = [
   '당신은 JC 포트폴리오 데모의 사내 운영 보조입니다. 주어진 도구로만 사실을 확인하고,',
@@ -160,13 +164,16 @@ async function runScenario(scenario: Scenario): Promise<TraceArtifact> {
     const toolUses = message.content.filter(
       (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
     );
+    // 응답이 상한에서 잘렸다는 뜻이다. 잘린 스텝은 도구 호출도 답도 온전하지 않으므로
+    // 성공으로 접으면 안 된다 - 아래 종료 분기에서 실패로 끝낸다.
+    const truncated = message.stop_reason === 'max_tokens';
 
     spans.push({
       spanId: stepSpanId,
       parentSpanId: runSpanId,
       kind: 'step',
       name: `step ${spans.filter((s) => s.kind === 'step').length + 1}`,
-      status: 'ok',
+      status: truncated ? 'error' : 'ok',
       startOffsetMs: stepStart,
       durationMs: stepEnd - stepStart,
       evalCaseId: null,
@@ -180,6 +187,15 @@ async function runScenario(scenario: Scenario): Promise<TraceArtifact> {
       },
     });
     messages.push({ role: 'assistant', content: message.content });
+
+    if (truncated) {
+      // 처음 수집했을 때 이 자리가 없어서, 상한에 잘린 실행이 요약 없는 succeeded 로 남았다.
+      // 화면이 초록 배지에 빈 답을 띄우게 되니 이 데모가 스스로에 대해 거짓말을 하는 셈이다.
+      // 잘림은 근거 없음(refused)도 예산 초과(exhausted)도 아닌 별개의 실패라 failed 로 끝낸다.
+      state = transition(state, 'failed');
+      summary = `모델 응답이 max_tokens(${MAX_TOKENS}) 상한에서 잘려 중단했습니다.`;
+      break;
+    }
 
     if (toolUses.length === 0) {
       summary = text;
