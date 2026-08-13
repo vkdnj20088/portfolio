@@ -33,3 +33,6 @@ export type { StaleReport } from './replay';
 
 // 2단계 - 실행 여럿을 놓고 회귀인지 잡음인지 판정하는 층.
 export * from './eval';
+
+// 3단계 - 하지 말아야 할 일을 하려 할 때 무엇이 막는가.
+export * from './guard';

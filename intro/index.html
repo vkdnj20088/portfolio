@@ -910,8 +910,10 @@
           도구를 쓰는 에이전트가 위 데모들(문서 검색, 근거 QA, IP 접근 제어)을 <b>도구로 불러</b> 다단계 과제를 풉니다.
           실행 전체가 span 트리로 남고, 도구가 실패한 실행과 예산에 걸려 멈춘 실행도 같은 방식으로 되짚습니다.
           그 위에 같은 과제를 <b>지시 두 종으로 세 번씩</b> 돌려, 통과율 차이가 잡음과 구분되는지 판정하는 화면을 두었습니다.
+          사용자가 쓴 문서에 심긴 지시가 부작용 도구를 부르려 할 때 무엇이 막는지도, 방어를 끄고 켠 같은 실행을 나란히 놓고 보여 줍니다.
           <a class="wx-link" data-demo-link="docqa-agent" href="#" hidden>에이전트 실행 되짚기 <span class="arrow" aria-hidden="true">&#8599;</span></a>
           <a class="wx-link" data-demo-link="docqa-agent-eval" href="#" hidden>회귀인가 잡음인가 <span class="arrow" aria-hidden="true">&#8599;</span></a>
+          <a class="wx-link" data-demo-link="docqa-agent-guard" href="#" hidden>무엇이 막는가 <span class="arrow" aria-hidden="true">&#8599;</span></a>
         </p>
         <!-- 카드 아홉 장 밖에 한 줄을 둔다. 문서QA 의 품질 지표 화면은 이 포트폴리오에서 판단
              근거가 가장 많이 적힌 곳인데(자기 오답 건수까지 공개한다) 앱 안쪽 탭이라 카드에서
@@ -1132,7 +1134,8 @@
         // 에이전트 실행 되짚기. 데모 카드가 아니라 아홉 데모 위에 올라가는 층이라
         // 카드 목록(data-demo)에는 없고 이 표에만 있다 - 개수 문구를 흔들지 않는다.
         'docqa-agent':  { port: 9444, sub: 'docqa',    path: '/agent' },
-        'docqa-agent-eval': { port: 9444, sub: 'docqa', path: '/agent/eval' }
+        'docqa-agent-eval': { port: 9444, sub: 'docqa', path: '/agent/eval' },
+        'docqa-agent-guard': { port: 9444, sub: 'docqa', path: '/agent/guard' }
       };
       var IS_LOCAL = location.protocol === 'file:' ||
         /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);

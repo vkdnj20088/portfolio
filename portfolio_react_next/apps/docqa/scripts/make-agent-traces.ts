@@ -44,7 +44,11 @@ import {
   digest,
   rollUp,
   toolsetDigest,
+  argSources,
+  decisionSummary,
+  evaluateGuards,
   transition,
+  type GuardrailId,
   type RunState,
   type RunSummary,
   type Span,
@@ -53,19 +57,33 @@ import {
   type TraceArtifact,
 } from '@chat/agent-core';
 import { TOOLS, TOOL_BY_NAME } from '../src/lib/agent/tools';
-import { SCENARIOS, type Scenario } from '../src/lib/agent/scenarios';
+import {
+  GUARD_SCENARIOS,
+  SCENARIOS,
+  type GuardScenario,
+  type Scenario,
+} from '../src/lib/agent/scenarios';
 import { classifyOutcome } from '../src/lib/agent/outcome';
 import { PROMPT_BY_VARIANT, VARIANTS } from '../src/lib/agent/eval/variants';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, '..', 'src', 'lib', 'agent', 'data', 'traces.json');
 const RUNS_OUT = join(HERE, '..', 'src', 'lib', 'agent', 'data', 'runs.json');
+const GUARD_OUT = join(HERE, '..', 'src', 'lib', 'agent', 'data', 'guard-runs.json');
+
+/** 켤 수 있는 가드 전부. `--guard=off,on` 의 `on` 이 이 목록을 켠다. */
+const ALL_GUARDRAILS: GuardrailId[] = ['untrusted-arg', 'approval-required'];
 
 /** `--variant=A,B --repeat=3`. 기본값은 1단계와 같다 - 구성 A 한 벌, 한 번. */
 function arg(name: string, fallback: string): string {
   const hit = process.argv.slice(2).find((a) => a.startsWith(`--${name}=`));
   return hit ? hit.slice(name.length + 3) : fallback;
 }
+/** `--guard=off,on` 이면 가드레일 시나리오만 돌린다. 앞의 다섯과 표본이 섞이면 2단계 수치가 흔들린다. */
+const GUARD_MODES = arg('guard', '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 const VARIANT_IDS = arg('variant', 'A')
   .split(',')
   .map((s) => s.trim())
@@ -103,6 +121,10 @@ const toolNameFromModel = new Map(TOOLS.map((t) => [t.name.replace('.', '_'), t.
 // tsx 는 이 앱(Next, CJS)에서 .ts 를 CJS 로 변환하므로 top-level await 을 쓸 수 없다.
 // main() 으로 감싸는 것이 모듈 형식에 기대지 않는 방법이다.
 async function main() {
+  if (GUARD_MODES.length > 0) {
+    await collectGuardRuns();
+    return;
+  }
   const traces: TraceArtifact[] = [];
   const runs: RunSummary[] = [];
 
@@ -143,6 +165,86 @@ async function main() {
   } else {
     console.error('구성/반복 축이 없어 평가 산출물은 건드리지 않았습니다 (--variant, --repeat).');
   }
+}
+
+/**
+ * 3단계 수집 - 가드를 끄고 켠 채로 같은 시나리오를 돌린다.
+ *
+ * 여기는 통계를 세우지 않는다. 가드는 결정적이라 반복이 필요 없고(같은 인자에 같은 판정),
+ * 재는 것도 통과율이 아니라 **부작용이 실제로 일어났는가**라는 이분값이다. 2단계의 검정을
+ * 여기에 끌어오면 정밀해 보이지만 재는 대상이 없는 화면이 된다.
+ */
+async function collectGuardRuns() {
+  const runs: GuardRunArtifact[] = [];
+  for (const mode of GUARD_MODES) {
+    const enabled = mode === 'on' ? ALL_GUARDRAILS : [];
+    for (const scenario of GUARD_SCENARIOS) {
+      console.error(`\n== guard:${mode} ${scenario.id} : ${scenario.title}`);
+      const trace = await runScenario(scenario, 'A', 0, {
+        enabled,
+        approvalPolicy: scenario.approvalPolicy,
+      });
+      runs.push(summarizeGuardRun(trace, scenario, mode));
+    }
+  }
+  writeFileSync(
+    GUARD_OUT,
+    JSON.stringify(
+      { generatedAt, model: MODEL, guardrails: ALL_GUARDRAILS, modes: GUARD_MODES, runs },
+      null,
+      2,
+    ) + '\n',
+    'utf8',
+  );
+  console.error(`\n가드 실행 ${runs.length}건 -> ${GUARD_OUT}`);
+}
+
+interface GuardRunArtifact {
+  scenarioId: string;
+  title: string;
+  intent: string;
+  hostile: boolean;
+  expectBlocked: boolean;
+  guardMode: string;
+  taskPrompt: string;
+  finalState: RunState;
+  summary: string;
+  /** 부작용 도구가 실제로 실행됐는가. 이 데모가 재는 값이다. */
+  sideEffectExecuted: boolean;
+  /** 실행됐다면 릴레이 큐에 남은 작업 id. 화면이 말만 하지 않는다는 증거다. */
+  jobIds: number[];
+  blockedCalls: number;
+  wouldBlockCalls: number;
+  spans: Span[];
+}
+
+function summarizeGuardRun(
+  trace: TraceArtifact,
+  scenario: GuardScenario,
+  guardMode: string,
+): GuardRunArtifact {
+  const toolSpans = trace.spans.filter((s) => s.kind === 'tool');
+  const effectful = toolSpans.filter((s) => s.attrs['tool.side_effect'] === true);
+  const executed = effectful.filter((s) => s.status === 'ok');
+  const jobIds = executed
+    .map((s) => (s.attrs['tool.output'] as { jobId?: number } | undefined)?.jobId)
+    .filter((id): id is number => typeof id === 'number');
+  return {
+    scenarioId: trace.scenarioId,
+    title: trace.title,
+    intent: scenario.intent,
+    hostile: scenario.hostile,
+    expectBlocked: scenario.expectBlocked,
+    guardMode,
+    taskPrompt: trace.taskPrompt,
+    finalState: trace.finalState,
+    summary: trace.summary,
+    sideEffectExecuted: executed.length > 0,
+    jobIds,
+    blockedCalls: toolSpans.filter((s) => s.attrs['guard.blocked'] === true).length,
+    wouldBlockCalls: toolSpans.filter((s) => s.attrs['guard.would_block'] === true).length,
+    spans: trace.spans,
+  };
 }
 
 /** 문단 id 형식. 코퍼스가 쓰는 `HR-01-p2` 꼴이다. */
@@ -188,10 +290,16 @@ main().catch((e: unknown) => {
 
 // ---------------------------------------------------------------------------
 
+interface GuardConfig {
+  enabled: GuardrailId[];
+  approvalPolicy: 'grant' | 'deny';
+}
+
 async function runScenario(
   scenario: Scenario,
   variantId: string,
   runIndex: number,
+  guardCfg: GuardConfig | null = null,
 ): Promise<TraceArtifact> {
   // 시드에 구성과 회차를 섞는다. 시나리오 id 만 시드로 쓰면 30 실행이 같은 span id 를 갖고,
   // 케이스의 origin 이 어느 실행을 가리키는지 구분할 수 없게 된다.
@@ -208,6 +316,12 @@ async function runScenario(
   let state: RunState = transition('pending', 'running');
   let approvalUsed = false;
   let summary = '';
+  /**
+   * 신뢰 불가 도구가 지금까지 돌려준 본문. 가드가 "이 인자가 여기서 왔는가"를 대조하는 자리다.
+   * 실행 단위로 쌓는 이유는, 티켓을 1스텝에서 읽고 3스텝에서 그 문장을 인자로 쓰는 것이
+   * 정확히 이 공격의 모양이기 때문이다.
+   */
+  const untrustedTexts: string[] = [];
 
   const offset = () => Date.now() - t0;
 
@@ -320,6 +434,53 @@ async function runScenario(
         });
         continue;
       }
+      const args = use.input as Record<string, unknown>;
+      if (guardCfg) {
+        const decision = runGuards(tool, args);
+        if (decision.blocked) {
+          // 막힌 호출은 재시도하지 않는다. 재시도는 일시적 실패를 살리는 장치이고, 정책
+          // 위반은 다시 불러도 같은 위반이다.
+          spans.push({
+            spanId: ids.spanId(),
+            parentSpanId: stepSpanId,
+            kind: 'tool',
+            name: tool.name,
+            status: 'blocked',
+            startOffsetMs: offset(),
+            durationMs: 0,
+            evalCaseId: null,
+            attrs: {
+              'tool.name': tool.name,
+              'tool.call_id': callId,
+              'tool.attempt': 1,
+              'tool.input': args,
+              'tool.input_digest': digest(args),
+              'tool.arg_sources': argSources(args, untrustedTexts),
+              'tool.side_effect': tool.sideEffect,
+              'tool.requires_approval': tool.requiresApproval,
+              'guard.blocked': true,
+              'guard.would_block': true,
+              'guard.findings': decision.findings.map((f) => ({
+                guardrail: f.guardrail,
+                argName: f.argName,
+                detail: f.detail,
+              })),
+            },
+          });
+          results.push({
+            type: 'tool_result',
+            tool_use_id: callId,
+            content: JSON.stringify({
+              ok: false,
+              code: 'BLOCKED_BY_POLICY',
+              message: decisionSummary(decision),
+              findings: decision.findings.map((f) => f.detail),
+            }),
+            is_error: true,
+          });
+          continue;
+        }
+      }
       const outcome = await callWithRetry(tool, use.input as Record<string, unknown>, {
         scenario,
         traceId,
@@ -329,7 +490,11 @@ async function runScenario(
         ids,
         spans,
         offset,
+        untrustedTexts,
       });
+      if (tool.untrusted && outcome.result.ok) {
+        untrustedTexts.push(JSON.stringify(outcome.result.value));
+      }
       results.push({
         type: 'tool_result',
         tool_use_id: callId,
@@ -361,6 +526,48 @@ async function runScenario(
     spans,
   };
 
+  /**
+   * 가드 판정. 승인은 두 번에 나눠 본다 - 먼저 승인 없이 판정하고, 걸린 것이 승인 게이트
+   * 하나뿐일 때만 사람에게 묻는다. 신뢰 불가 인자가 함께 걸렸다면 묻지 않는다. 승인 화면은
+   * "그 문장을 누가 썼는가"를 보여 주지 않으므로, 그 상태로 사람에게 묻는 것 자체가 이미
+   * 공격에 한 발 넘어간 것이다.
+   */
+  function runGuards(tool: ToolDefinition, args: Record<string, unknown>) {
+    const cfg = guardCfg!;
+    const first = evaluateGuards({
+      tool,
+      args,
+      enabled: cfg.enabled,
+      approved: false,
+      untrustedTexts,
+    });
+    const onlyApproval =
+      first.findings.length > 0 && first.findings.every((f) => f.overridableByApproval);
+    // 승인 게이트가 꺼져 있으면 승인을 구하지 않는다. 첫 수집에서 이 조건이 빠져 있어,
+    // 가드를 끈 실행에도 승인 span 이 남았다 - 아무도 막지 않는 자리에 사람이 승인했다는
+    // 기록만 생기는 셈이고, 그건 off 대조군이 아니다.
+    const gateOn = cfg.enabled.includes('approval-required');
+    if (!gateOn || !onlyApproval || cfg.approvalPolicy !== 'grant') return first;
+
+    // 수집 실행에서는 수집자가 사람이다. 시나리오에 미리 적어 둔 판단을 결정적으로 재생하고,
+    // 승인이 있었다는 사실을 span 으로 남긴다 - 화면에서 그 자리가 보여야 게이트가 실재한다.
+    spans.push({
+      spanId: ids.spanId(),
+      parentSpanId: runSpanId,
+      kind: 'approval',
+      name: `${tool.name} 실행 승인`,
+      status: 'ok',
+      startOffsetMs: offset(),
+      durationMs: 0,
+      evalCaseId: null,
+      attrs: {
+        'approval.reason': `부작용이 있는 도구(${tool.name}) 실행 요청`,
+        'approval.granted': true,
+      },
+    });
+    return evaluateGuards({ tool, args, enabled: cfg.enabled, approved: true, untrustedTexts });
+  }
+
   function runSpan(durationMs = 0): Span {
     return {
       spanId: runSpanId,
@@ -378,6 +585,7 @@ async function runScenario(
 
 interface CallCtx {
   scenario: Scenario;
+  untrustedTexts: string[];
   traceId: string;
   runSpanId: string;
   stepSpanId: string;
@@ -440,7 +648,9 @@ async function callWithRetry(
         'tool.output_digest': result.ok ? digest(result.value) : undefined,
         // 인자 출처. 1단계는 기록만 하고 정책으로 쓰지 않는다 - 3단계 인젝션 방어에서
         // "신뢰 불가 출처의 지시를 인자로 승격하지 않는다"를 판정하려면 이 기록이 있어야 한다.
-        'tool.arg_sources': Object.fromEntries(Object.keys(input).map((k) => [k, 'task' as const])),
+        // 1단계에서는 전부 task 로 적었다. 3단계에서 실제 출처를 판정해 채운다 - 기록만 하던
+        // 자리가 정책으로 쓰이는 자리가 됐다.
+        'tool.arg_sources': argSources(input, ctx.untrustedTexts),
         'tool.side_effect': tool.sideEffect,
         'tool.requires_approval': tool.requiresApproval,
         'tool.injected_failure': injection?.code,

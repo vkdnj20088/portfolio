@@ -14,13 +14,11 @@ import { usePathname } from 'next/navigation';
 export function AgentTabs() {
   const pathname = usePathname();
   const onEval = pathname.startsWith('/agent/eval');
+  const onGuard = pathname.startsWith('/agent/guard');
+  const onRun = !onEval && !onGuard;
   return (
     <nav className="agentTabs" aria-label="에이전트 화면">
-      <Link
-        href="/agent"
-        className={onEval ? '' : 'isOn'}
-        aria-current={onEval ? undefined : 'page'}
-      >
+      <Link href="/agent" className={onRun ? 'isOn' : ''} aria-current={onRun ? 'page' : undefined}>
         실행 되짚기
       </Link>
       <Link
@@ -29,6 +27,13 @@ export function AgentTabs() {
         aria-current={onEval ? 'page' : undefined}
       >
         회귀인가 잡음인가
+      </Link>
+      <Link
+        href="/agent/guard"
+        className={onGuard ? 'isOn' : ''}
+        aria-current={onGuard ? 'page' : undefined}
+      >
+        무엇이 막는가
       </Link>
     </nav>
   );

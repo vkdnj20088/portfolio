@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-08-11T02:48:51.878Z",
-  "toolsetDigest": "5e95bea2a851fe48",
+  "generatedAt": "2026-08-13T12:52:46.811Z",
+  "toolsetDigest": "8d96b932fc254fdc",
   "traces": [
     {
       "scenarioId": "vpn-blocked",
       "title": "사외 접근이 막힌 이유",
       "taskPrompt": "재택 중인 직원이 203.0.113.77 에서 관리자 콘솔에 접속하려다 막혔습니다. 어떤 규칙이 막았는지 확인하고, 사내 규정상 어떻게 접속해야 하는지 근거 문단과 함께 알려 주세요.",
       "model": "claude-sonnet-5",
-      "generatedAt": "2026-08-11T02:48:51.878Z",
-      "toolsetDigest": "5e95bea2a851fe48",
+      "generatedAt": "2026-08-13T12:52:46.811Z",
+      "toolsetDigest": "8d96b932fc254fdc",
       "budget": {
         "maxSteps": 8,
         "maxToolCalls": 20,
@@ -18,7 +18,7 @@
         "softLimitRatio": 0.8
       },
       "finalState": "succeeded",
-      "summary": "## 확인 결과\n\n**차단 원인**\n- `203.0.113.77`은 IP 접근 제어 정책의 어떤 허용 규칙과도 일치하지 않아, 기본 정책인 **거부(DENY)** 가 적용되었습니다. (매치된 규칙 없음 → 기본 거부)\n\n**사내 규정상 올바른 접속 방법**\n1. 관리자 콘솔은 허용된 IP 대역 외부에서 접근이 원천 차단되며, 접근이 필요하면 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. — 근거: `SEC-02-p2`\n2. 사내 네트워크·내부 시스템은 반드시 **회사 지급 장비에서 VPN을 통해서만** 접근 가능합니다. — 근거: `SEC-02-p1`\n3. 재택근무 시에도 **회사 지급 노트북과 VPN**을 사용해야 하며, 개인 PC로 사내 시스템 접속은 금지됩니다. — 근거: `HR-02-p4`\n\n**권장 조치**: 해당 직원은 회사 지급 노트북에서 VPN에 접속한 뒤, 관리자 콘솔 접근이 필요하다면 사전에 IP 접근 제어 어드민에 등록 요청을 해야 합니다.",
+      "summary": "## 확인 결과\n\n**차단 사유**\n`guard_evaluateIpPolicy` 조회 결과, IP `203.0.113.77`은 등록된 허용 규칙 어느 것에도 매치되지 않아 **기본 정책(거부)**이 적용되어 차단되었습니다. (`decision: DENY`, `matchedRuleId: null`, \"매치하는 규칙이 없어 기본 정책(거부)을 적용했습니다.\")\n→ 근거: **SEC-02-p2** \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n**사내 규정상 올바른 접속 방법**\n1. 원격지(재택) 근무 시에는 **회사 지급 노트북 + VPN**을 통해서만 사내 시스템에 접속해야 하며, 개인 PC 접속은 금지됩니다.\n   → 근거: **HR-02-p4**\n2. 사내 네트워크·내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근 가능합니다.\n   → 근거: **SEC-02-p1**\n3. 관리자 콘솔처럼 허용 IP 대역 밖에서 접근이 필요한 경우, 사전에 **IP 접근 제어 어드민에 사용 시간대와 함께 등록**해야 합니다.\n   → 근거: **SEC-02-p2**\n4. 관리자 권한 계정은 **2단계 인증(OTP)**이 필수입니다.\n   → 근거: **SEC-01-p2**\n\n**결론**: 해당 직원은 회사 지급 노트북으로 VPN 연결 후, 필요 시 IP 접근 제어 어드민에 접속 IP와 사용 시간대를 사전 등록하고, 관리자 계정 OTP 인증을 거쳐 접속해야 합니다.",
       "spans": [
         {
           "spanId": "76d86383db3df8b5",
@@ -27,7 +27,7 @@
           "name": "사외 접근이 막힌 이유",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 9809,
+          "durationMs": 10157,
           "evalCaseId": null,
           "attrs": {
             "task.id": "vpn-blocked",
@@ -41,12 +41,12 @@
           "name": "step 1",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 3597,
+          "durationMs": 2822,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1242,
-            "gen_ai.usage.output_tokens": 179,
+            "gen_ai.usage.input_tokens": 1624,
+            "gen_ai.usage.output_tokens": 172,
             "gen_ai.response.finish_reason": "tool_use",
             "gen_ai.messages": [
               {
@@ -62,12 +62,12 @@
           "kind": "tool",
           "name": "guard.evaluateIpPolicy",
           "status": "ok",
-          "startOffsetMs": 3598,
-          "durationMs": 6,
+          "startOffsetMs": 2822,
+          "durationMs": 10,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "guard.evaluateIpPolicy",
-            "tool.call_id": "toolu_012dh2PkVMjU5i5iWsjUZCJc",
+            "tool.call_id": "toolu_01MEei7vvG6HpLN8dETWUhEs",
             "tool.attempt": 1,
             "tool.input": {
               "target": "203.0.113.77"
@@ -93,19 +93,24 @@
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3604,
-          "durationMs": 1,
+          "startOffsetMs": 2832,
+          "durationMs": 2,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01Hjf9JcgxUXa5ZjJTFVANz1",
+            "tool.call_id": "toolu_01M54k5p3uqapBiuaxc77CkC",
             "tool.attempt": 1,
             "tool.input": {
-              "query": "관리자 콘솔 원격 접속 재택 VPN 접근 규정"
+              "query": "재택 근무 관리자 콘솔 접속 규정 VPN"
             },
-            "tool.input_digest": "fffa99b11c0b71ff",
+            "tool.input_digest": "bfc152b1e978b1c3",
             "tool.output": {
               "hits": [
+                {
+                  "passageId": "HR-02-p4",
+                  "docTitle": "재택근무 및 근무시간 운영 지침",
+                  "text": "원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다."
+                },
                 {
                   "passageId": "SEC-02-p2",
                   "docTitle": "디바이스 및 VPN 접근 통제",
@@ -117,23 +122,18 @@
                   "text": "사내 네트워크와 내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근할 수 있습니다. VPN 계정은 재직 기간에만 유효하며 퇴사 시 즉시 회수됩니다."
                 },
                 {
-                  "passageId": "HR-02-p4",
-                  "docTitle": "재택근무 및 근무시간 운영 지침",
-                  "text": "원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다."
-                },
-                {
                   "passageId": "HR-02-p2",
                   "docTitle": "재택근무 및 근무시간 운영 지침",
                   "text": "재택근무는 주 2일까지 허용되며, 전날 18시까지 그룹웨어에 신청하고 팀장의 승인을 받아야 합니다. 재택 중에도 코어타임(10:00~16:00)에는 즉시 연락이 닿아야 합니다."
                 },
                 {
-                  "passageId": "SEC-02-p3",
-                  "docTitle": "디바이스 및 VPN 접근 통제",
-                  "text": "분실하거나 도난당한 노트북·휴대폰은 즉시 보안팀에 신고하여 원격 잠금 및 초기화를 요청해야 합니다."
+                  "passageId": "SEC-01-p2",
+                  "docTitle": "정보보안 및 비밀번호 정책",
+                  "text": "비밀번호는 90일마다 변경해야 하며, 5회 연속 로그인 실패 시 계정이 30분간 잠깁니다. 관리자 권한 계정은 2단계 인증(OTP)이 필수입니다."
                 }
               ]
             },
-            "tool.output_digest": "54a82902fc83db88",
+            "tool.output_digest": "0da2a4ef1c3186a9",
             "tool.arg_sources": {
               "query": "task"
             },
@@ -147,18 +147,18 @@
           "kind": "step",
           "name": "step 2",
           "status": "ok",
-          "startOffsetMs": 3605,
-          "durationMs": 6204,
+          "startOffsetMs": 2834,
+          "durationMs": 7323,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 2197,
-            "gen_ai.usage.output_tokens": 480,
+            "gen_ai.usage.input_tokens": 2594,
+            "gen_ai.usage.output_tokens": 701,
             "gen_ai.response.finish_reason": "end_turn",
             "gen_ai.messages": [
               {
                 "role": "assistant",
-                "text": "## 확인 결과\n\n**차단 원인**\n- `203.0.113.77`은 IP 접근 제어 정책의 어떤 허용 규칙과도 일치하지 않아, 기본 정책인 **거부(DENY)** 가 적용되었습니다. (매치된 규칙 없음 → 기본 거부)\n\n**사내 규정상 올바른 접속 방법**\n1. 관리자 콘솔은 허용된 IP 대역 외부에서 접근이 원천 차단되며, 접근이 필요하면 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. — 근거: `SEC-02-p2`\n2. 사내 네트워크·내부 시스템은 반드시 **회사 지급 장비에서 VPN을 통해서만** 접근 가능합니다. — 근거: `SEC-02-p1`\n3. 재택근무 시에도 **회사 지급 노트북과 VPN**을 사용해야 하며, 개인 PC로 사내 시스템 접속은 금지됩니다. — 근거: `HR-02-p4`\n\n**권장 조치**: 해당 직원은 회사 지급 노트북에서 VPN에 접속한 뒤, 관리자 콘솔 접근이 필요하다면 사전에 IP 접근 제어 어드민에 등록 요청을 해야 합니다."
+                "text": "## 확인 결과\n\n**차단 사유**\n`guard_evaluateIpPolicy` 조회 결과, IP `203.0.113.77`은 등록된 허용 규칙 어느 것에도 매치되지 않아 **기본 정책(거부)**이 적용되어 차단되었습니다. (`decision: DENY`, `matchedRuleId: null`, \"매치하는 규칙이 없어 기본 정책(거부)을 적용했습니다.\")\n→ 근거: **SEC-02-p2** \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n**사내 규정상 올바른 접속 방법**\n1. 원격지(재택) 근무 시에는 **회사 지급 노트북 + VPN**을 통해서만 사내 시스템에 접속해야 하며, 개인 PC 접속은 금지됩니다.\n   → 근거: **HR-02-p4**\n2. 사내 네트워크·내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근 가능합니다.\n   → 근거: **SEC-02-p1**\n3. 관리자 콘솔처럼 허용 IP 대역 밖에서 접근이 필요한 경우, 사전에 **IP 접근 제어 어드민에 사용 시간대와 함께 등록**해야 합니다.\n   → 근거: **SEC-02-p2**\n4. 관리자 권한 계정은 **2단계 인증(OTP)**이 필수입니다.\n   → 근거: **SEC-01-p2**\n\n**결론**: 해당 직원은 회사 지급 노트북으로 VPN 연결 후, 필요 시 IP 접근 제어 어드민에 접속 IP와 사용 시간대를 사전 등록하고, 관리자 계정 OTP 인증을 거쳐 접속해야 합니다."
               }
             ]
           }
@@ -170,8 +170,8 @@
       "title": "다음 주에는 들어올 수 있나",
       "taskPrompt": "10.20.0.5 가 2026년 8월 17일 오전 10시(KST)에 접근 가능한지 평가하고, 불가하면 사내 규정상 사전 등록 절차가 무엇인지 찾아 주세요.",
       "model": "claude-sonnet-5",
-      "generatedAt": "2026-08-11T02:48:51.878Z",
-      "toolsetDigest": "5e95bea2a851fe48",
+      "generatedAt": "2026-08-13T12:52:46.811Z",
+      "toolsetDigest": "8d96b932fc254fdc",
       "budget": {
         "maxSteps": 8,
         "maxToolCalls": 20,
@@ -181,7 +181,7 @@
         "softLimitRatio": 0.8
       },
       "finalState": "succeeded",
-      "summary": "## 평가 결과\n\n**대상**: 10.20.0.5 / **시각**: 2026-08-17 10:00 (KST)\n\n- **판정**: 거부(DENY)\n- **근거**: 매치하는 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount: 0, 매치된 규칙 없음)\n\n즉, 해당 IP·시간대에 대해 사전 등록된 허용 규칙이 없어 접근이 불가합니다.\n\n## 사전 등록 절차 (근거 문단: SEC-02-p2)\n\n> \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다.\"\n\n추가로 등록 방식 관련 (근거 문단: PROD-02-p3):\n\n> \"IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다. 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다.\"\n\n**결론**: 10.20.0.5는 등록된 규칙이 없어 접근이 거부되며, 접근이 필요하면 IP 접근 제어 어드민에서 해당 IP(또는 CIDR)와 사용 시간대를 함께 사전 등록해야 합니다.",
+      "summary": "## 평가 결과\n\n**대상**: 10.20.0.5\n**시각**: 2026-08-17 10:00 KST\n\n**결과: 접근 불가 (DENY)**\n- 사유: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (matchedRuleId 없음, evaluatedCount 0)\n\n## 사전 등록 절차 (근거: SEC-02-p2, PROD-02-p3)\n\n접근이 거부되므로 사내 규정상 다음 절차가 필요합니다.\n\n1. **IP 접근 제어 어드민**에서 사전 등록을 진행해야 합니다. (근거: SEC-02-p2 — \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\")\n2. 등록 시 **허용할 IP 또는 CIDR 대역**과 **사용 시간대**를 함께 등록해야 하며, 조회 시각은 KST(UTC+9) 기준입니다. (근거: PROD-02-p3)\n\n참고로 SEC-02-p1에 따르면 사내 네트워크·내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근 가능하다는 별도 규정도 있습니다.",
       "spans": [
         {
           "spanId": "303437969e31d078",
@@ -190,7 +190,7 @@
           "name": "다음 주에는 들어올 수 있나",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 13409,
+          "durationMs": 16472,
           "evalCaseId": null,
           "attrs": {
             "task.id": "future-window",
@@ -204,17 +204,17 @@
           "name": "step 1",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 7908,
+          "durationMs": 8558,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1220,
-            "gen_ai.usage.output_tokens": 893,
+            "gen_ai.usage.input_tokens": 1602,
+            "gen_ai.usage.output_tokens": 903,
             "gen_ai.response.finish_reason": "tool_use",
             "gen_ai.messages": [
               {
                 "role": "assistant",
-                "text": "(도구 호출만)"
+                "text": "10.20.0.5의 접근 가능 여부를 먼저 확인하겠습니다."
               }
             ]
           }
@@ -225,18 +225,18 @@
           "kind": "tool",
           "name": "guard.evaluateIpPolicy",
           "status": "ok",
-          "startOffsetMs": 7908,
-          "durationMs": 6,
+          "startOffsetMs": 8558,
+          "durationMs": 8,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "guard.evaluateIpPolicy",
-            "tool.call_id": "toolu_01K364YHuXj1JLy5dPrEBHfd",
+            "tool.call_id": "toolu_01JEG9XHLf9QsPtR6XW7ZQwi",
             "tool.attempt": 1,
             "tool.input": {
               "target": "10.20.0.5",
-              "at": 1786928400000
+              "at": 1786842000000
             },
-            "tool.input_digest": "fbb48024b8ace37e",
+            "tool.input_digest": "3b5d67e3cadffdad",
             "tool.output": {
               "decision": "DENY",
               "reason": "매치하는 규칙이 없어 기본 정책(거부)을 적용했습니다.",
@@ -254,21 +254,43 @@
         },
         {
           "spanId": "6c27ca1762263911",
-          "parentSpanId": "7036daed9e2b14b3",
+          "parentSpanId": "303437969e31d078",
+          "kind": "step",
+          "name": "step 2",
+          "status": "ok",
+          "startOffsetMs": 8566,
+          "durationMs": 2679,
+          "evalCaseId": null,
+          "attrs": {
+            "gen_ai.request.model": "claude-sonnet-5",
+            "gen_ai.usage.input_tokens": 2587,
+            "gen_ai.usage.output_tokens": 212,
+            "gen_ai.response.finish_reason": "tool_use",
+            "gen_ai.messages": [
+              {
+                "role": "assistant",
+                "text": "접근이 거부되므로, 사내 규정상 사전 등록 절차를 문서에서 찾아보겠습니다."
+              }
+            ]
+          }
+        },
+        {
+          "spanId": "3029aa3a9e28d61c",
+          "parentSpanId": "6c27ca1762263911",
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 7914,
-          "durationMs": 1,
+          "startOffsetMs": 11245,
+          "durationMs": 0,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_016yd142StRiaHe3K7bjFSSH",
+            "tool.call_id": "toolu_01KEvmiJgCVyKRQbaQfvVeyK",
             "tool.attempt": 1,
             "tool.input": {
-              "query": "IP 접근 사전 등록 절차"
+              "query": "IP 접근 허용 사전 등록 절차"
             },
-            "tool.input_digest": "f8c3195b1bd60095",
+            "tool.input_digest": "20affed216281628",
             "tool.output": {
               "hits": [
                 {
@@ -282,23 +304,23 @@
                   "text": "IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다. 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다."
                 },
                 {
+                  "passageId": "PROD-02-p2",
+                  "docTitle": "JC Guard 사용 매뉴얼",
+                  "text": "차단 확장자는 고정 목록과 사용자 지정(커스텀) 목록으로 관리하며, 커스텀 확장자는 최대 200개까지 등록할 수 있습니다. 확장자는 영문·숫자 조합만 허용됩니다."
+                },
+                {
+                  "passageId": "SEC-02-p4",
+                  "docTitle": "디바이스 및 VPN 접근 통제",
+                  "text": "USB 등 외부 저장매체 사용은 기본 차단되며, 필요 시 보안팀 승인 후 지정 장비에서만 허용됩니다."
+                },
+                {
                   "passageId": "SEC-02-p1",
                   "docTitle": "디바이스 및 VPN 접근 통제",
                   "text": "사내 네트워크와 내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근할 수 있습니다. VPN 계정은 재직 기간에만 유효하며 퇴사 시 즉시 회수됩니다."
-                },
-                {
-                  "passageId": "HR-02-p3",
-                  "docTitle": "재택근무 및 근무시간 운영 지침",
-                  "text": "초과근무(연장근로)는 사전 승인제이며, 승인된 초과근무는 통상임금의 1.5배로 보상하거나 보상휴가로 대체할 수 있습니다."
-                },
-                {
-                  "passageId": "HR-01-p5",
-                  "docTitle": "휴가 및 연차 정책",
-                  "text": "연차 사용 신청은 그룹웨어에서 최소 하루 전에 등록해야 하며, 미사용 연차는 회계연도 말에 소멸되지 않고 다음 해로 이월됩니다."
                 }
               ]
             },
-            "tool.output_digest": "d58631047d1c160e",
+            "tool.output_digest": "5d79518eda8732ec",
             "tool.arg_sources": {
               "query": "task"
             },
@@ -307,23 +329,55 @@
           }
         },
         {
-          "spanId": "3029aa3a9e28d61c",
+          "spanId": "302be8d19e208757",
+          "parentSpanId": "6c27ca1762263911",
+          "kind": "tool",
+          "name": "docqa.answer",
+          "status": "ok",
+          "startOffsetMs": 11246,
+          "durationMs": 1,
+          "evalCaseId": null,
+          "attrs": {
+            "tool.name": "docqa.answer",
+            "tool.call_id": "toolu_01S1ZyUS4e8yUW2PCojeCVP4",
+            "tool.attempt": 1,
+            "tool.input": {
+              "question": "IP 접근 허용을 받기 위한 사전 등록 절차는 무엇인가요?"
+            },
+            "tool.input_digest": "ea8fe40b8e686aa5",
+            "tool.output": {
+              "answered": true,
+              "passageId": "SEC-02-p2",
+              "text": "접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.",
+              "confidence": 0.37,
+              "threshold": 0.29
+            },
+            "tool.output_digest": "2d6f3f5771740ea1",
+            "tool.arg_sources": {
+              "question": "task"
+            },
+            "tool.side_effect": false,
+            "tool.requires_approval": false
+          }
+        },
+        {
+          "spanId": "6c2e85dc6223fa7a",
           "parentSpanId": "303437969e31d078",
           "kind": "step",
-          "name": "step 2",
+          "name": "step 3",
           "status": "ok",
-          "startOffsetMs": 7915,
-          "durationMs": 5494,
+          "startOffsetMs": 11247,
+          "durationMs": 5225,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 2882,
-            "gen_ai.usage.output_tokens": 502,
+            "gen_ai.usage.input_tokens": 3597,
+            "gen_ai.usage.output_tokens": 489,
             "gen_ai.response.finish_reason": "end_turn",
             "gen_ai.messages": [
               {
                 "role": "assistant",
-                "text": "## 평가 결과\n\n**대상**: 10.20.0.5 / **시각**: 2026-08-17 10:00 (KST)\n\n- **판정**: 거부(DENY)\n- **근거**: 매치하는 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount: 0, 매치된 규칙 없음)\n\n즉, 해당 IP·시간대에 대해 사전 등록된 허용 규칙이 없어 접근이 불가합니다.\n\n## 사전 등록 절차 (근거 문단: SEC-02-p2)\n\n> \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다.\"\n\n추가로 등록 방식 관련 (근거 문단: PROD-02-p3):\n\n> \"IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다. 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다.\"\n\n**결론**: 10.20.0.5는 등록된 규칙이 없어 접근이 거부되며, 접근이 필요하면 IP 접근 제어 어드민에서 해당 IP(또는 CIDR)와 사용 시간대를 함께 사전 등록해야 합니다."
+                "text": "## 평가 결과\n\n**대상**: 10.20.0.5\n**시각**: 2026-08-17 10:00 KST\n\n**결과: 접근 불가 (DENY)**\n- 사유: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (matchedRuleId 없음, evaluatedCount 0)\n\n## 사전 등록 절차 (근거: SEC-02-p2, PROD-02-p3)\n\n접근이 거부되므로 사내 규정상 다음 절차가 필요합니다.\n\n1. **IP 접근 제어 어드민**에서 사전 등록을 진행해야 합니다. (근거: SEC-02-p2 — \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\")\n2. 등록 시 **허용할 IP 또는 CIDR 대역**과 **사용 시간대**를 함께 등록해야 하며, 조회 시각은 KST(UTC+9) 기준입니다. (근거: PROD-02-p3)\n\n참고로 SEC-02-p1에 따르면 사내 네트워크·내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근 가능하다는 별도 규정도 있습니다."
               }
             ]
           }
@@ -335,8 +389,8 @@
       "title": "코퍼스에 답이 없는 질문",
       "taskPrompt": "사내 주차장 운영 시간과 방문객 주차 정책을 규정 근거와 함께 알려 주세요.",
       "model": "claude-sonnet-5",
-      "generatedAt": "2026-08-11T02:48:51.878Z",
-      "toolsetDigest": "5e95bea2a851fe48",
+      "generatedAt": "2026-08-13T12:52:46.811Z",
+      "toolsetDigest": "8d96b932fc254fdc",
       "budget": {
         "maxSteps": 8,
         "maxToolCalls": 20,
@@ -346,7 +400,7 @@
         "softLimitRatio": 0.8
       },
       "finalState": "refused",
-      "summary": "사내문서 코퍼스에서 주차장 운영 시간 및 방문객 주차 정책에 관한 근거를 찾을 수 없었습니다 (검색 결과는 휴가 정책 문서만 반환됨).",
+      "summary": "사내문서 코퍼스(휴가/근무, 헬프데스크 FAQ, 재택근무, 보안 정책 등)를 semantic/keyword 방식으로 모두 검색하고 직접 질의응답도 시도했으나, 주차장 운영 시간이나 방문객 주차 정책과 관련된 문단을 찾지 못했습니다.",
       "spans": [
         {
           "spanId": "495ef4b236c4f7c4",
@@ -355,7 +409,7 @@
           "name": "코퍼스에 답이 없는 질문",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 6478,
+          "durationMs": 7611,
           "evalCaseId": null,
           "attrs": {
             "task.id": "no-grounds",
@@ -369,12 +423,12 @@
           "name": "step 1",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 3821,
+          "durationMs": 2796,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1181,
-            "gen_ai.usage.output_tokens": 156,
+            "gen_ai.usage.input_tokens": 1563,
+            "gen_ai.usage.output_tokens": 161,
             "gen_ai.response.finish_reason": "tool_use",
             "gen_ai.messages": [
               {
@@ -390,12 +444,12 @@
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3821,
+          "startOffsetMs": 2796,
           "durationMs": 0,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01Uva7tfyM6Y7QSgxTMPStY4",
+            "tool.call_id": "toolu_01Par7snuve9pfgA4PRyeukv",
             "tool.attempt": 1,
             "tool.input": {
               "query": "주차장 운영 시간 방문객 주차 정책"
@@ -422,14 +476,92 @@
           "spanId": "4565aa2b3acd4cd5",
           "parentSpanId": "8961980936be3bff",
           "kind": "tool",
-          "name": "docqa.answer",
+          "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3821,
+          "startOffsetMs": 2796,
           "durationMs": 14,
           "evalCaseId": null,
           "attrs": {
+            "tool.name": "docqa.search",
+            "tool.call_id": "toolu_012Zy4SqhWh4qLop617BDbHt",
+            "tool.attempt": 1,
+            "tool.input": {
+              "query": "사내 주차장 규정",
+              "mode": "keyword"
+            },
+            "tool.input_digest": "c8516b2f5e8fe751",
+            "tool.output": {
+              "hits": [
+                {
+                  "passageId": "FAQ-01-p3",
+                  "docTitle": "사내 헬프데스크 FAQ",
+                  "text": "사내 와이파이는 임직원용(JC-Staff)과 방문객용(JC-Guest)으로 나뉘며, 방문객용은 외부 인터넷만 되고 사내 시스템에는 접속할 수 없습니다."
+                },
+                {
+                  "passageId": "FAQ-01-p2",
+                  "docTitle": "사내 헬프데스크 FAQ",
+                  "text": "신규 입사자의 사내 계정과 장비는 입사 첫날 정보시스템팀이 지급하며, 계정 활성화까지 최대 1영업일이 걸릴 수 있습니다."
+                },
+                {
+                  "passageId": "HR-02-p4",
+                  "docTitle": "재택근무 및 근무시간 운영 지침",
+                  "text": "원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다."
+                },
+                {
+                  "passageId": "FAQ-01-p4",
+                  "docTitle": "사내 헬프데스크 FAQ",
+                  "text": "노트북 고장이나 주변기기 요청은 헬프데스크(helpdesk@jc.example) 티켓으로 접수하며, 긴급 장애는 사내 메신저 #it-support 채널로 문의하세요."
+                },
+                {
+                  "passageId": "SEC-01-p3",
+                  "docTitle": "정보보안 및 비밀번호 정책",
+                  "text": "피싱 의심 메일을 받으면 링크를 클릭하지 말고 보안팀(security@jc.example)으로 신고하세요. 사내 시스템은 이메일로 비밀번호를 묻지 않습니다."
+                }
+              ]
+            },
+            "tool.output_digest": "7717d05edf849e4c",
+            "tool.arg_sources": {
+              "query": "task",
+              "mode": "task"
+            },
+            "tool.side_effect": false,
+            "tool.requires_approval": false
+          }
+        },
+        {
+          "spanId": "896853ce36cf8520",
+          "parentSpanId": "495ef4b236c4f7c4",
+          "kind": "step",
+          "name": "step 2",
+          "status": "ok",
+          "startOffsetMs": 2811,
+          "durationMs": 1808,
+          "evalCaseId": null,
+          "attrs": {
+            "gen_ai.request.model": "claude-sonnet-5",
+            "gen_ai.usage.input_tokens": 2543,
+            "gen_ai.usage.output_tokens": 109,
+            "gen_ai.response.finish_reason": "tool_use",
+            "gen_ai.messages": [
+              {
+                "role": "assistant",
+                "text": "(도구 호출만)"
+              }
+            ]
+          }
+        },
+        {
+          "spanId": "896a9265f6c8649b",
+          "parentSpanId": "896853ce36cf8520",
+          "kind": "tool",
+          "name": "docqa.answer",
+          "status": "ok",
+          "startOffsetMs": 4619,
+          "durationMs": 0,
+          "evalCaseId": null,
+          "attrs": {
             "tool.name": "docqa.answer",
-            "tool.call_id": "toolu_01Ara2PRdcJ21CYubraY2h9q",
+            "tool.call_id": "toolu_01Tib3DvGD5owJiB4XNzmt16",
             "tool.attempt": 1,
             "tool.input": {
               "question": "사내 주차장 운영 시간과 방문객 주차 정책은 무엇인가요?"
@@ -451,23 +583,23 @@
           }
         },
         {
-          "spanId": "896853ce36cf8520",
+          "spanId": "456df8f0facaa97e",
           "parentSpanId": "495ef4b236c4f7c4",
           "kind": "step",
-          "name": "step 2",
+          "name": "step 3",
           "status": "ok",
-          "startOffsetMs": 3836,
-          "durationMs": 2642,
+          "startOffsetMs": 4619,
+          "durationMs": 2992,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1594,
-            "gen_ai.usage.output_tokens": 99,
+            "gen_ai.usage.input_tokens": 2702,
+            "gen_ai.usage.output_tokens": 138,
             "gen_ai.response.finish_reason": "end_turn",
             "gen_ai.messages": [
               {
                 "role": "assistant",
-                "text": "NO_GROUNDS\n사내문서 코퍼스에서 주차장 운영 시간 및 방문객 주차 정책에 관한 근거를 찾을 수 없었습니다 (검색 결과는 휴가 정책 문서만 반환됨)."
+                "text": "NO_GROUNDS\n사내문서 코퍼스(휴가/근무, 헬프데스크 FAQ, 재택근무, 보안 정책 등)를 semantic/keyword 방식으로 모두 검색하고 직접 질의응답도 시도했으나, 주차장 운영 시간이나 방문객 주차 정책과 관련된 문단을 찾지 못했습니다."
               }
             ]
           }
@@ -479,8 +611,8 @@
       "title": "도구가 한 번 실패하는 실행",
       "taskPrompt": "198.51.100.24 의 접근 판정을 확인하고, 거부라면 사내 규정상 예외 신청 방법을 알려 주세요.",
       "model": "claude-sonnet-5",
-      "generatedAt": "2026-08-11T02:48:51.878Z",
-      "toolsetDigest": "5e95bea2a851fe48",
+      "generatedAt": "2026-08-13T12:52:46.811Z",
+      "toolsetDigest": "8d96b932fc254fdc",
       "budget": {
         "maxSteps": 8,
         "maxToolCalls": 20,
@@ -490,7 +622,7 @@
         "softLimitRatio": 0.8
       },
       "finalState": "succeeded",
-      "summary": "## 확인 결과\n\n**1. IP 판정 (198.51.100.24)**\n- 판정: **거부(DENY)**\n- 사유: 매치되는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (매치 규칙 없음, 평가된 규칙 수 0건)\n\n**2. 예외 신청 방법**\n사내 규정상 접근이 필요한 경우 절차는 다음과 같습니다.\n\n- 허용 IP 대역 외부에서 관리자 콘솔 접근이 필요하면, **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시에는 **허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 지정**하며, 조회 시각은 KST(UTC+9) 기준으로 표시됩니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n즉, 해당 IP(198.51.100.24)로 접근이 필요한 경우 IP 접근 제어 어드민 화면에서 해당 IP/CIDR와 사용 시간대를 지정해 사전 등록하시면 됩니다.",
+      "summary": "## 1. IP 접근 판정\n\n- **대상 IP**: 198.51.100.24\n- **판정**: **DENY (거부)**\n- **사유**: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount=0, matchedRuleId 없음)\n\n## 2. 예외 신청 방법 (근거: SEC-02-p2, 「디바이스 및 VPN 접근 통제」)\n\n허용된 IP 대역 외부에서 관리자 콘솔 등에 접근이 필요한 경우, **IP 접근 제어 어드민**에 다음 정보를 포함해 **사전 등록**하시면 됩니다.\n\n- 사용할 IP 또는 CIDR 대역\n- 사용 시간대\n\n참고로 PROD-02-p3(「JC Guard 사용 매뉴얼」)에 따르면, 등록 시 조회/표시되는 시각은 항상 **KST(UTC+9)** 기준이므로 시간대 등록 시 유의하시기 바랍니다.",
       "spans": [
         {
           "spanId": "bff332db7c9dcea1",
@@ -499,7 +631,7 @@
           "name": "도구가 한 번 실패하는 실행",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 12768,
+          "durationMs": 6825,
           "evalCaseId": null,
           "attrs": {
             "task.id": "tool-retry",
@@ -513,12 +645,12 @@
           "name": "step 1",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 3285,
+          "durationMs": 2347,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1191,
-            "gen_ai.usage.output_tokens": 87,
+            "gen_ai.usage.input_tokens": 1573,
+            "gen_ai.usage.output_tokens": 163,
             "gen_ai.response.finish_reason": "tool_use",
             "gen_ai.messages": [
               {
@@ -534,7 +666,7 @@
           "kind": "tool",
           "name": "guard.evaluateIpPolicy",
           "status": "error",
-          "startOffsetMs": 3285,
+          "startOffsetMs": 2347,
           "durationMs": 0,
           "error": {
             "code": "TIMEOUT",
@@ -544,7 +676,7 @@
           "evalCaseId": null,
           "attrs": {
             "tool.name": "guard.evaluateIpPolicy",
-            "tool.call_id": "toolu_01HQBwPFep7mqaJyowtNsUo3",
+            "tool.call_id": "toolu_01AJvHzXB86tXYHSvmnPBhRn",
             "tool.attempt": 1,
             "tool.input": {
               "target": "198.51.100.24"
@@ -564,12 +696,12 @@
           "kind": "tool",
           "name": "guard.evaluateIpPolicy",
           "status": "ok",
-          "startOffsetMs": 3510,
-          "durationMs": 5,
+          "startOffsetMs": 2541,
+          "durationMs": 7,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "guard.evaluateIpPolicy",
-            "tool.call_id": "toolu_01HQBwPFep7mqaJyowtNsUo3",
+            "tool.call_id": "toolu_01AJvHzXB86tXYHSvmnPBhRn",
             "tool.attempt": 2,
             "tool.input": {
               "target": "198.51.100.24"
@@ -591,43 +723,21 @@
         },
         {
           "spanId": "ffe90a3f7ca6c8fd",
-          "parentSpanId": "bff332db7c9dcea1",
-          "kind": "step",
-          "name": "step 2",
-          "status": "ok",
-          "startOffsetMs": 3515,
-          "durationMs": 3328,
-          "evalCaseId": null,
-          "attrs": {
-            "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1361,
-            "gen_ai.usage.output_tokens": 243,
-            "gen_ai.response.finish_reason": "tool_use",
-            "gen_ai.messages": [
-              {
-                "role": "assistant",
-                "text": "198.51.100.24 IP 판정 결과가 **거부(DENY)** 로 확인되어, 예외 신청 방법을 사내문서에서 조회하겠습니다."
-              }
-            ]
-          }
-        },
-        {
-          "spanId": "fff159043ca425a6",
-          "parentSpanId": "ffe90a3f7ca6c8fd",
+          "parentSpanId": "fffa53603c9b2b4a",
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 6843,
-          "durationMs": 0,
+          "startOffsetMs": 2548,
+          "durationMs": 1,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01ENmuyNfTk6vhfw4q2LKvaX",
+            "tool.call_id": "toolu_01FBLgdnuAMDDex6NGQXXMqN",
             "tool.attempt": 1,
             "tool.input": {
-              "query": "IP 접근 제어 예외 신청 방법"
+              "query": "IP 접근 차단 예외 신청 방법"
             },
-            "tool.input_digest": "9bcbed1a823fada8",
+            "tool.input_digest": "61d0a56a9cd87ce0",
             "tool.output": {
               "hits": [
                 {
@@ -646,18 +756,18 @@
                   "text": "연차 사용 신청은 그룹웨어에서 최소 하루 전에 등록해야 하며, 미사용 연차는 회계연도 말에 소멸되지 않고 다음 해로 이월됩니다."
                 },
                 {
+                  "passageId": "SEC-02-p4",
+                  "docTitle": "디바이스 및 VPN 접근 통제",
+                  "text": "USB 등 외부 저장매체 사용은 기본 차단되며, 필요 시 보안팀 승인 후 지정 장비에서만 허용됩니다."
+                },
+                {
                   "passageId": "HR-02-p2",
                   "docTitle": "재택근무 및 근무시간 운영 지침",
                   "text": "재택근무는 주 2일까지 허용되며, 전날 18시까지 그룹웨어에 신청하고 팀장의 승인을 받아야 합니다. 재택 중에도 코어타임(10:00~16:00)에는 즉시 연락이 닿아야 합니다."
-                },
-                {
-                  "passageId": "SEC-02-p1",
-                  "docTitle": "디바이스 및 VPN 접근 통제",
-                  "text": "사내 네트워크와 내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근할 수 있습니다. VPN 계정은 재직 기간에만 유효하며 퇴사 시 즉시 회수됩니다."
                 }
               ]
             },
-            "tool.output_digest": "d949d0368a8b9a00",
+            "tool.output_digest": "a939e634b288ac56",
             "tool.arg_sources": {
               "query": "task"
             },
@@ -666,55 +776,23 @@
           }
         },
         {
-          "spanId": "c3eebbf938a1e0c3",
-          "parentSpanId": "ffe90a3f7ca6c8fd",
-          "kind": "tool",
-          "name": "docqa.answer",
-          "status": "ok",
-          "startOffsetMs": 6843,
-          "durationMs": 0,
-          "evalCaseId": null,
-          "attrs": {
-            "tool.name": "docqa.answer",
-            "tool.call_id": "toolu_01DQHPxAZkAEYFr7X6PMZ3we",
-            "tool.attempt": 1,
-            "tool.input": {
-              "question": "IP 접근 제어에서 거부된 경우 예외 신청은 어떻게 하나요?"
-            },
-            "tool.input_digest": "4298a41b023c1e35",
-            "tool.output": {
-              "answered": true,
-              "passageId": "PROD-02-p3",
-              "text": "IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다.",
-              "confidence": 0.3,
-              "threshold": 0.29
-            },
-            "tool.output_digest": "9fa98c3e322bc5d4",
-            "tool.arg_sources": {
-              "question": "task"
-            },
-            "tool.side_effect": false,
-            "tool.requires_approval": false
-          }
-        },
-        {
-          "spanId": "03e254c638b329e4",
+          "spanId": "fff159043ca425a6",
           "parentSpanId": "bff332db7c9dcea1",
           "kind": "step",
-          "name": "step 3",
+          "name": "step 2",
           "status": "ok",
-          "startOffsetMs": 6843,
-          "durationMs": 5925,
+          "startOffsetMs": 2549,
+          "durationMs": 4276,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 2421,
-            "gen_ai.usage.output_tokens": 462,
+            "gen_ai.usage.input_tokens": 2505,
+            "gen_ai.usage.output_tokens": 367,
             "gen_ai.response.finish_reason": "end_turn",
             "gen_ai.messages": [
               {
                 "role": "assistant",
-                "text": "## 확인 결과\n\n**1. IP 판정 (198.51.100.24)**\n- 판정: **거부(DENY)**\n- 사유: 매치되는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (매치 규칙 없음, 평가된 규칙 수 0건)\n\n**2. 예외 신청 방법**\n사내 규정상 접근이 필요한 경우 절차는 다음과 같습니다.\n\n- 허용 IP 대역 외부에서 관리자 콘솔 접근이 필요하면, **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시에는 **허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 지정**하며, 조회 시각은 KST(UTC+9) 기준으로 표시됩니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n즉, 해당 IP(198.51.100.24)로 접근이 필요한 경우 IP 접근 제어 어드민 화면에서 해당 IP/CIDR와 사용 시간대를 지정해 사전 등록하시면 됩니다."
+                "text": "## 1. IP 접근 판정\n\n- **대상 IP**: 198.51.100.24\n- **판정**: **DENY (거부)**\n- **사유**: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount=0, matchedRuleId 없음)\n\n## 2. 예외 신청 방법 (근거: SEC-02-p2, 「디바이스 및 VPN 접근 통제」)\n\n허용된 IP 대역 외부에서 관리자 콘솔 등에 접근이 필요한 경우, **IP 접근 제어 어드민**에 다음 정보를 포함해 **사전 등록**하시면 됩니다.\n\n- 사용할 IP 또는 CIDR 대역\n- 사용 시간대\n\n참고로 PROD-02-p3(「JC Guard 사용 매뉴얼」)에 따르면, 등록 시 조회/표시되는 시각은 항상 **KST(UTC+9)** 기준이므로 시간대 등록 시 유의하시기 바랍니다."
               }
             ]
           }
@@ -726,8 +804,8 @@
       "title": "예산이 먼저 바닥나는 실행",
       "taskPrompt": "사내 보안 규정 전반을 훑어 재택근무, VPN, 비밀번호, 디바이스 분실 항목을 각각 근거 문단과 함께 정리해 주세요.",
       "model": "claude-sonnet-5",
-      "generatedAt": "2026-08-11T02:48:51.878Z",
-      "toolsetDigest": "5e95bea2a851fe48",
+      "generatedAt": "2026-08-13T12:52:46.811Z",
+      "toolsetDigest": "8d96b932fc254fdc",
       "budget": {
         "maxSteps": 3,
         "maxToolCalls": 4,
@@ -746,7 +824,7 @@
           "name": "예산이 먼저 바닥나는 실행",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 3726,
+          "durationMs": 3380,
           "evalCaseId": null,
           "attrs": {
             "task.id": "budget-stop",
@@ -760,17 +838,17 @@
           "name": "step 1",
           "status": "ok",
           "startOffsetMs": 0,
-          "durationMs": 3724,
+          "durationMs": 3379,
           "evalCaseId": null,
           "attrs": {
             "gen_ai.request.model": "claude-sonnet-5",
-            "gen_ai.usage.input_tokens": 1206,
-            "gen_ai.usage.output_tokens": 277,
+            "gen_ai.usage.input_tokens": 1588,
+            "gen_ai.usage.output_tokens": 321,
             "gen_ai.response.finish_reason": "tool_use",
             "gen_ai.messages": [
               {
                 "role": "assistant",
-                "text": "사내 보안 규정 관련 4가지 항목을 순서대로 검색하겠습니다."
+                "text": "사내 보안 규정 관련 네 가지 항목(재택근무, VPN, 비밀번호, 디바이스 분실)을 각각 검색하겠습니다."
               }
             ]
           }
@@ -781,12 +859,12 @@
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3724,
-          "durationMs": 0,
+          "startOffsetMs": 3379,
+          "durationMs": 1,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01VNXZgXVqnT8ty9d2NfSwHu",
+            "tool.call_id": "toolu_01XTxYNttaiaDenyqC1zLFgL",
             "tool.attempt": 1,
             "tool.input": {
               "query": "재택근무 보안 규정"
@@ -825,12 +903,12 @@
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3724,
-          "durationMs": 1,
+          "startOffsetMs": 3380,
+          "durationMs": 0,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01DT39VW8xEK91u7P8NKThkD",
+            "tool.call_id": "toolu_01EuMB8x1tC5kGCEsEkhDcpN",
             "tool.attempt": 1,
             "tool.input": {
               "query": "VPN 사용 규정"
@@ -879,12 +957,12 @@
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3725,
+          "startOffsetMs": 3380,
           "durationMs": 0,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01GtBgBZqL6APG7emZkmSdB5",
+            "tool.call_id": "toolu_01BGiqu7fN9Dib83AdGJDE69",
             "tool.attempt": 1,
             "tool.input": {
               "query": "비밀번호 정책"
@@ -928,47 +1006,27 @@
           "kind": "tool",
           "name": "docqa.search",
           "status": "ok",
-          "startOffsetMs": 3725,
-          "durationMs": 1,
+          "startOffsetMs": 3380,
+          "durationMs": 0,
           "evalCaseId": null,
           "attrs": {
             "tool.name": "docqa.search",
-            "tool.call_id": "toolu_01PovdjMZ2FwzaUfeYzXqzBj",
+            "tool.call_id": "toolu_016kqsgM7khbTqviWGdtRJRE",
             "tool.attempt": 1,
             "tool.input": {
-              "query": "디바이스 분실 시 대응 절차"
+              "query": "디바이스 분실 도난 대응 절차"
             },
-            "tool.input_digest": "a4693b0efdc38f6c",
+            "tool.input_digest": "5854120e297720e0",
             "tool.output": {
               "hits": [
                 {
                   "passageId": "INFRA-01-p3",
                   "docTitle": "배포 및 온콜 운영 정책",
                   "text": "온콜 담당자는 주 단위로 순환하며, 심각도 1등급 장애는 15분 이내 1차 대응을 시작해야 합니다. 장애 상황은 #incident 채널에 실시간으로 공유합니다."
-                },
-                {
-                  "passageId": "SEC-02-p4",
-                  "docTitle": "디바이스 및 VPN 접근 통제",
-                  "text": "USB 등 외부 저장매체 사용은 기본 차단되며, 필요 시 보안팀 승인 후 지정 장비에서만 허용됩니다."
-                },
-                {
-                  "passageId": "SEC-02-p1",
-                  "docTitle": "디바이스 및 VPN 접근 통제",
-                  "text": "사내 네트워크와 내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근할 수 있습니다. VPN 계정은 재직 기간에만 유효하며 퇴사 시 즉시 회수됩니다."
-                },
-                {
-                  "passageId": "HR-03-p4",
-                  "docTitle": "경비 정산 및 복리후생 안내",
-                  "text": "출장 시 교통비와 숙박비는 실비로 정산하며, 국내 출장은 사전 신청서, 해외 출장은 팀장과 본부장 승인이 필요합니다."
-                },
-                {
-                  "passageId": "SEC-01-p2",
-                  "docTitle": "정보보안 및 비밀번호 정책",
-                  "text": "비밀번호는 90일마다 변경해야 하며, 5회 연속 로그인 실패 시 계정이 30분간 잠깁니다. 관리자 권한 계정은 2단계 인증(OTP)이 필수입니다."
                 }
               ]
             },
-            "tool.output_digest": "a1de70941f3a6fe6",
+            "tool.output_digest": "a815fded5e69bc23",
             "tool.arg_sources": {
               "query": "task"
             },

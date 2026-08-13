@@ -102,6 +102,16 @@ export interface SpanAttrs {
   'approval.reason'?: string;
   'approval.granted'?: boolean;
 
+  // ---- guard (3단계) ----
+  /** 켜져 있는 가드가 이 호출을 실제로 막았는가. */
+  'guard.blocked'?: boolean;
+  /**
+   * 가드가 전부 켜져 있었다면 막혔을 것인가. 꺼진 구성에서도 채운다 - 이 값이 없으면
+   * "방어를 껐더니 무슨 일이 일어났나"를 나중에 셀 수 없다.
+   */
+  'guard.would_block'?: boolean;
+  'guard.findings'?: { guardrail: string; argName: string | null; detail: string }[];
+
   // ---- run ----
   'task.id'?: string;
   /**
@@ -141,6 +151,14 @@ export interface ToolDefinition {
   /** 1단계는 전부 false. 지금 넣어 두면 3단계에서 상태기계를 다시 열지 않아도 된다. */
   sideEffect: boolean;
   requiresApproval: boolean;
+  /**
+   * 이 도구의 출력이 **바깥 사람이 쓴 글**인가.
+   *
+   * 사내문서나 정책 평가 결과와 달리, 사용자가 제출한 본문은 공격자가 고를 수 있는 문자열이다.
+   * 3단계 인자 출처 판정이 이 표식을 보고 어떤 텍스트를 신뢰 불가로 볼지 정한다. 표식이
+   * 없으면(1·2단계 도구) 신뢰 가능으로 본다.
+   */
+  untrusted?: boolean;
   /** 이 도구가 참조하는 픽스처 id 들. 바뀌면 커밋된 trace 가 낡는다(toolsetDigest). */
   fixtures: string[];
   run(input: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult>;

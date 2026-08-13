@@ -7,11 +7,13 @@ import { CURRENT_TOOLSET_DIGEST, hasTraces, staleReport, traceBundle } from './t
 const ctx = { correlationId: 'a'.repeat(32) };
 
 describe('도구 계약', () => {
-  it('세 도구가 이름/스키마/타임아웃을 선언한다', () => {
+  it('다섯 도구가 이름/스키마/타임아웃을 선언한다', () => {
     expect(TOOLS.map((t) => t.name).sort()).toEqual([
       'docqa.answer',
       'docqa.search',
       'guard.evaluateIpPolicy',
+      'inbox.readTicket',
+      'relay.schedule',
     ]);
     for (const t of TOOLS) {
       expect(t.inputSchema).toHaveProperty('type', 'object');
@@ -20,11 +22,16 @@ describe('도구 계약', () => {
     }
   });
 
-  it('1단계 도구는 전부 부작용이 없다 - 읽기 전용으로 자른 경계다', () => {
-    for (const t of TOOLS) {
-      expect(t.sideEffect).toBe(false);
-      expect(t.requiresApproval).toBe(false);
-    }
+  it('부작용이 있는 도구는 하나뿐이고, 그 하나는 승인 대상이다', () => {
+    // 부작용 도구를 늘리면 승인 게이트가 화면에서 흐려진다. 하나만 두어 "무엇이 위험한가"가
+    // 목록을 세지 않아도 보이게 한다.
+    const effectful = TOOLS.filter((t) => t.sideEffect);
+    expect(effectful.map((t) => t.name)).toEqual(['relay.schedule']);
+    for (const t of TOOLS) expect(t.requiresApproval).toBe(t.sideEffect);
+  });
+
+  it('출력이 신뢰 불가인 도구도 하나뿐이다 - 공격 표면이 어디인지 코드가 말한다', () => {
+    expect(TOOLS.filter((t) => t.untrusted).map((t) => t.name)).toEqual(['inbox.readTicket']);
   });
 
   it('잘못된 입력은 예외가 아니라 구조화 오류로 돌아온다', async () => {

@@ -1432,3 +1432,78 @@ mark {
   overflow-wrap: anywhere;
   min-width: 22ch;
 }
+
+/* ── 3단계: 무엇이 막는가 ─────────────────────────────────────────────────
+   여기서만 필요한 것은 둘이다 - 공격 문자열을 그대로 보여주는 티켓 카드, 그리고 막힘/실행됨을
+   한눈에 가르는 배지. 나머지는 앞 두 화면의 것을 그대로 쓴다. */
+.ticketList {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.ticket {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+}
+.ticket.isHostile {
+  border-left-color: var(--color-link);
+}
+.ticket h3 {
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+.ticket p {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.tFlag {
+  margin-left: var(--space-2);
+  padding: 1px 6px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.tFlag.isHostile {
+  color: var(--color-link);
+  border-color: var(--color-link);
+}
+
+/* 배지는 색만으로 말하지 않는다 - 문구가 이미 "막힘"/"실행됨"이라 색은 보조다. */
+.outcome {
+  font-weight: 600;
+}
+.outcome.isGood {
+  color: var(--color-success);
+}
+.outcome.isBad {
+  color: var(--color-link);
+}
+
+.guardDetail {
+  margin-top: var(--space-2);
+}
+.finding {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+.finding ul {
+  margin-top: var(--space-2);
+  padding-left: 1.1em;
+  list-style: disc;
+}
+/* "모델이 부르지 않음"은 좋은 결과도 나쁜 결과도 아니다 - 가드가 시험되지 않았다는 사실이라
+   초록으로 칠하면 화면이 그 자리를 성과로 읽게 만든다. */
+.outcome.isNeutral {
+  color: var(--color-text-muted);
+}

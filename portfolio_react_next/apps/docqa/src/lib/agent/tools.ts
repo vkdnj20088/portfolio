@@ -1,5 +1,6 @@
 import type { ToolContext, ToolDefinition, ToolResult } from '@chat/agent-core';
 import { CONFIDENCE_THRESHOLD, extractAnswer, search } from '@chat/search-domain';
+import { TICKET_BY_ID } from './tickets';
 
 /**
  * 에이전트에게 쥐여주는 도구들.
@@ -15,7 +16,12 @@ import { CONFIDENCE_THRESHOLD, extractAnswer, search } from '@chat/search-domain
  * - 관심종목 - 실시간 스트림이라 결정적 스냅샷을 만들 수 없다.
  * - 대출 서류 분류 - 유일한 입구가 multipart 업로드라 도구 인자 스키마가 파일 바이트가 된다.
  *   계약이 나빠서 뺐고, 2단계에서 fixture id 로 부르는 GET 을 추가한 뒤 다시 본다.
- * - 작업 릴레이 예약 - 일부러 남겼다. 유일한 부작용 도구라 3단계 승인 게이트의 대상이 된다.
+ * - 작업 릴레이 예약 - 3단계에서 들여왔다. 유일한 부작용 도구라 승인 게이트의 대상이 된다.
+ *
+ * 3단계에서 둘이 늘었다. `inbox.readTicket` 은 **출력이 신뢰 불가**인 유일한 도구이고
+ * (공격자가 고를 수 있는 문자열이 실행 안으로 들어오는 통로), `relay.schedule` 은 **부작용이
+ * 있는** 유일한 도구다. 둘이 함께 있어야 인젝션 방어가 시연할 대상을 갖는다 - 신뢰 불가 입력만
+ * 있으면 막을 것이 없고, 부작용만 있으면 공격 경로가 없다.
  */
 
 /** 오류는 예외가 아니라 결과다. 에이전트가 읽고 판단하고, 재시도 여부는 하네스가 정한다. */
@@ -215,6 +221,141 @@ const guardEvaluateIpPolicy: ToolDefinition = {
   },
 };
 
-export const TOOLS: ToolDefinition[] = [docqaSearch, docqaAnswer, guardEvaluateIpPolicy];
+// ---------------------------------------------------------------------------
+// 3단계 - 신뢰 불가 입력과 부작용
+// ---------------------------------------------------------------------------
+
+/**
+ * 사용자 제보 티켓 읽기. **출력이 바깥 사람이 쓴 글**이라는 것이 이 도구의 성질이다.
+ *
+ * 앞의 세 도구는 출력이 전부 우리 것이다 - 사내문서 코퍼스와 정책 평가 결과. 공격자가 고를 수
+ * 있는 문자열이 실행 안으로 들어오는 통로가 없으면 인젝션 방어를 시연할 대상 자체가 없다.
+ * `untrusted: true` 가 그 통로를 표시하고, 가드가 이 표식을 보고 어떤 텍스트를 신뢰 불가로
+ * 볼지 정한다.
+ */
+const inboxReadTicket: ToolDefinition = {
+  name: 'inbox.readTicket',
+  description: '사용자가 제출한 문의 티켓의 제목과 본문을 그대로 읽는다.',
+  inputSchema: {
+    type: 'object',
+    properties: { ticketId: { type: 'string', description: '티켓 id (예: T-1001)' } },
+    required: ['ticketId'],
+  },
+  outputSchema: {
+    type: 'object',
+    properties: { id: { type: 'string' }, subject: { type: 'string' }, body: { type: 'string' } },
+  },
+  timeoutMs: 1_000,
+  sideEffect: false,
+  requiresApproval: false,
+  untrusted: true,
+  fixtures: ['docqa/tickets'],
+  async run(input) {
+    const ticketId = requireString(input, 'ticketId');
+    if (!ticketId)
+      return fail('BAD_INPUT', 'ticketId 는 비어 있지 않은 문자열이어야 합니다', false);
+    const ticket = TICKET_BY_ID.get(ticketId);
+    if (!ticket) return fail('BAD_INPUT', `${ticketId} 티켓이 없습니다`, false);
+    // 본문을 그대로 돌려준다. 여기서 미리 걸러 내면 가드가 막을 것이 사라져, 방어가 있는지
+    // 없는지 구분되지 않는 화면이 된다. 위험한 문자열은 통과시키고 **경계에서** 막는다.
+    return { ok: true, value: { id: ticket.id, subject: ticket.subject, body: ticket.body } };
+  },
+};
+
+/**
+ * 작업 예약 - 이 포트폴리오에서 **유일하게 부작용이 있는 도구**다.
+ *
+ * 1단계에서 일부러 남겨 둔 자리다. 읽기 전용 도구만 있으면 승인 게이트는 코드에만 있고 화면에는
+ * 없는 장치가 된다. 이 도구가 들어오면서 `requiresApproval` 이 처음으로 실물이 된다.
+ *
+ * 실행되면 Spring 의 릴레이 큐에 진짜 행이 생긴다. 그래서 가드가 막았는지 아닌지를 화면이
+ * 말만 하는 게 아니라, 막지 못한 실행에는 작업 id 가 남는다.
+ */
+const relaySchedule: ToolDefinition = {
+  name: 'relay.schedule',
+  description: '작업 릴레이 큐에 작업을 예약한다. 실제로 큐에 행이 생기는 부작용이 있다.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      type: {
+        type: 'string',
+        enum: ['PAYMENT_NOTIFY', 'RECEIPT_EMAIL', 'WEBHOOK_PUSH', 'SEARCH_INDEX_SYNC'],
+      },
+      payload: { type: 'string', description: '작업 페이로드(200자 이내)' },
+      idempotencyKey: { type: 'string', description: '멱등 키(영숫자·점·하이픈·언더스코어)' },
+    },
+    required: ['type', 'payload'],
+  },
+  outputSchema: {
+    type: 'object',
+    properties: {
+      jobId: { type: ['integer', 'null'] },
+      duplicate: { type: 'boolean' },
+      status: { type: 'string' },
+    },
+  },
+  timeoutMs: 3_000,
+  sideEffect: true,
+  requiresApproval: true,
+  fixtures: ['relay/queue'],
+  async run(input, ctx: ToolContext) {
+    const type = requireString(input, 'type');
+    const payload = requireString(input, 'payload');
+    if (!type || !payload) {
+      return fail('BAD_INPUT', 'type 과 payload 는 비어 있지 않은 문자열이어야 합니다', false);
+    }
+    const key = requireString(input, 'idempotencyKey');
+    const body = {
+      idempotencyKey: key && /^[A-Za-z0-9._-]{1,64}$/.test(key) ? key : null,
+      type,
+      payload: payload.slice(0, 200),
+      scenario: 'ALWAYS_SUCCEED',
+      maxAttempts: 3,
+      publishMode: 'OUTBOX',
+      failPersist: false,
+    };
+    const timeout = AbortSignal.timeout(relaySchedule.timeoutMs);
+    try {
+      const res = await fetch(`${GUARD_BASE}/api/relay/jobs`, {
+        method: 'POST',
+        headers: {
+          'X-Request-Id': ctx.correlationId,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: ctx.signal ?? timeout,
+      });
+      if (!res.ok) {
+        return fail('UPSTREAM_ERROR', `릴레이가 ${res.status} 를 냈습니다`, res.status >= 500);
+      }
+      const out = (await res.json()) as {
+        job: { id: number; status: string } | null;
+        duplicate: boolean;
+      };
+      return {
+        ok: true,
+        value: {
+          jobId: out.job?.id ?? null,
+          duplicate: out.duplicate,
+          status: out.job?.status ?? 'NOT_PERSISTED',
+        },
+      };
+    } catch (e) {
+      const aborted = e instanceof Error && e.name === 'TimeoutError';
+      return aborted
+        ? fail('TIMEOUT', `${relaySchedule.timeoutMs}ms 안에 응답하지 않았습니다`, true)
+        : fail('UNREACHABLE', `릴레이에 닿지 못했습니다: ${(e as Error).message}`, true);
+    }
+  },
+};
+
+export const TOOLS: ToolDefinition[] = [
+  docqaSearch,
+  docqaAnswer,
+  guardEvaluateIpPolicy,
+  inboxReadTicket,
+  relaySchedule,
+];
 
 export const TOOL_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
