@@ -17,6 +17,20 @@
  *
  * guard 도구는 Spring 이 떠 있어야 한다(./gradlew bootRun). 안 떠 있으면 그 시나리오의 도구
  * 호출이 UNREACHABLE 로 기록되는데, 그것도 사실이라 그대로 커밋해도 화면은 정직하다.
+ *
+ * 2단계에서 축이 둘 붙었다 - **구성(--variant)** 과 **반복(--repeat)**. 축을 켜는 실행은
+ * 별도 스크립트로 둔다(플래그를 pnpm 으로 넘기면 `&&` 뒤의 포매터에 붙어 버린다).
+ *
+ *   pnpm --filter @chat/docqa run make:agent-runs
+ *
+ * 이게 없으면 2단계는 시작도 못 한다. 분산을 재려면 같은 조건을 여러 번 돌린 표본이 있어야
+ * 하고, 회귀인지 잡음인지 가르려면 조건이 둘이어야 한다. 축이 없으면 표본 자체가 없다.
+ *
+ * 산출물이 둘로 갈린다. `traces.json` 은 1단계 그대로 - **구성 A 의 0회차만**, span 트리
+ * 전체를 담아 실행 되짚기 화면이 읽는다. `runs.json` 은 전 구성 × 전 회차를 담되 채점에
+ * 필요한 것만 남긴 요약이다. 30 실행의 span 을 전부 실으면 산출물이 원본의 여섯 배가 되고,
+ * 채점이 실제로 보는 것은 최종 상태·부른 도구·인용한 문단·예산뿐이다. 요약이 원본과
+ * 어긋나지 않는지는 테스트가 대조한다 - 미리 계산한 요약은 부패하기 마련이다.
  */
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -32,6 +46,7 @@ import {
   toolsetDigest,
   transition,
   type RunState,
+  type RunSummary,
   type Span,
   type ToolDefinition,
   type ToolResult,
@@ -39,9 +54,23 @@ import {
 } from '@chat/agent-core';
 import { TOOLS, TOOL_BY_NAME } from '../src/lib/agent/tools';
 import { SCENARIOS, type Scenario } from '../src/lib/agent/scenarios';
+import { classifyOutcome } from '../src/lib/agent/outcome';
+import { PROMPT_BY_VARIANT, VARIANTS } from '../src/lib/agent/eval/variants';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, '..', 'src', 'lib', 'agent', 'data', 'traces.json');
+const RUNS_OUT = join(HERE, '..', 'src', 'lib', 'agent', 'data', 'runs.json');
+
+/** `--variant=A,B --repeat=3`. 기본값은 1단계와 같다 - 구성 A 한 벌, 한 번. */
+function arg(name: string, fallback: string): string {
+  const hit = process.argv.slice(2).find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : fallback;
+}
+const VARIANT_IDS = arg('variant', 'A')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const REPEAT = Math.max(1, Number(arg('repeat', '1')) || 1);
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 // 1024 로 두었더니 future-window 시나리오의 첫 스텝이 그 자리에서 잘렸다(stop_reason=max_tokens,
@@ -50,13 +79,10 @@ const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 // 않은 값으로 올린다.
 const MAX_TOKENS = 4096;
 
-const SYSTEM_PROMPT = [
-  '당신은 JC 포트폴리오 데모의 사내 운영 보조입니다. 주어진 도구로만 사실을 확인하고,',
-  '도구가 돌려준 것 밖의 내용을 지어내지 않습니다.',
-  'docqa.answer 가 answered=false 를 돌려주면 코퍼스에 근거가 없다는 뜻입니다.',
-  '그 경우 추측하지 말고 "사내문서에서 근거를 찾지 못했습니다"라고 답하고 끝냅니다.',
-  '답에는 근거가 된 문단 id 를 함께 적습니다. 한국어 존댓말로 간결하게 씁니다.',
-].join(' ');
+if (VARIANT_IDS.some((id) => !PROMPT_BY_VARIANT[id])) {
+  console.error(`모르는 구성입니다: ${VARIANT_IDS.join(',')} (아는 것: A, B)`);
+  process.exit(2);
+}
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error('ANTHROPIC_API_KEY 가 필요합니다 - 이 스크립트만 실제 API 를 부릅니다.');
@@ -78,17 +104,81 @@ const toolNameFromModel = new Map(TOOLS.map((t) => [t.name.replace('.', '_'), t.
 // main() 으로 감싸는 것이 모듈 형식에 기대지 않는 방법이다.
 async function main() {
   const traces: TraceArtifact[] = [];
-  for (const scenario of SCENARIOS) {
-    console.error(`\n== ${scenario.id} : ${scenario.title}`);
-    traces.push(await runScenario(scenario));
+  const runs: RunSummary[] = [];
+
+  for (const variantId of VARIANT_IDS) {
+    for (let runIndex = 0; runIndex < REPEAT; runIndex += 1) {
+      for (const scenario of SCENARIOS) {
+        console.error(`\n== ${variantId}/${runIndex} ${scenario.id} : ${scenario.title}`);
+        const trace = await runScenario(scenario, variantId, runIndex);
+        runs.push(summarize(trace, variantId, runIndex));
+        // span 트리 원본은 실행 되짚기 화면이 읽는 한 벌만 남긴다. 나머지는 요약으로 충분하고,
+        // 요약이 이 원본과 어긋나지 않는지는 테스트가 대조한다.
+        if (variantId === 'A' && runIndex === 0) traces.push(trace);
+      }
+    }
   }
 
-  writeFileSync(
-    OUT,
-    JSON.stringify({ generatedAt, toolsetDigest: digestOfToolset, traces }, null, 2) + '\n',
-    'utf8',
-  );
-  console.error(`\n${traces.length}건을 ${OUT} 에 저장했습니다.`);
+  if (traces.length > 0) {
+    writeFileSync(
+      OUT,
+      JSON.stringify({ generatedAt, toolsetDigest: digestOfToolset, traces }, null, 2) + '\n',
+      'utf8',
+    );
+    console.error(`\n실행 되짚기용 ${traces.length}건 -> ${OUT}`);
+  }
+
+  // 축이 하나뿐이면(1단계와 같은 실행) 평가 산출물을 덮어쓰지 않는다. 구성 A 한 회차만
+  // 담긴 runs.json 은 통계를 세울 수 없는데, 그것이 기존 표본을 지우면 화면이 조용히 빈다.
+  if (VARIANT_IDS.length > 1 || REPEAT > 1) {
+    const bundle = {
+      generatedAt,
+      model: MODEL,
+      repeat: REPEAT,
+      variants: VARIANTS.filter((v) => VARIANT_IDS.includes(v.id)),
+      runs,
+    };
+    writeFileSync(RUNS_OUT, JSON.stringify(bundle, null, 2) + '\n', 'utf8');
+    console.error(`평가용 ${runs.length}건 -> ${RUNS_OUT}`);
+  } else {
+    console.error('구성/반복 축이 없어 평가 산출물은 건드리지 않았습니다 (--variant, --repeat).');
+  }
+}
+
+/** 문단 id 형식. 코퍼스가 쓰는 `HR-01-p2` 꼴이다. */
+const PASSAGE_ID = /\b[A-Z]{2,6}-\d{2}-p\d+\b/g;
+
+/**
+ * span 트리를 채점용 투영으로 접는다.
+ *
+ * `groundedPassageIds` 가 이 함수의 핵심이다. 도구가 실제로 돌려준 문단 id 를 모아 두면,
+ * 최종 답이 인용한 id 가 그 집합 밖인지 아닌지를 규칙만으로 판정할 수 있다. 그럴듯한 id 를
+ * 지어 붙인 답은 사람 눈에 근거가 달린 답으로 보이는데, 이 대조가 그것을 잡는다.
+ */
+function summarize(trace: TraceArtifact, variantId: string, runIndex: number): RunSummary {
+  const toolSpans = trace.spans.filter((s) => s.kind === 'tool');
+  const grounded = new Set<string>();
+  for (const s of toolSpans) {
+    const out = s.attrs['tool.output'];
+    if (out === undefined) continue;
+    for (const id of JSON.stringify(out).match(PASSAGE_ID) ?? []) grounded.add(id);
+  }
+  return {
+    scenarioId: trace.scenarioId,
+    variantId,
+    runIndex,
+    finalState: trace.finalState,
+    answer: trace.summary,
+    spent: rollUp(trace.spans),
+    toolCalls: toolSpans.map((s) => ({
+      name: s.name,
+      status: s.status,
+      outputDigest: (s.attrs['tool.output_digest'] as string | undefined) ?? '',
+      attempt: (s.attrs['tool.attempt'] as number | undefined) ?? 1,
+    })),
+    citedPassageIds: [...new Set(trace.summary.match(PASSAGE_ID) ?? [])],
+    groundedPassageIds: [...grounded],
+  };
 }
 
 main().catch((e: unknown) => {
@@ -98,8 +188,17 @@ main().catch((e: unknown) => {
 
 // ---------------------------------------------------------------------------
 
-async function runScenario(scenario: Scenario): Promise<TraceArtifact> {
-  const ids = createIdFactory(scenario.id);
+async function runScenario(
+  scenario: Scenario,
+  variantId: string,
+  runIndex: number,
+): Promise<TraceArtifact> {
+  // 시드에 구성과 회차를 섞는다. 시나리오 id 만 시드로 쓰면 30 실행이 같은 span id 를 갖고,
+  // 케이스의 origin 이 어느 실행을 가리키는지 구분할 수 없게 된다.
+  const ids = createIdFactory(
+    runIndex === 0 && variantId === 'A' ? scenario.id : `${scenario.id}|${variantId}|${runIndex}`,
+  );
+  const systemPrompt = PROMPT_BY_VARIANT[variantId]!;
   const traceId = ids.traceId();
   const runSpanId = ids.spanId();
   const t0 = Date.now();
@@ -150,7 +249,7 @@ async function runScenario(scenario: Scenario): Promise<TraceArtifact> {
       // temperature 는 넘기지 않는다 - 이 모델은 그 파라미터를 받지 않는다(400).
       // 애초에 재현을 그 손잡이로 살 수 있는 것도 아니었다. 실행이 재현되지 않기 때문에
       // 결과를 커밋하는 것이고, 커밋된 span 이 "그때 이렇게 돌았다"는 기록이다.
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       tools: anthropicTools,
       messages,
     });
@@ -198,12 +297,12 @@ async function runScenario(scenario: Scenario): Promise<TraceArtifact> {
     }
 
     if (toolUses.length === 0) {
-      summary = text;
-      // 근거를 못 찾아 답하지 않은 실행은 실패가 아니라 별도 종료 상태다.
-      state = transition(
-        state,
-        /근거를 찾지 못했|찾지 못했습니다/.test(text) ? 'refused' : 'succeeded',
-      );
+      // 근거를 못 찾아 답하지 않은 실행은 실패가 아니라 별도 종료 상태다. 그 판정을
+      // 산문에서 추측하지 않는 이유는 outcome.ts 에 적어 두었다 - 첫 수집에서 네 건이
+      // 뒤집혔고, 최종 상태는 2단계 실험의 결과 변수 그 자체다.
+      const outcome = classifyOutcome(text);
+      summary = outcome.summary;
+      state = transition(state, outcome.refused ? 'refused' : 'succeeded');
       break;
     }
 

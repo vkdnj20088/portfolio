@@ -5,8 +5,11 @@ import {
   STATE_LABEL,
   alwaysExpanded,
   budgetPressure,
+  backIndex,
   buildTree,
   flatten,
+  originKey,
+  proposeCase,
   rollUp,
   stateTone,
   type ReplayVerdict,
@@ -16,7 +19,9 @@ import {
   type TraceArtifact,
 } from '@chat/agent-core';
 import { AppShell } from '@/components/AppShell';
+import { AgentTabs } from '@/components/AgentTabs';
 import { hasTraces, traceBundle } from '@/lib/agent/traces';
+import { cases } from '@/lib/agent/eval/dataset';
 
 /**
  * 에이전트 실행 되짚기 - 이 화면이 30초 안에 말하려는 것은 하나다.
@@ -31,6 +36,8 @@ import { hasTraces, traceBundle } from '@/lib/agent/traces';
  * 실패한 span 은 접히지 않는다(agent-core/tree.ts 의 alwaysExpanded).
  */
 const BUNDLE = traceBundle();
+/** 어느 span 이 이미 케이스가 됐는지. 진실원은 케이스의 origin 이고 여기서 역으로 찾는다. */
+const CASE_BY_ORIGIN = backIndex(cases());
 
 export default function AgentPage() {
   const [selectedId, setSelectedId] = useState(BUNDLE.traces[0]?.scenarioId ?? '');
@@ -48,6 +55,8 @@ export default function AgentPage() {
             부릅니다.
           </p>
         </div>
+
+        <AgentTabs />
 
         {!hasTraces() ? <NotCollected /> : trace ? <TraceView trace={trace} /> : null}
 
@@ -197,7 +206,10 @@ function TraceView({ trace }: { trace: TraceArtifact }) {
         </div>
         <aside className="agentDetail" aria-label="선택한 span 상세">
           {selected ? (
-            <SpanDetail span={selected} verification={verdictBySpan.get(selected.spanId)} />
+            <>
+              <SpanDetail span={selected} verification={verdictBySpan.get(selected.spanId)} />
+              <Promote trace={trace} span={selected} />
+            </>
           ) : (
             <p className="evalNote">트리에서 span 을 고르면 입력과 출력, 속성이 여기 나옵니다.</p>
           )}
@@ -208,6 +220,68 @@ function TraceView({ trace }: { trace: TraceArtifact }) {
         <p className="evalNote">도구 재실행 검증을 받지 못했습니다: {verifyError}</p>
       ) : null}
     </>
+  );
+}
+
+/**
+ * 승격 - 이 span 을 eval 케이스 초안으로 만든다.
+ *
+ * 버튼이 하는 일은 **JSON 을 화면에 띄우는 것까지**다. 실제 승격은 로컬에서 cases.json 에
+ * 붙여 넣고 커밋해야 일어난다. 우회처럼 보이지만 이게 옳은 형태다 - eval 데이터셋은 코드와
+ * 함께 버전 관리되고 리뷰되는 자산이지 런타임 상태가 아니다. 배포가 케이스를 늘릴 수 있게
+ * 만들면, 화면을 여는 사람마다 기대값이 달라진다.
+ *
+ * 자동 승격을 하지 않는 이유는 더 단순하다. 실패한 실행을 자동으로 기대값으로 굳히면 지금
+ * 동작이 정답이 되고, 그 뒤로는 회귀를 정답이라고 부르게 된다.
+ */
+function Promote({ trace, span }: { trace: TraceArtifact; span: Span }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  // span 쪽 `evalCaseId` 를 읽지 않고 케이스의 origin 에서 매번 되짚는다. 사본을 두면
+  // 승격할 때마다 두 파일을 같이 고쳐야 하고, 한쪽만 고치는 순간 화면이 틀린 말을 한다.
+  // 진실원이 하나면 어긋날 자리가 없다.
+  const alreadyCase = CASE_BY_ORIGIN.get(
+    originKey({ scenarioId: trace.scenarioId, variantId: 'A', runIndex: 0, spanId: span.spanId }),
+  );
+
+  return (
+    <div className="promoteBox">
+      {alreadyCase ? (
+        <p className="evalNote">
+          이 span 은 이미 케이스 <code>{alreadyCase}</code> 로 승격되어 있습니다.
+        </p>
+      ) : null}
+      <button
+        type="button"
+        className="linkBtn"
+        onClick={() =>
+          setDraft(
+            draft
+              ? null
+              : JSON.stringify(
+                  proposeCase(trace, {
+                    caseId: `${trace.scenarioId}-${span.spanId.slice(0, 6)}`,
+                    variantId: 'A',
+                    runIndex: 0,
+                    spanId: span.spanId,
+                  }),
+                  null,
+                  2,
+                ),
+          )
+        }
+      >
+        {draft ? '초안 접기' : '이 span 을 eval 케이스로 승격'}
+      </button>
+      {draft ? (
+        <>
+          <p className="evalNote">
+            체크 후보를 뽑아 둔 초안입니다. 고르는 것은 사람입니다 - 덜어내고{' '}
+            <code>cases.json</code> 에 붙여 커밋해야 실제로 승격됩니다.
+          </p>
+          <textarea className="promoteJson" readOnly rows={12} value={draft} />
+        </>
+      ) : null}
+    </div>
   );
 }
 

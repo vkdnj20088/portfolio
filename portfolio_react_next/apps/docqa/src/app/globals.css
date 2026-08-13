@@ -1273,3 +1273,162 @@ mark {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ── 2단계: 회귀인가 잡음인가 ──────────────────────────────────────────────
+   실행 되짚기와 같은 지붕 아래 두 번째 뷰다. 색과 간격은 위 화면들의 것을 그대로 쓰고,
+   여기서만 필요한 것은 세 가지다 - 세그먼트 전환, 자기 분산 띠, 승격 초안 상자. */
+.agentTabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.agentTabs a {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.agentTabs a.isOn {
+  color: var(--color-text);
+  font-weight: 600;
+  border-bottom-color: var(--color-link);
+}
+
+.evalBlock {
+  margin-top: var(--space-6);
+}
+.tone-muted {
+  border-left-color: var(--color-border);
+}
+
+/* 판정 문장. 이 화면에서 가장 먼저 읽혀야 하는 한 줄이라 크기로 순서를 만든다. */
+.evalVerdict {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+.evalVerdict .vLine {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.evalVerdict .vDetail {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* 자기 분산 띠. 두 구성의 구간이 겹치는지가 눈으로 보여야 하므로 같은 축 위에 그린다. */
+.spreadRows {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+.spreadRow {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr) 7rem;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+.spreadRow .sName {
+  font-weight: 600;
+}
+.spreadRow .sBar {
+  position: relative;
+  height: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.spreadRow .sFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-link);
+  opacity: 0.55;
+}
+.spreadRow .sRange {
+  text-align: right;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 검정력 상자. 수치가 못 보는 것을 적는 자리라 본문과 분리해 눈에 걸리게 둔다. */
+.powerBox {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+.powerBox p {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.voteLine {
+  font-size: var(--text-xs);
+  line-height: 1.7;
+}
+
+.linkBtn {
+  margin-top: var(--space-3);
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--color-link);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.promoteBox {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+.promoteJson {
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+@media (max-width: 860px) {
+  /* 좁은 화면에서 세 칸을 유지하면 띠가 손톱만 해져 겹침이 안 보인다. 이름과 수치를 위로 뺀다. */
+  .spreadRow {
+    grid-template-columns: minmax(0, 1fr) 7rem;
+  }
+  .spreadRow .sName {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 표는 자기 칸 안에서 가로로 흐르게 둔다. `.evalTable` 의 nowrap 은 짧은 수치 칸을 위한
+   기본값이라, 문장이 들어가는 이 화면의 표에는 맞지 않는다 - 375px 에서 페이지 전체가
+   1,895px 넘쳐 흘렀다(실측). 기본값을 바꾸면 다른 화면의 수치 표가 접히므로 여기서만 푼다. */
+.tableScroll {
+  overflow-x: auto;
+}
+.splitTable th,
+.splitTable td {
+  white-space: normal;
+}
+.splitTable .voteLine {
+  /* 한국어는 단어 경계가 드물어 break-word 만으로는 안 끊긴다. */
+  overflow-wrap: anywhere;
+  min-width: 22ch;
+}

@@ -1,0 +1,1160 @@
+{
+  "generatedAt": "2026-08-11T02:48:51.878Z",
+  "model": "claude-sonnet-5",
+  "repeat": 3,
+  "variants": [
+    {
+      "id": "A",
+      "label": "기본 프롬프트",
+      "note": "1단계에서 쓰던 지시 그대로",
+      "systemPromptDigest": "3efa0f967bd20970",
+      "toolsetDigest": "5e95bea2a851fe48",
+      "guardrails": []
+    },
+    {
+      "id": "B",
+      "label": "불응답 강화",
+      "note": "\"확신이 서지 않으면 답하지 말라\"는 한 문장을 더한 것",
+      "systemPromptDigest": "1deee29bc2cbfaf9",
+      "toolsetDigest": "5e95bea2a851fe48",
+      "guardrails": []
+    }
+  ],
+  "runs": [
+    {
+      "scenarioId": "vpn-blocked",
+      "variantId": "A",
+      "runIndex": 0,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**차단 원인**\n- `203.0.113.77`은 IP 접근 제어 정책의 어떤 허용 규칙과도 일치하지 않아, 기본 정책인 **거부(DENY)** 가 적용되었습니다. (매치된 규칙 없음 → 기본 거부)\n\n**사내 규정상 올바른 접속 방법**\n1. 관리자 콘솔은 허용된 IP 대역 외부에서 접근이 원천 차단되며, 접근이 필요하면 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. — 근거: `SEC-02-p2`\n2. 사내 네트워크·내부 시스템은 반드시 **회사 지급 장비에서 VPN을 통해서만** 접근 가능합니다. — 근거: `SEC-02-p1`\n3. 재택근무 시에도 **회사 지급 노트북과 VPN**을 사용해야 하며, 개인 PC로 사내 시스템 접속은 금지됩니다. — 근거: `HR-02-p4`\n\n**권장 조치**: 해당 직원은 회사 지급 노트북에서 VPN에 접속한 뒤, 관리자 콘솔 접근이 필요하다면 사전에 IP 접근 제어 어드민에 등록 요청을 해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 3439,
+        "outputTokens": 659,
+        "wallMs": 9809
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "54a82902fc83db88",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "SEC-02-p1", "HR-02-p4"],
+      "groundedPassageIds": ["SEC-02-p2", "SEC-02-p1", "HR-02-p4", "HR-02-p2", "SEC-02-p3"]
+    },
+    {
+      "scenarioId": "future-window",
+      "variantId": "A",
+      "runIndex": 0,
+      "finalState": "succeeded",
+      "answer": "## 평가 결과\n\n**대상**: 10.20.0.5 / **시각**: 2026-08-17 10:00 (KST)\n\n- **판정**: 거부(DENY)\n- **근거**: 매치하는 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount: 0, 매치된 규칙 없음)\n\n즉, 해당 IP·시간대에 대해 사전 등록된 허용 규칙이 없어 접근이 불가합니다.\n\n## 사전 등록 절차 (근거 문단: SEC-02-p2)\n\n> \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다.\"\n\n추가로 등록 방식 관련 (근거 문단: PROD-02-p3):\n\n> \"IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다. 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다.\"\n\n**결론**: 10.20.0.5는 등록된 규칙이 없어 접근이 거부되며, 접근이 필요하면 IP 접근 제어 어드민에서 해당 IP(또는 CIDR)와 사용 시간대를 함께 사전 등록해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 4102,
+        "outputTokens": 1395,
+        "wallMs": 13409
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d58631047d1c160e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "SEC-02-p1", "HR-02-p3", "HR-01-p5"]
+    },
+    {
+      "scenarioId": "no-grounds",
+      "variantId": "A",
+      "runIndex": 0,
+      "finalState": "refused",
+      "answer": "사내문서 코퍼스에서 주차장 운영 시간 및 방문객 주차 정책에 관한 근거를 찾을 수 없었습니다 (검색 결과는 휴가 정책 문서만 반환됨).",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 2775,
+        "outputTokens": 255,
+        "wallMs": 6478
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "ede7e4475281e8ed",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": ["HR-01-p2"]
+    },
+    {
+      "scenarioId": "tool-retry",
+      "variantId": "A",
+      "runIndex": 0,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**1. IP 판정 (198.51.100.24)**\n- 판정: **거부(DENY)**\n- 사유: 매치되는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (매치 규칙 없음, 평가된 규칙 수 0건)\n\n**2. 예외 신청 방법**\n사내 규정상 접근이 필요한 경우 절차는 다음과 같습니다.\n\n- 허용 IP 대역 외부에서 관리자 콘솔 접근이 필요하면, **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시에는 **허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 지정**하며, 조회 시각은 KST(UTC+9) 기준으로 표시됩니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n즉, 해당 IP(198.51.100.24)로 접근이 필요한 경우 IP 접근 제어 어드민 화면에서 해당 IP/CIDR와 사용 시간대를 지정해 사전 등록하시면 됩니다.",
+      "spent": {
+        "steps": 3,
+        "toolCalls": 4,
+        "inputTokens": 4973,
+        "outputTokens": 792,
+        "wallMs": 12768
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "error",
+          "outputDigest": "",
+          "attempt": 1
+        },
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 2
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d949d0368a8b9a00",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "9fa98c3e322bc5d4",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-01-p5", "HR-02-p2", "SEC-02-p1"]
+    },
+    {
+      "scenarioId": "budget-stop",
+      "variantId": "A",
+      "runIndex": 0,
+      "finalState": "exhausted",
+      "answer": "예산 상한에 걸려 중단했습니다. 부분 결과는 아래 트리에 남아 있습니다.",
+      "spent": {
+        "steps": 1,
+        "toolCalls": 4,
+        "inputTokens": 1206,
+        "outputTokens": 277,
+        "wallMs": 3726
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "dd71d243d5125925",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b54b022d0d114d9b",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "bab6151e2b13ef58",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a1de70941f3a6fe6",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": [
+        "HR-02-p2",
+        "SEC-01-p4",
+        "SEC-02-p3",
+        "SEC-02-p1",
+        "HR-02-p4",
+        "HR-03-p3",
+        "SEC-02-p4",
+        "HR-01-p5",
+        "SEC-01-p1",
+        "FAQ-01-p1",
+        "SEC-01-p3",
+        "SEC-01-p2",
+        "INFRA-01-p3",
+        "HR-03-p4"
+      ]
+    },
+    {
+      "scenarioId": "vpn-blocked",
+      "variantId": "A",
+      "runIndex": 1,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**접속 차단 원인**\n- `203.0.113.77` 평가 결과: **DENY** — 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용되었습니다. (특정 매치 규칙 ID 없음, 기본 거부)\n- 근거: **SEC-02-p2** \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n즉, 해당 IP가 사전 등록된 허용 대역에 포함되어 있지 않아 관리자 콘솔 접근이 막힌 것으로 보입니다.\n\n**사내 규정상 올바른 접속 방법**\n1. **사전 등록 필요**: 관리자 콘솔에 외부 IP로 접근하려면 사용 시간대와 함께 IP 접근 제어 어드민에 사전 등록해야 합니다. (근거: SEC-02-p2)\n2. **VPN·회사 지급 장비 사용**: 원격지에서는 반드시 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지되어 있습니다. (근거: HR-02-p4)\n3. **재택근무 신청 절차 준수**: 재택근무는 주 2일까지 허용되며, 전날 18시까지 그룹웨어 신청 및 팀장 승인이 필요합니다. 재택 중에도 코어타임(10:00~16:00)에는 즉시 연락 가능해야 합니다. (근거: HR-02-p2)\n4. **관리자 계정 2단계 인증 필수**: 관리자 권한 계정은 OTP 기반 2단계 인증이 필요합니다. (근거: SEC-01-p2)\n\n**정리**: 해당 직원은 개인 회선(203.0.113.77)으로 직접 접속을 시도해 기본 거부 정책에 걸렸습니다. 회사 지급 노트북으로 VPN에 연결한 뒤, 필요 시 IP 접근 제어 어드민에 사전 등록하고, 재택근무 신청·승인 절차를 거쳐 2단계 인증으로 관리자 콘솔에 접속해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 3432,
+        "outputTokens": 1055,
+        "wallMs": 15062
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "3a137c5404f17c3e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "HR-02-p4", "HR-02-p2", "SEC-01-p2"],
+      "groundedPassageIds": ["SEC-02-p2", "HR-02-p2", "SEC-02-p3", "SEC-01-p2", "HR-02-p4"]
+    },
+    {
+      "scenarioId": "future-window",
+      "variantId": "A",
+      "runIndex": 1,
+      "finalState": "succeeded",
+      "answer": "## 평가 결과\n\n**대상:** 10.20.0.5, **시각:** 2026-08-17 10:00(KST)\n\n- **판정: 접근 불가 (DENY)**\n- 사유: 해당 IP·시간대에 매치되는 허용 규칙이 없어, 기본 정책인 \"거부\"가 적용되었습니다. (매치된 규칙 없음, 평가된 규칙 수 0)\n\n## 사전 등록 절차\n\n사내 규정상 허용 IP 대역 외부 접근이 필요한 경우, 사전에 등록 절차를 거쳐야 합니다.\n\n- **절차:** IP 접근 제어 어드민에 접근할 IP(또는 CIDR)와 **사용 시간대**를 함께 사전 등록해야 합니다. (근거: `SEC-02-p2`)\n- **보충:** JC Guard 시스템에서는 허용 IP/CIDR 대역과 사용 시간대를 함께 등록하며, 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다. (근거: `PROD-02-p3`)\n\n따라서 10.20.0.5가 해당 시간에 접근하려면, 사전에 IP 접근 제어 어드민을 통해 해당 IP와 사용 시간대(2026-08-17 10:00 KST 포함 구간)를 등록해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 3936,
+        "outputTokens": 1206,
+        "wallMs": 14325
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d58631047d1c160e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "SEC-02-p1", "HR-02-p3", "HR-01-p5"]
+    },
+    {
+      "scenarioId": "no-grounds",
+      "variantId": "A",
+      "runIndex": 1,
+      "finalState": "refused",
+      "answer": "사내문서 코퍼스를 semantic/keyword 검색과 답변 추출 모두로 확인했지만, 주차장 운영 시간이나 방문객 주차 정책과 관련된 문단을 전혀 찾을 수 없었습니다(검색 결과 없음, docqa_answer도 answered=false).",
+      "spent": {
+        "steps": 3,
+        "toolCalls": 3,
+        "inputTokens": 4478,
+        "outputTokens": 384,
+        "wallMs": 7883
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "ede7e4475281e8ed",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b3e19d79c8cef913",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": ["HR-01-p2"]
+    },
+    {
+      "scenarioId": "tool-retry",
+      "variantId": "A",
+      "runIndex": 1,
+      "finalState": "succeeded",
+      "answer": "## 접근 판정 결과\n\n- **대상 IP**: 198.51.100.24\n- **판정**: **DENY (거부)**\n- **사유**: 매치되는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (matchedRuleId 없음)\n\n## 예외 신청 방법\n\n사내 규정에 따르면, 허용된 IP 대역 외부에서 접근이 필요한 경우 다음과 같이 신청합니다.\n\n> \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다.\" (근거: SEC-02-p2)\n\n등록 시 참고사항:\n> \"IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다. 조회 시각은 항상 **KST(UTC+9)** 기준으로 표시됩니다.\" (근거: PROD-02-p3)\n\n**요약**: IP 접근 제어 어드민 화면에서 해당 IP(또는 CIDR 대역)와 사용할 시간대를 함께 사전 등록하시면 됩니다. 시간대 입력 시 KST 기준임을 유의하시기 바랍니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 3,
+        "inputTokens": 3313,
+        "outputTokens": 635,
+        "wallMs": 9527
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "error",
+          "outputDigest": "",
+          "attempt": 1
+        },
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 2
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a939e634b288ac56",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-01-p5", "SEC-02-p4", "HR-02-p2"]
+    },
+    {
+      "scenarioId": "budget-stop",
+      "variantId": "A",
+      "runIndex": 1,
+      "finalState": "exhausted",
+      "answer": "예산 상한에 걸려 중단했습니다. 부분 결과는 아래 트리에 남아 있습니다.",
+      "spent": {
+        "steps": 1,
+        "toolCalls": 4,
+        "inputTokens": 1206,
+        "outputTokens": 323,
+        "wallMs": 4705
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "dd71d243d5125925",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b54b022d0d114d9b",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "bab6151e2b13ef58",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a815fded5e69bc23",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": [
+        "HR-02-p2",
+        "SEC-01-p4",
+        "SEC-02-p3",
+        "SEC-02-p1",
+        "HR-02-p4",
+        "HR-03-p3",
+        "SEC-02-p4",
+        "HR-01-p5",
+        "SEC-01-p1",
+        "FAQ-01-p1",
+        "SEC-01-p3",
+        "SEC-01-p2",
+        "INFRA-01-p3"
+      ]
+    },
+    {
+      "scenarioId": "vpn-blocked",
+      "variantId": "A",
+      "runIndex": 2,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**어떤 규칙이 막았는가**\n`guard_evaluateIpPolicy` 조회 결과, `203.0.113.77`은 등록된 허용 규칙에 하나도 매칭되지 않아 **기본 정책(DENY)**이 적용되어 차단되었습니다. (evaluatedCount=0, matchedRuleId=null — 즉 개별 규칙이 아니라 \"허용 목록에 없으면 거부\"라는 기본값에 의해 막힌 것입니다.)\n\n이는 사내 규정과도 일치합니다.\n- **SEC-02-p2** (디바이스 및 VPN 접근 통제): \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n**사내 규정상 올바른 접속 방법**\n1. **HR-02-p4** (재택근무 및 근무시간 운영 지침): \"원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다.\" → 회사 지급 노트북 + VPN 접속이 필수입니다.\n2. **SEC-02-p2**: 해당 재택 IP(203.0.113.77)에서 접속이 필요하다면, 사전에 **IP 접근 제어 어드민**에 사용 시간대와 함께 등록 신청해야 허용됩니다.\n3. **SEC-01-p2** (정보보안 및 비밀번호 정책): 관리자 권한 계정은 2단계 인증(OTP)이 필수이므로, VPN 접속 후 로그인 시 OTP 인증도 함께 진행해야 합니다.\n\n**요약**: 현재 IP는 허용 목록에 없어 기본 거부 정책으로 차단된 상태이며, 정상 접속을 위해서는 회사 지급 노트북으로 VPN 연결 후, 필요 시 해당 IP를 IP 접근 제어 어드민에 사전 등록하고 OTP 인증을 완료해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 3443,
+        "outputTokens": 1019,
+        "wallMs": 12802
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "f6e93a1fe2061e31",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "HR-02-p4", "SEC-01-p2"],
+      "groundedPassageIds": ["HR-02-p4", "SEC-02-p2", "HR-02-p2", "SEC-01-p2", "FAQ-01-p3"]
+    },
+    {
+      "scenarioId": "future-window",
+      "variantId": "A",
+      "runIndex": 2,
+      "finalState": "succeeded",
+      "answer": "## 평가 결과\n\n**대상**: 10.20.0.5 / **평가 시각**: 2026-08-17 10:00 KST\n\n- **판정: 거부(DENY)**\n- **사유**: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount: 0, 매치된 규칙 없음)\n\n즉, 해당 시각에 10.20.0.5는 접근이 **불가능**합니다.\n\n## 사전 등록 절차\n\n사내 규정상 절차는 다음과 같습니다.\n\n- 허용된 IP 대역 외부에서 관리자 콘솔 등에 접근이 필요한 경우, **IP 접근 제어 어드민에 \"사용 시간대\"와 함께 사전 등록**해야 합니다. (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시 **허용할 IP 또는 CIDR 대역**과 **사용 시간대**를 함께 지정하며, 조회 시각은 항상 **KST(UTC+9) 기준**으로 표시됩니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n따라서 10.20.0.5로 해당 시간대에 접근하려면, JC Guard의 IP 접근 제어 어드민에서 해당 IP(또는 대역)와 사용 시간대를 사전에 등록해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 4158,
+        "outputTokens": 1459,
+        "wallMs": 15791
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d58631047d1c160e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "SEC-02-p1", "HR-02-p3", "HR-01-p5"]
+    },
+    {
+      "scenarioId": "no-grounds",
+      "variantId": "A",
+      "runIndex": 2,
+      "finalState": "refused",
+      "answer": "사내문서 코퍼스에서 주차장 운영 시간이나 방문객 주차 정책과 관련된 근거를 찾지 못했습니다(검색 결과는 휴가·연차 정책만 반환되었고, 직접 질의에도 답변 가능한 근거가 없었습니다).",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 2765,
+        "outputTokens": 310,
+        "wallMs": 6327
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "ede7e4475281e8ed",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": ["HR-01-p2"]
+    },
+    {
+      "scenarioId": "tool-retry",
+      "variantId": "A",
+      "runIndex": 2,
+      "finalState": "succeeded",
+      "answer": "## 접근 판정 결과\n\n**IP:** 198.51.100.24\n**판정: 거부 (DENY)**\n- 사유: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용되었습니다. (평가된 규칙 수: 0)\n\n## 예외 신청 방법\n\n사내 규정에 따르면, 허용된 IP 대역 외부에서 접근이 필요한 경우 다음과 같이 신청합니다.\n\n- 허용된 IP 대역 외부에서의 관리자 콘솔 접근은 기본적으로 차단됩니다.\n- 접근이 필요하면 **IP 접근 제어 어드민**에 **사용 시간대**와 함께 **사전 등록**해야 합니다. (근거: SEC-02-p2)\n- 등록 시에는 허용할 **IP 또는 CIDR 대역**과 **사용 시간대**를 함께 지정하며, 조회 시각은 **KST(UTC+9)** 기준으로 표시됩니다. (근거: PROD-02-p3)\n\n**요약:** 198.51.100.24는 현재 허용 목록에 없어 거부되며, 접근이 필요하면 IP 접근 제어 어드민 화면에서 해당 IP(또는 CIDR)와 사용 시간대를 사전 등록하시면 됩니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 3,
+        "inputTokens": 3331,
+        "outputTokens": 617,
+        "wallMs": 10111
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "error",
+          "outputDigest": "",
+          "attempt": 1
+        },
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 2
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d949d0368a8b9a00",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-01-p5", "HR-02-p2", "SEC-02-p1"]
+    },
+    {
+      "scenarioId": "budget-stop",
+      "variantId": "A",
+      "runIndex": 2,
+      "finalState": "exhausted",
+      "answer": "예산 상한에 걸려 중단했습니다. 부분 결과는 아래 트리에 남아 있습니다.",
+      "spent": {
+        "steps": 1,
+        "toolCalls": 4,
+        "inputTokens": 1206,
+        "outputTokens": 363,
+        "wallMs": 4724
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "dd71d243d5125925",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "16c5dd6add4fb494",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "bab6151e2b13ef58",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a815fded5e69bc23",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": [
+        "HR-02-p2",
+        "SEC-01-p4",
+        "SEC-02-p3",
+        "HR-02-p4",
+        "SEC-02-p1",
+        "FAQ-01-p3",
+        "FAQ-01-p1",
+        "SEC-01-p1",
+        "SEC-01-p3",
+        "SEC-01-p2",
+        "INFRA-01-p3"
+      ]
+    },
+    {
+      "scenarioId": "vpn-blocked",
+      "variantId": "B",
+      "runIndex": 0,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**차단 원인**\n- IP 접근 제어 정책 평가 결과: `203.0.113.77` → **DENY** (매치되는 허용 규칙이 없어 기본 정책인 거부가 적용됨, `matchedRuleId: null`)\n- 근거: **SEC-02-p2** (『디바이스 및 VPN 접근 통제』) — \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n즉, 해당 재택 IP가 허용 대역(화이트리스트)에 등록되어 있지 않아 기본 거부 규칙에 의해 막힌 것입니다.\n\n## 사내 규정상 올바른 접속 절차\n\n1. **VPN·회사 지급 노트북 사용 필수**\n   - 근거: **HR-02-p4** — \"원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다.\"\n\n2. **관리자 콘솔 접속을 위해서는 IP 사전 등록 필요**\n   - 근거: **SEC-02-p2** — 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 함.\n\n3. **관리자 권한 계정은 2단계 인증(OTP) 필수**\n   - 근거: **SEC-01-p2** — \"관리자 권한 계정은 2단계 인증(OTP)이 필수입니다.\"\n\n4. (참고) **재택근무 자체 신청 절차**\n   - 근거: **HR-02-p2** — 재택근무는 주 2일까지 허용되며, 전날 18시까지 그룹웨어 신청 및 팀장 승인 필요, 코어타임(10:00~16:00) 중 즉시 연락 가능해야 함.\n\n**요약**: 해당 직원은 회사 지급 노트북과 VPN으로 접속해야 하며, 관리자 콘솔 접근이 필요하다면 사용 시간대와 함께 IP를 사전에 접근 제어 어드민에 등록하고, 접속 시 OTP 2단계 인증을 거쳐야 합니다. 개인 PC나 미등록 IP로는 접속이 규정상 허용되지 않습니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 3,
+        "inputTokens": 3673,
+        "outputTokens": 1124,
+        "wallMs": 12989
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "3a137c5404f17c3e",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "HR-02-p4", "SEC-01-p2", "HR-02-p2"],
+      "groundedPassageIds": ["SEC-02-p2", "HR-02-p2", "SEC-02-p3", "SEC-01-p2", "HR-02-p4"]
+    },
+    {
+      "scenarioId": "future-window",
+      "variantId": "B",
+      "runIndex": 0,
+      "finalState": "succeeded",
+      "answer": "## 평가 결과\n\n**대상:** 10.20.0.5, **시각:** 2026-08-17 10:00 KST\n**결과: DENY (접근 불가)**\n- 매치하는 규칙이 없어 기본 정책(거부)이 적용되었습니다.\n- 등록된 허용 규칙이 0건 평가되었으며, matchedRuleId 없음.\n\n## 사전 등록 절차\n\n사내 규정상 허용 IP 대역 외부(혹은 미등록 IP)에서 접근하려면 다음 절차가 필요합니다.\n\n- **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시 **허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 지정**해야 하며, 조회 시각은 항상 **KST(UTC+9) 기준**으로 표시됩니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n즉, 10.20.0.5를 해당 시간대에 사용하려면 JC Guard(IP 접근 제어 어드민)에 IP/CIDR와 사용 시간대를 사전 등록해야 접근이 허용됩니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 4731,
+        "outputTokens": 1895,
+        "wallMs": 22929
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "5d79518eda8732ec",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "PROD-02-p2", "SEC-02-p4", "SEC-02-p1"]
+    },
+    {
+      "scenarioId": "no-grounds",
+      "variantId": "B",
+      "runIndex": 0,
+      "finalState": "refused",
+      "answer": "사내문서 코퍼스에서 주차장 운영 시간 및 방문객 주차 정책에 관한 근거를 찾지 못했습니다. (검색 결과로는 휴가·연차 정책 문서(HR-01-p2)만 반환되어 주차 관련 내용과 무관했습니다.)",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 2871,
+        "outputTokens": 304,
+        "wallMs": 8422
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "ede7e4475281e8ed",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["HR-01-p2"],
+      "groundedPassageIds": ["HR-01-p2"]
+    },
+    {
+      "scenarioId": "tool-retry",
+      "variantId": "B",
+      "runIndex": 0,
+      "finalState": "succeeded",
+      "answer": "## 접근 판정 결과\n\n**IP: 198.51.100.24 → DENY (거부)**\n- 근거: 매치하는 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount=0, matchedRuleId=null)\n\n## 예외 신청 방법\n\n사내 규정상 예외 신청 절차는 다음과 같습니다.\n\n- 허용된 IP 대역 외부에서 관리자 콘솔에 접근해야 하는 경우, **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록**해야 합니다. (근거: `SEC-02-p2`, \"디바이스 및 VPN 접근 통제\")\n- 등록 시에는 **허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록**하며, 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다. (근거: `PROD-02-p3`, \"JC Guard 사용 매뉴얼\")\n\n즉, 198.51.100.24에서 접근이 필요하시면 IP 접근 제어 어드민 화면에서 해당 IP(또는 CIDR)와 사용 시간대를 사전에 등록하시면 됩니다.",
+      "spent": {
+        "steps": 3,
+        "toolCalls": 4,
+        "inputTokens": 4951,
+        "outputTokens": 674,
+        "wallMs": 13627
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "error",
+          "outputDigest": "",
+          "attempt": 1
+        },
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 2
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d949d0368a8b9a00",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-01-p5", "HR-02-p2", "SEC-02-p1"]
+    },
+    {
+      "scenarioId": "budget-stop",
+      "variantId": "B",
+      "runIndex": 0,
+      "finalState": "exhausted",
+      "answer": "예산 상한에 걸려 중단했습니다. 부분 결과는 아래 트리에 남아 있습니다.",
+      "spent": {
+        "steps": 1,
+        "toolCalls": 4,
+        "inputTokens": 1250,
+        "outputTokens": 241,
+        "wallMs": 3498
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "dd71d243d5125925",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b54b022d0d114d9b",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "bab6151e2b13ef58",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a1de70941f3a6fe6",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": [
+        "HR-02-p2",
+        "SEC-01-p4",
+        "SEC-02-p3",
+        "SEC-02-p1",
+        "HR-02-p4",
+        "HR-03-p3",
+        "SEC-02-p4",
+        "HR-01-p5",
+        "SEC-01-p1",
+        "FAQ-01-p1",
+        "SEC-01-p3",
+        "SEC-01-p2",
+        "INFRA-01-p3",
+        "HR-03-p4"
+      ]
+    },
+    {
+      "scenarioId": "vpn-blocked",
+      "variantId": "B",
+      "runIndex": 1,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**차단 원인**\n`guard_evaluateIpPolicy` 조회 결과, 203.0.113.77 은 등록된 허용 규칙에 매치되지 않아 **기본 정책(거부)** 이 적용되었습니다. (decision: DENY, reason: \"매치하는 규칙이 없어 기본 정책(거부)을 적용했습니다.\")\n즉, 특정 차단 규칙이 아니라 **허용 목록에 없어서 기본값으로 막힌 것**입니다.\n\n**사내 규정상 올바른 접속 방법**\n\n1. **허용 IP 대역 외부 접근 자체가 원천 차단**됩니다. 접근이 필요하면 사전에 등록해야 합니다.\n   > \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\" — *SEC-02-p2 (디바이스 및 VPN 접근 통제)*\n\n2. **재택근무 시에는 반드시 회사 지급 노트북 + VPN을 사용**해야 하며, 개인 PC로 직접 접속하는 것은 금지됩니다.\n   > \"원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다.\" — *HR-02-p4 (재택근무 및 근무시간 운영 지침)*\n\n3. 참고로 관리자 권한 계정은 **2단계 인증(OTP)** 도 필수입니다.\n   > \"관리자 권한 계정은 2단계 인증(OTP)이 필수입니다.\" — *SEC-01-p2 (정보보안 및 비밀번호 정책)*\n\n**정리하면**, 해당 직원은\n- 회사 지급 노트북으로 VPN 연결 후 접속해야 하며,\n- 사용할 IP(또는 VPN 대역)와 접속 시간대를 IP 접근 제어 어드민에 사전 등록하고,\n- 관리자 콘솔 로그인 시 OTP 2단계 인증을 거쳐야\n합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 3513,
+        "outputTokens": 1023,
+        "wallMs": 12481
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "6da23b2888dfc8ba",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "HR-02-p4", "SEC-01-p2"],
+      "groundedPassageIds": ["SEC-02-p2", "HR-02-p4", "HR-02-p2", "SEC-02-p3", "SEC-01-p2"]
+    },
+    {
+      "scenarioId": "future-window",
+      "variantId": "B",
+      "runIndex": 1,
+      "finalState": "succeeded",
+      "answer": "## 평가 결과\n\n**10.20.0.5 / 2026-08-17 10:00 KST → 접근 불가 (DENY)**\n\n- 매치되는 허용 규칙이 없어 기본 정책(거부)이 적용되었습니다. (evaluatedCount: 0, matchedRuleId: 없음)\n\n## 사전 등록 절차\n\n접근이 필요한 경우, 다음 절차를 따라야 합니다.\n\n- **IP 접근 제어 어드민**에 해당 IP(또는 CIDR 대역)와 **사용 시간대**를 함께 사전 등록해야 합니다. (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시 IP/CIDR 대역과 사용 시간대를 함께 지정하며, 조회 시각은 항상 **KST(UTC+9)** 기준으로 표시됩니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n즉, 10.20.0.5를 2026년 8월 17일 오전 10시(KST) 무렵 사용하시려면 사전에 IP 접근 제어 어드민에서 해당 IP와 시간대를 등록해 두셔야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 4272,
+        "outputTokens": 1438,
+        "wallMs": 18128
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "fb1ee68b73760495",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-02-p3", "HR-01-p5", "HR-03-p4"]
+    },
+    {
+      "scenarioId": "no-grounds",
+      "variantId": "B",
+      "runIndex": 1,
+      "finalState": "refused",
+      "answer": "사내 문서 코퍼스에서 주차장 운영 시간이나 방문객 주차 정책에 대한 근거를 찾지 못했습니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 2870,
+        "outputTokens": 252,
+        "wallMs": 7590
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "ede7e4475281e8ed",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": ["HR-01-p2"]
+    },
+    {
+      "scenarioId": "tool-retry",
+      "variantId": "B",
+      "runIndex": 1,
+      "finalState": "succeeded",
+      "answer": "## 접근 판정 결과\n\n- **대상 IP**: 198.51.100.24\n- **판정**: **DENY (거부)**\n- **근거**: 매치되는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount: 0)\n\n## 예외 신청 방법\n\n거부된 경우, 사내 규정상 아래와 같이 예외 신청을 진행하시면 됩니다.\n\n- 접근이 필요한 경우, **IP 접근 제어 어드민**에 해당 IP(또는 CIDR)와 **사용 시간대**를 함께 **사전 등록**해야 합니다.\n  (근거: `SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n\n참고로 등록 시 조회/평가 시각은 항상 **KST(UTC+9)** 기준으로 표시된다는 점도 함께 확인해두시면 좋습니다. (근거: `PROD-02-p3`, 「JC Guard 사용 매뉴얼」)",
+      "spent": {
+        "steps": 3,
+        "toolCalls": 4,
+        "inputTokens": 5528,
+        "outputTokens": 871,
+        "wallMs": 16400
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "error",
+          "outputDigest": "",
+          "attempt": 1
+        },
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 2
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d949d0368a8b9a00",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "32c123856d155ecb",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-01-p5", "HR-02-p2", "SEC-02-p1"]
+    },
+    {
+      "scenarioId": "budget-stop",
+      "variantId": "B",
+      "runIndex": 1,
+      "finalState": "exhausted",
+      "answer": "예산 상한에 걸려 중단했습니다. 부분 결과는 아래 트리에 남아 있습니다.",
+      "spent": {
+        "steps": 1,
+        "toolCalls": 4,
+        "inputTokens": 1250,
+        "outputTokens": 241,
+        "wallMs": 3366
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "dd71d243d5125925",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b54b022d0d114d9b",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "bab6151e2b13ef58",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a1de70941f3a6fe6",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": [
+        "HR-02-p2",
+        "SEC-01-p4",
+        "SEC-02-p3",
+        "SEC-02-p1",
+        "HR-02-p4",
+        "HR-03-p3",
+        "SEC-02-p4",
+        "HR-01-p5",
+        "SEC-01-p1",
+        "FAQ-01-p1",
+        "SEC-01-p3",
+        "SEC-01-p2",
+        "INFRA-01-p3",
+        "HR-03-p4"
+      ]
+    },
+    {
+      "scenarioId": "vpn-blocked",
+      "variantId": "B",
+      "runIndex": 2,
+      "finalState": "succeeded",
+      "answer": "## 확인 결과\n\n**차단 원인**\n- IP 접근 제어 정책을 평가한 결과, `203.0.113.77`은 등록된 허용 규칙과 매치되지 않아 **기본 정책(거부)**이 적용되었습니다. (evaluatedCount: 0, matchedRuleId: 없음)\n- 근거: `SEC-02-p2` — \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n## 사내 규정상 올바른 접속 방법\n\n1. **회사 지급 장비 + VPN 필수**\n   근거: `SEC-02-p1` — \"사내 네트워크와 내부 시스템은 회사 지급 장비에서 VPN을 통해서만 접근할 수 있습니다.\"\n   근거: `HR-02-p4` — \"원격지 근무 시에는 회사 지급 노트북과 VPN을 사용해야 하며, 개인 PC로 사내 시스템에 접속하는 것은 금지됩니다.\"\n\n2. **관리자 콘솔 접속 시 IP 사전 등록 필요**\n   근거: `SEC-02-p2` — 해당 IP(또는 원격지 대역)를 IP 접근 제어 어드민에 사용 시간대와 함께 **사전 등록**해야 접속이 허용됩니다.\n\n3. **관리자 권한 계정은 OTP 2단계 인증 필수**\n   근거: `SEC-01-p2` — \"관리자 권한 계정은 2단계 인증(OTP)이 필수입니다.\"\n\n4. **재택근무 자체도 사전 승인 필요**\n   근거: `HR-02-p2` — 재택근무는 주 2일까지 허용되며, 전날 18시까지 그룹웨어 신청 및 팀장 승인이 필요하고, 코어타임(10:00~16:00)에는 즉시 연락이 가능해야 합니다.\n\n**요약**: 해당 직원은 회사 지급 노트북으로 VPN에 접속한 뒤, 관리자 콘솔용으로 현재 IP(또는 대역)를 IP 접근 제어 어드민에 사전 등록하고, 관리자 계정 OTP 인증을 거쳐 접속해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 3550,
+        "outputTokens": 1016,
+        "wallMs": 11612
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "0da2a4ef1c3186a9",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "SEC-02-p1", "HR-02-p4", "SEC-01-p2", "HR-02-p2"],
+      "groundedPassageIds": ["HR-02-p4", "SEC-02-p2", "SEC-02-p1", "HR-02-p2", "SEC-01-p2"]
+    },
+    {
+      "scenarioId": "future-window",
+      "variantId": "B",
+      "runIndex": 2,
+      "finalState": "succeeded",
+      "answer": "## 평가 결과\n\n**대상:** 10.20.0.5, **평가 시각:** 2026-08-17 10:00 (KST)\n\n- **판정: DENY (접근 불가)**\n- 근거: 매치하는 허용 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount=0, matchedRuleId 없음)\n\n## 사전 등록 절차\n\n접근이 필요한 경우 사내 규정상 다음 절차가 요구됩니다.\n\n- **IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록** 필요 — 허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단되며, 접근이 필요하면 사전에 등록해야 함 (`SEC-02-p2`, 「디바이스 및 VPN 접근 통제」)\n- 등록 시에는 **허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 지정**해야 하며, 조회 시각은 항상 KST(UTC+9) 기준으로 표시됨 (`PROD-02-p3`, 「JC Guard 사용 매뉴얼」)\n\n**요약:** 10.20.0.5는 현재 등록된 허용 규칙이 없어 해당 시각에 접근이 거부됩니다. 접근을 허용하려면 IP 접근 제어 어드민에서 해당 IP(대역)와 사용 시간대를 사전 등록해야 합니다.",
+      "spent": {
+        "steps": 2,
+        "toolCalls": 2,
+        "inputTokens": 4434,
+        "outputTokens": 1656,
+        "wallMs": 20424
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d58631047d1c160e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "SEC-02-p1", "HR-02-p3", "HR-01-p5"]
+    },
+    {
+      "scenarioId": "no-grounds",
+      "variantId": "B",
+      "runIndex": 2,
+      "finalState": "refused",
+      "answer": "사내문서 코퍼스에서 \"주차장 운영 시간\"이나 \"방문객 주차 정책\"과 관련된 문단을 검색(semantic/keyword)했으나 관련 근거를 전혀 찾지 못했습니다(검색 결과는 휴가 정책 등 무관한 문단만 반환됨).",
+      "spent": {
+        "steps": 3,
+        "toolCalls": 3,
+        "inputTokens": 4639,
+        "outputTokens": 387,
+        "wallMs": 11057
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "ede7e4475281e8ed",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b3e19d79c8cef913",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": ["HR-01-p2"]
+    },
+    {
+      "scenarioId": "tool-retry",
+      "variantId": "B",
+      "runIndex": 2,
+      "finalState": "succeeded",
+      "answer": "## 접근 판정 결과\n\n**IP: 198.51.100.24 → 거부(DENY)**\n- 판정 근거: 매치되는 규칙이 없어 기본 정책(거부)이 적용됨 (evaluatedCount=0, matchedRuleId 없음)\n\n## 예외 신청 방법\n\n사내 규정상 절차는 다음과 같습니다 (근거: `SEC-02-p2`, 문서: 디바이스 및 VPN 접근 통제):\n\n> \"허용된 IP 대역 외부에서의 관리자 콘솔 접근은 차단됩니다. 접근이 필요한 경우 IP 접근 제어 어드민에 사용 시간대와 함께 사전 등록해야 합니다.\"\n\n즉, **IP 접근 제어 어드민(관리 콘솔)에 해당 IP와 필요한 사용 시간대를 함께 사전 등록**하면 예외 처리가 가능합니다.\n\n참고로 등록 방식에 대한 추가 정보(`PROD-02-p3`, JC Guard 사용 매뉴얼):\n> \"IP 접근 제어에서는 허용할 IP 또는 CIDR 대역과 사용 시간대를 함께 등록합니다. 조회 시각은 항상 KST(UTC+9) 기준으로 표시됩니다.\"\n\n따라서 198.51.100.24를 예외로 허용하려면, 어드민 화면에서 해당 IP(또는 CIDR)와 사용 시간대(KST 기준)를 함께 사전 등록해야 합니다.",
+      "spent": {
+        "steps": 3,
+        "toolCalls": 4,
+        "inputTokens": 4983,
+        "outputTokens": 798,
+        "wallMs": 16077
+      },
+      "toolCalls": [
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "error",
+          "outputDigest": "",
+          "attempt": 1
+        },
+        {
+          "name": "guard.evaluateIpPolicy",
+          "status": "ok",
+          "outputDigest": "8e32f736cd05498c",
+          "attempt": 2
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "d949d0368a8b9a00",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.answer",
+          "status": "ok",
+          "outputDigest": "e81c0a1ce2f3228e",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": ["SEC-02-p2", "PROD-02-p3"],
+      "groundedPassageIds": ["SEC-02-p2", "PROD-02-p3", "HR-01-p5", "HR-02-p2", "SEC-02-p1"]
+    },
+    {
+      "scenarioId": "budget-stop",
+      "variantId": "B",
+      "runIndex": 2,
+      "finalState": "exhausted",
+      "answer": "예산 상한에 걸려 중단했습니다. 부분 결과는 아래 트리에 남아 있습니다.",
+      "spent": {
+        "steps": 1,
+        "toolCalls": 4,
+        "inputTokens": 1250,
+        "outputTokens": 236,
+        "wallMs": 3364
+      },
+      "toolCalls": [
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "dd71d243d5125925",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "b54b022d0d114d9b",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "bab6151e2b13ef58",
+          "attempt": 1
+        },
+        {
+          "name": "docqa.search",
+          "status": "ok",
+          "outputDigest": "a815fded5e69bc23",
+          "attempt": 1
+        }
+      ],
+      "citedPassageIds": [],
+      "groundedPassageIds": [
+        "HR-02-p2",
+        "SEC-01-p4",
+        "SEC-02-p3",
+        "SEC-02-p1",
+        "HR-02-p4",
+        "HR-03-p3",
+        "SEC-02-p4",
+        "HR-01-p5",
+        "SEC-01-p1",
+        "FAQ-01-p1",
+        "SEC-01-p3",
+        "SEC-01-p2",
+        "INFRA-01-p3"
+      ]
+    }
+  ]
+}

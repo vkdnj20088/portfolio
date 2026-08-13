@@ -11,7 +11,9 @@
     "test": "vitest run",
     "check:browser-support": "es-check es2022 \".next/static/chunks/**/*.js\"",
     "make:llm-baseline": "tsx scripts/make-llm-baseline.ts && prettier --write ../../packages/search-domain/src/eval/llm-baseline.json",
-    "make:agent-traces": "tsx scripts/make-agent-traces.ts && prettier --write src/lib/agent/data/traces.json"
+    "make:agent-traces": "tsx scripts/make-agent-traces.ts && prettier --write src/lib/agent/data/traces.json",
+    "make:agent-runs": "tsx scripts/make-agent-traces.ts --variant=A,B --repeat=3 && prettier --write src/lib/agent/data/traces.json src/lib/agent/data/runs.json",
+    "make:judgments": "tsx scripts/make-judgments.ts && prettier --write src/lib/agent/data/judgments.json"
   },
   "dependencies": {
     "@chat/agent-core": "workspace:*",

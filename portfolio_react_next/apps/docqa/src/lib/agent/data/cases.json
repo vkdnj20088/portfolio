@@ -1,0 +1,329 @@
+{
+  "generatedAt": "2026-08-11",
+  "cases": [
+    {
+      "id": "vpn-decision",
+      "scenarioId": "vpn-blocked",
+      "title": "차단 판정을 도구로 확인한다",
+      "origin": {
+        "scenarioId": "vpn-blocked",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "badd4bbd1739d9fb"
+      },
+      "checks": [
+        {
+          "id": "state",
+          "kind": "structure",
+          "label": "답을 내고 끝나야 한다",
+          "assertion": {
+            "op": "finalStateIs",
+            "state": "succeeded"
+          }
+        },
+        {
+          "id": "tool-guard",
+          "kind": "structure",
+          "label": "IP 정책 도구를 최소 1회 불러야 한다",
+          "assertion": {
+            "op": "toolCalledAtLeast",
+            "tool": "guard.evaluateIpPolicy",
+            "times": 1
+          }
+        },
+        {
+          "id": "budget",
+          "kind": "structure",
+          "label": "예산 안에서 끝나야 한다",
+          "assertion": {
+            "op": "withinBudget"
+          }
+        }
+      ],
+      "humanLabel": null
+    },
+    {
+      "id": "vpn-grounds",
+      "scenarioId": "vpn-blocked",
+      "title": "규정 근거를 문단 id 와 함께 댄다",
+      "origin": {
+        "scenarioId": "vpn-blocked",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "76cdd6271b33d019"
+      },
+      "checks": [
+        {
+          "id": "citation",
+          "kind": "citation",
+          "label": "인용한 문단이 도구 출력에 실제로 있어야 한다"
+        },
+        {
+          "id": "grounded",
+          "kind": "judge",
+          "label": "사내 규정 근거를 문단 id 와 함께 제시했는가",
+          "question": "이 답변은 사내 규정 근거를 문단 id 와 함께 제시하고 있습니까?"
+        }
+      ],
+      "humanLabel": true,
+      "trap": {
+        "answer": "VPN 없이도 접속할 수 있습니다. 별도 근거 문단은 없습니다.",
+        "expected": false
+      }
+    },
+    {
+      "id": "vpn-remedy",
+      "scenarioId": "vpn-blocked",
+      "title": "막힌 이유만이 아니라 어떻게 해야 하는지까지 답한다",
+      "origin": {
+        "scenarioId": "vpn-blocked",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "76d86383db3df8b5"
+      },
+      "checks": [
+        {
+          "id": "remedy",
+          "kind": "judge",
+          "label": "차단 사유와 함께 접속 방법까지 답했는가",
+          "question": "이 답변은 차단된 이유와 함께, 사내 규정상 어떻게 접속해야 하는지까지 답하고 있습니까?"
+        }
+      ],
+      "humanLabel": true
+    },
+    {
+      "id": "window-evaluated",
+      "scenarioId": "future-window",
+      "title": "지정한 시각으로 정책을 평가한다",
+      "origin": {
+        "scenarioId": "future-window",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "6c391338622cf4d6"
+      },
+      "checks": [
+        {
+          "id": "tool-guard",
+          "kind": "structure",
+          "label": "IP 정책 도구를 최소 1회 불러야 한다",
+          "assertion": {
+            "op": "toolCalledAtLeast",
+            "tool": "guard.evaluateIpPolicy",
+            "times": 1
+          }
+        },
+        {
+          "id": "budget",
+          "kind": "structure",
+          "label": "예산 안에서 끝나야 한다",
+          "assertion": {
+            "op": "withinBudget"
+          }
+        }
+      ],
+      "humanLabel": null
+    },
+    {
+      "id": "window-procedure",
+      "scenarioId": "future-window",
+      "title": "불가하면 사전 등록 절차까지 잇는다",
+      "origin": {
+        "scenarioId": "future-window",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "3029aa3a9e28d61c"
+      },
+      "checks": [
+        {
+          "id": "citation",
+          "kind": "citation",
+          "label": "인용한 문단이 도구 출력에 실제로 있어야 한다"
+        },
+        {
+          "id": "procedure",
+          "kind": "judge",
+          "label": "사전 등록 절차를 답에 포함했는가",
+          "question": "이 답변은 접근이 불가할 때의 사전 등록 절차를 설명하고 있습니까?"
+        }
+      ],
+      "humanLabel": true
+    },
+    {
+      "id": "nogrounds-refuses",
+      "scenarioId": "no-grounds",
+      "title": "근거가 없으면 답하지 않고 끝낸다",
+      "origin": {
+        "scenarioId": "no-grounds",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "495ef4b236c4f7c4"
+      },
+      "checks": [
+        {
+          "id": "state",
+          "kind": "structure",
+          "label": "근거 없음으로 끝나야 한다",
+          "assertion": {
+            "op": "finalStateIs",
+            "state": "refused"
+          }
+        }
+      ],
+      "humanLabel": null
+    },
+    {
+      "id": "nogrounds-no-invention",
+      "scenarioId": "no-grounds",
+      "title": "없는 규정을 지어내지 않는다",
+      "origin": {
+        "scenarioId": "no-grounds",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "896853ce36cf8520"
+      },
+      "checks": [
+        {
+          "id": "citation",
+          "kind": "citation",
+          "label": "인용한 문단이 도구 출력에 실제로 있어야 한다"
+        },
+        {
+          "id": "no-invention",
+          "kind": "judge",
+          "label": "코퍼스에 없는 내용을 지어내지 않았는가",
+          "question": "이 답변은 주차장 운영 시간이나 주차 정책에 대해 구체적인 내용을 단정해 말하고 있습니까? 단정하고 있다면 fail 입니다."
+        }
+      ],
+      "humanLabel": true,
+      "trap": {
+        "answer": "사내 주차장은 평일 07:00~22:00 운영하며 방문객은 3시간까지 무료입니다. (근거: HR-09-p2)",
+        "expected": false
+      }
+    },
+    {
+      "id": "retry-recovers",
+      "scenarioId": "tool-retry",
+      "title": "도구가 한 번 실패해도 실행을 마친다",
+      "origin": {
+        "scenarioId": "tool-retry",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "03f81b153898e667"
+      },
+      "checks": [
+        {
+          "id": "state",
+          "kind": "structure",
+          "label": "답을 내고 끝나야 한다",
+          "assertion": {
+            "op": "finalStateIs",
+            "state": "succeeded"
+          }
+        },
+        {
+          "id": "tool-guard",
+          "kind": "structure",
+          "label": "실패한 뒤에도 IP 정책 도구 호출이 성립해야 한다",
+          "assertion": {
+            "op": "toolCalledAtLeast",
+            "tool": "guard.evaluateIpPolicy",
+            "times": 1
+          }
+        }
+      ],
+      "humanLabel": null
+    },
+    {
+      "id": "retry-answer",
+      "scenarioId": "tool-retry",
+      "title": "도구 실패를 답으로 흘리지 않는다",
+      "origin": {
+        "scenarioId": "tool-retry",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "03e254c638b329e4"
+      },
+      "checks": [
+        {
+          "id": "answered",
+          "kind": "judge",
+          "label": "도구가 한 번 실패했어도 과제가 물은 것에 답했는가",
+          "question": "이 답변은 IP 접근 판정과 예외 신청 방법이라는 과제의 두 물음에 실제로 답하고 있습니까?"
+        }
+      ],
+      "humanLabel": true
+    },
+    {
+      "id": "budget-stops",
+      "scenarioId": "budget-stop",
+      "title": "예산 상한에서 멈춘다",
+      "origin": {
+        "scenarioId": "budget-stop",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "91e25098fe7db692"
+      },
+      "checks": [
+        {
+          "id": "state",
+          "kind": "structure",
+          "label": "예산 초과로 끝나야 한다",
+          "assertion": {
+            "op": "finalStateIs",
+            "state": "exhausted"
+          }
+        }
+      ],
+      "humanLabel": null
+    },
+    {
+      "id": "budget-declares",
+      "scenarioId": "budget-stop",
+      "title": "중단됐다는 사실을 감추지 않는다",
+      "origin": {
+        "scenarioId": "budget-stop",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "91db94d3be7f9069"
+      },
+      "checks": [
+        {
+          "id": "declares",
+          "kind": "judge",
+          "label": "중단됐다는 사실을 답이 밝히는가",
+          "question": "이 답변은 작업이 끝까지 가지 못하고 중단됐다는 사실을 밝히고 있습니까?"
+        }
+      ],
+      "humanLabel": true,
+      "trap": {
+        "answer": "재택근무, VPN, 비밀번호, 디바이스 분실 네 항목을 모두 정리했습니다. 이상입니다.",
+        "expected": false
+      }
+    },
+    {
+      "id": "budget-no-overclaim",
+      "scenarioId": "budget-stop",
+      "title": "부분 결과를 전부인 양 말하지 않는다",
+      "origin": {
+        "scenarioId": "budget-stop",
+        "variantId": "A",
+        "runIndex": 0,
+        "spanId": "d5de3e76fa822d74"
+      },
+      "checks": [
+        {
+          "id": "citation",
+          "kind": "citation",
+          "label": "인용한 문단이 도구 출력에 실제로 있어야 한다"
+        },
+        {
+          "id": "no-overclaim",
+          "kind": "judge",
+          "label": "다루지 못한 항목을 다룬 것처럼 말하지 않는가",
+          "question": "이 답변은 실제로 확인하지 못한 항목까지 정리했다고 말하고 있습니까? 그렇다면 fail 입니다."
+        }
+      ],
+      "humanLabel": true
+    }
+  ]
+}
