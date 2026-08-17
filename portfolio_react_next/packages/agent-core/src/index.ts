@@ -28,8 +28,8 @@ export { DEFAULT_BUDGET, budgetPressure, checkBudget, rollUp } from './budget';
 export type { BudgetVerdict } from './budget';
 export { alwaysExpanded, buildTree, flatten } from './tree';
 export type { SpanNode } from './tree';
-export { checkStale, toolsetDigest, verifyToolSpans } from './replay';
-export type { StaleReport } from './replay';
+export { checkStale, toolDigests, toolsetDigest, usedToolNames, verifyToolSpans } from './replay';
+export type { StaleReport, ToolFingerprint } from './replay';
 
 // 2단계 - 실행 여럿을 놓고 회귀인지 잡음인지 판정하는 층.
 export * from './eval';

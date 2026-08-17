@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { digest } from './digest';
-import { checkStale, toolsetDigest, verifyToolSpans } from './replay';
+import { checkStale, toolDigests, toolsetDigest, usedToolNames, verifyToolSpans } from './replay';
 import type { Span, ToolDefinition, ToolResult, TraceArtifact } from './types';
 
 const ctx = { correlationId: 'test' };
@@ -65,6 +65,29 @@ describe('도구 재실행 검증', () => {
     const spans = [toolSpan({ 'tool.output_digest': digest(out) })];
     const [v] = await verifyToolSpans(trace(spans), tools, ctx);
     expect(v!.verdict).toBe('verified');
+  });
+
+  it('부작용이 있는 도구는 아예 부르지 않는다', async () => {
+    // 재생 검증은 화면을 열 때마다 돈다. 여기서 예약 도구를 다시 부르면 배포된 서버가
+    // 방문자 수만큼 작업을 만들고, 승인 게이트를 재생 경로로 우회하게 된다.
+    let called = false;
+    const tools = new Map([
+      [
+        'demo.tool',
+        tool(
+          'demo.tool',
+          async () => {
+            called = true;
+            return { ok: true, value: {} };
+          },
+          { sideEffect: true },
+        ),
+      ],
+    ]);
+    const [v] = await verifyToolSpans(trace([toolSpan({})]), tools, ctx);
+    expect(called).toBe(false);
+    expect(v!.verdict).toBe('unverified');
+    expect(v!.detail).toContain('부작용');
   });
 
   it('출력이 달라지면 mismatch - 스키마는 그대로인데 동작이 바뀐 경우를 잡는다', async () => {
@@ -143,6 +166,63 @@ describe('도구 재실행 검증', () => {
   });
 });
 
+describe('도구별 다이제스트와 낡음 판정', () => {
+  const t1 = tool('a.one', async () => ({ ok: true, value: 1 }));
+  const t2 = tool('b.two', async () => ({ ok: true, value: 2 }));
+  const t3 = tool('c.three', async () => ({ ok: true, value: 3 }));
+
+  /** a.one 만 쓴 실행. */
+  const usedOne = trace([toolSpan({ 'tool.name': 'a.one' })]);
+
+  it('쓰지 않은 도구가 늘어난 것으로는 낡지 않는다', () => {
+    // 3단계에서 도구 둘을 늘렸다는 이유로 실행 서른 건과 판정 백스물여섯 건을 통째로 다시
+    // 받았다. 낡음은 집합의 성질이 아니라 그 실행이 실제로 쓴 도구의 성질이다.
+    const before = toolDigests([t1, t2]);
+    const after = {
+      toolsetDigest: toolsetDigest([t1, t2, t3]),
+      toolDigests: toolDigests([t1, t2, t3]),
+    };
+    const r = checkStale({ ...usedOne, toolsetDigest: toolsetDigest([t1, t2]) }, after, before);
+    expect(r.stale).toBe(false);
+    expect(r.changed).toEqual([]);
+    expect(r.coarse).toBe(false);
+  });
+
+  it('쓴 도구의 계약이 바뀌면 낡고, 무엇이 바뀌었는지 이름을 남긴다', () => {
+    const before = toolDigests([t1, t2]);
+    const changedTool = tool('a.one', async () => ({ ok: true, value: 1 }), {
+      fixtures: ['새 픽스처'],
+    });
+    const after = {
+      toolsetDigest: toolsetDigest([changedTool, t2]),
+      toolDigests: toolDigests([changedTool, t2]),
+    };
+    const r = checkStale({ ...usedOne, toolsetDigest: toolsetDigest([t1, t2]) }, after, before);
+    expect(r.stale).toBe(true);
+    expect(r.changed).toEqual(['a.one']);
+  });
+
+  it('도구별 해시가 없는 옛 산출물은 집합 해시로 판정하되 거칠다고 표시한다', () => {
+    // 판정을 거절하면 옛 산출물이 화면에서 사라진다. 떨어지되 감추지 않는다.
+    const r = checkStale({ ...usedOne, toolsetDigest: 'old' }, 'new');
+    expect(r.stale).toBe(true);
+    expect(r.coarse).toBe(true);
+  });
+
+  it('집합 해시는 도구별 해시가 같으면 같다 - 둘이 어긋날 수 없다', () => {
+    expect(toolsetDigest([t1, t2])).toBe(toolsetDigest([t2, t1]));
+    expect(toolDigests([t1, t2])).toEqual(toolDigests([t2, t1]));
+  });
+
+  it('쓴 도구 이름은 재시도로 중복돼도 한 번만 센다', () => {
+    const two = trace([
+      toolSpan({ 'tool.name': 'a.one' }, 's1'),
+      toolSpan({ 'tool.name': 'a.one' }, 's2'),
+    ]);
+    expect(usedToolNames(two)).toEqual(['a.one']);
+  });
+});
+
 describe('도구 집합 다이제스트', () => {
   const a = tool('a', async () => ({ ok: true, value: 1 }));
   const b = tool('b', async () => ({ ok: true, value: 2 }));
@@ -169,6 +249,8 @@ describe('도구 집합 다이제스트', () => {
   it('낡음 판정이 커밋값과 현재값을 함께 돌려준다', () => {
     expect(checkStale(trace([]), 'different')).toEqual({
       stale: true,
+      changed: [],
+      coarse: true,
       committed: 'committed',
       current: 'different',
     });

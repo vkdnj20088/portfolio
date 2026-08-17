@@ -32,7 +32,7 @@
  * 채점이 실제로 보는 것은 최종 상태·부른 도구·인용한 문단·예산뿐이다. 요약이 원본과
  * 어긋나지 않는지는 테스트가 대조한다 - 미리 계산한 요약은 부패하기 마련이다.
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
@@ -43,12 +43,14 @@ import {
   createIdFactory,
   digest,
   rollUp,
+  toolDigests,
   toolsetDigest,
   argSources,
   decisionSummary,
   evaluateGuards,
   transition,
   type GuardrailId,
+  type RunBundle,
   type RunState,
   type RunSummary,
   type Span,
@@ -89,6 +91,8 @@ const VARIANT_IDS = arg('variant', 'A')
   .map((s) => s.trim())
   .filter(Boolean);
 const REPEAT = Math.max(1, Number(arg('repeat', '1')) || 1);
+/** `--force` 면 재사용하지 않고 전부 다시 받는다. */
+const FORCE = process.argv.slice(2).includes('--force');
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 // 1024 로 두었더니 future-window 시나리오의 첫 스텝이 그 자리에서 잘렸다(stop_reason=max_tokens,
@@ -110,6 +114,36 @@ if (!process.env.ANTHROPIC_API_KEY) {
 const client = new Anthropic();
 const generatedAt = new Date().toISOString();
 const digestOfToolset = toolsetDigest(TOOLS);
+const digestByTool = toolDigests(TOOLS);
+
+/**
+ * 이미 받아 둔 실행을 다시 쓸 수 있는지.
+ *
+ * 재수집은 비싸다 - 실행 서른 건에 십오 분, 그 위에 심판이 더 붙는다. 그런데 도구를 하나
+ * 늘렸다는 이유로 그 도구를 부른 적도 없는 실행까지 다시 받는 것은 낭비다. **그 실행이 실제로
+ * 쓴 도구**의 계약이 그대로고 지시 문장도 그대로면, 그 기록은 여전히 그때 그대로 참이다.
+ *
+ * 지시가 바뀌면 재사용하지 않는다. 프롬프트가 바뀐 실행을 옛 표본과 섞으면 2단계 대조가
+ * 무엇을 재는지 알 수 없게 된다.
+ */
+function reusable(prev: RunSummary | undefined, prevDigests: Record<string, string> | undefined) {
+  if (FORCE || !prev || !prevDigests) return false;
+  const prompt = PROMPT_BY_VARIANT[prev.variantId];
+  const variant = VARIANTS.find((v) => v.id === prev.variantId);
+  if (!prompt || !variant || variant.systemPromptDigest !== digest(prompt)) return false;
+  const used = [...new Set(prev.toolCalls.map((c) => c.name))];
+  return used.every((name) => prevDigests[name] === digestByTool[name]);
+}
+
+function readPrevious(): { runs: RunSummary[]; toolDigests?: Record<string, string> } {
+  try {
+    return JSON.parse(readFileSync(RUNS_OUT, 'utf8')) as RunBundle & {
+      toolDigests?: Record<string, string>;
+    };
+  } catch {
+    return { runs: [] };
+  }
+}
 
 const anthropicTools = TOOLS.map((t) => ({
   name: t.name.replace('.', '_'), // 모델 도구 이름은 [a-zA-Z0-9_-] 만 허용한다
@@ -127,24 +161,69 @@ async function main() {
   }
   const traces: TraceArtifact[] = [];
   const runs: RunSummary[] = [];
+  const previous = readPrevious();
+  let reused = 0;
 
   for (const variantId of VARIANT_IDS) {
     for (let runIndex = 0; runIndex < REPEAT; runIndex += 1) {
       for (const scenario of SCENARIOS) {
+        const prev = previous.runs.find(
+          (r) =>
+            r.scenarioId === scenario.id && r.variantId === variantId && r.runIndex === runIndex,
+        );
+        // 되짚기 화면이 읽는 한 벌(A/0)은 span 원본이 필요한데 요약에는 span 이 없다.
+        // 그 한 벌만은 재사용하지 않는다 - 원본 없이 요약만 남으면 화면이 빈다.
+        const isTraceRun = variantId === 'A' && runIndex === 0;
+        if (!isTraceRun && reusable(prev, previous.toolDigests)) {
+          console.error(`== ${variantId}/${runIndex} ${scenario.id} : 재사용(도구·지시 그대로)`);
+          runs.push(prev!);
+          reused += 1;
+          continue;
+        }
         console.error(`\n== ${variantId}/${runIndex} ${scenario.id} : ${scenario.title}`);
         const trace = await runScenario(scenario, variantId, runIndex);
         runs.push(summarize(trace, variantId, runIndex));
         // span 트리 원본은 실행 되짚기 화면이 읽는 한 벌만 남긴다. 나머지는 요약으로 충분하고,
         // 요약이 이 원본과 어긋나지 않는지는 테스트가 대조한다.
-        if (variantId === 'A' && runIndex === 0) traces.push(trace);
+        if (isTraceRun) traces.push(trace);
       }
     }
   }
+  // 이번 축 밖에 있던 실행은 그대로 들고 간다.
+  //
+  // 재사용을 넣으면서 생긴 위험이다. 축을 좁혀 돌리면(예: 구성 B 만) 결과 파일이 그 축만
+  // 담게 되고, 나머지는 조용히 사라진다. 부분 수집을 할 수 있게 만든 것이 이 라운드의
+  // 목적인데 부분 수집이 데이터를 지우면 아무도 쓰지 않는다.
+  const inAxis = (r: RunSummary) => VARIANT_IDS.includes(r.variantId) && r.runIndex < REPEAT;
+  const carried = previous.runs.filter((r) => !inAxis(r));
+  runs.push(...carried);
+
+  // 파일 안의 순서를 고정한다. 재사용과 들고 가기가 붙으면서 순서가 호출 방식에 따라
+  // 달라졌는데, 그러면 내용이 한 글자도 안 바뀐 재수집이 오백 줄짜리 diff 를 만든다.
+  // 산출물을 읽는 사람이 "무엇이 실제로 달라졌나"를 볼 수 있어야 한다.
+  const scenarioOrder = new Map(SCENARIOS.map((s, i) => [s.id, i]));
+  runs.sort(
+    (a, b) =>
+      a.variantId.localeCompare(b.variantId) ||
+      a.runIndex - b.runIndex ||
+      (scenarioOrder.get(a.scenarioId) ?? 0) - (scenarioOrder.get(b.scenarioId) ?? 0),
+  );
+
+  // 무엇을 건너뛰었는지 반드시 말한다. 조용히 재사용하면 "전부 다시 받았다"로 읽힌다.
+  console.error(
+    `\n새로 받은 실행 ${runs.length - reused - carried.length}건, 재사용 ${reused}건` +
+      (carried.length ? `, 이번 축 밖이라 그대로 둔 것 ${carried.length}건` : '') +
+      '.',
+  );
 
   if (traces.length > 0) {
     writeFileSync(
       OUT,
-      JSON.stringify({ generatedAt, toolsetDigest: digestOfToolset, traces }, null, 2) + '\n',
+      JSON.stringify(
+        { generatedAt, toolsetDigest: digestOfToolset, toolDigests: digestByTool, traces },
+        null,
+        2,
+      ) + '\n',
       'utf8',
     );
     console.error(`\n실행 되짚기용 ${traces.length}건 -> ${OUT}`);
@@ -156,8 +235,10 @@ async function main() {
     const bundle = {
       generatedAt,
       model: MODEL,
+      toolDigests: digestByTool,
       repeat: REPEAT,
-      variants: VARIANTS.filter((v) => VARIANT_IDS.includes(v.id)),
+      // 들고 간 실행의 구성도 목록에 남아야 한다 - 빠지면 화면이 그 실행을 못 읽는다.
+      variants: VARIANTS.filter((v) => runs.some((r) => r.variantId === v.id)),
       runs,
     };
     writeFileSync(RUNS_OUT, JSON.stringify(bundle, null, 2) + '\n', 'utf8');
@@ -520,6 +601,7 @@ async function runScenario(
     model: MODEL,
     generatedAt,
     toolsetDigest: digestOfToolset,
+    toolDigests: digestByTool,
     budget: scenario.budget,
     finalState: state,
     summary,

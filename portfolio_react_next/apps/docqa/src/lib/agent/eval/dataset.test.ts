@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { digest, rollUp } from '@chat/agent-core';
+import { checkStale, digest, rollUp, toolDigests } from '@chat/agent-core';
+import { TOOLS } from '../tools';
+import { CURRENT_TOOL_FINGERPRINT, staleReports } from '../traces';
 import { SCENARIO_BY_ID } from '../scenarios';
 import { traceBundle } from '../traces';
 import { caseProblems, cases, hasRuns, judgmentBundle, report, runBundle } from './dataset';
@@ -89,6 +91,76 @@ describe('실행 요약과 span 원본', () => {
     // 미리 걸러 버리면 지어낸 인용이 산출물에서 사라져 채점기가 볼 것이 없어진다.
     for (const r of runBundle().runs) {
       for (const id of r.citedPassageIds) expect(typeof id).toBe('string');
+    }
+  });
+});
+
+describe('재수집 비용 - 무엇을 다시 받아야 하는지', () => {
+  it('산출물이 도구별 해시를 갖고 있다 - 없으면 집합 해시로 거칠게 판정한다', () => {
+    // 이 필드가 없던 시절에는 도구 하나가 늘어난 것만으로 실행 서른 건과 판정
+    // 백스물여섯 건을 통째로 다시 받아야 했다.
+    expect(runBundle().toolDigests).toBeTruthy();
+    for (const { report } of staleReports()) expect(report.coarse).toBe(false);
+  });
+
+  it('지금 도구와 어긋난 실행이 없다', () => {
+    for (const { scenarioId, report } of staleReports()) {
+      expect(report.changed, scenarioId).toEqual([]);
+      expect(report.stale, scenarioId).toBe(false);
+    }
+  });
+
+  it('쓰지 않은 도구가 늘어도 낡지 않는다 - 재수집을 부르는 조건이 좁다', () => {
+    const extra = {
+      ...TOOLS[0]!,
+      name: 'zzz.brandNew',
+      fixtures: ['새 픽스처'],
+    };
+    const widened = {
+      toolsetDigest: 'different',
+      toolDigests: toolDigests([...TOOLS, extra]),
+    };
+    for (const t of traceBundle().traces) {
+      const r = checkStale(t, widened, t.toolDigests ?? runBundle().toolDigests);
+      expect(r.stale, t.scenarioId).toBe(false);
+    }
+  });
+
+  it('실행이 쓴 도구가 바뀌면 그 실행만 낡는다', () => {
+    const target = 'docqa.answer';
+    const tampered = { ...CURRENT_TOOL_FINGERPRINT.toolDigests, [target]: 'changed' };
+    const stale = traceBundle()
+      .traces.filter(
+        (t) =>
+          checkStale(
+            t,
+            { toolsetDigest: 'x', toolDigests: tampered },
+            t.toolDigests ?? runBundle().toolDigests,
+          ).stale,
+      )
+      .map((t) => t.scenarioId);
+    const usesTarget = traceBundle()
+      .traces.filter((t) =>
+        t.spans.some((s) => s.kind === 'tool' && (s.attrs['tool.name'] ?? s.name) === target),
+      )
+      .map((t) => t.scenarioId);
+    expect(stale).toEqual(usesTarget);
+    expect(stale.length).toBeLessThan(traceBundle().traces.length);
+  });
+
+  it('판정에 무엇을 보고 내렸는지의 지문이 있다 - 답과 질문이 그대로면 다시 묻지 않는다', () => {
+    const jb = judgmentBundle();
+    if (jb.judgments.length === 0) return;
+    const answerByRun = new Map(
+      runBundle().runs.map((r) => [`${r.scenarioId}|${r.variantId}|${r.runIndex}`, r.answer]),
+    );
+    const byId = new Map(cases().map((c) => [c.id, c]));
+    for (const j of jb.judgments) {
+      const c = byId.get(j.caseId)!;
+      const question = c.checks.find((k) => k.id === j.checkId)?.question;
+      const answer = answerByRun.get(`${c.scenarioId}|${j.variantId}|${j.runIndex}`);
+      expect(j.questionDigest, j.caseId).toBe(digest(question!));
+      expect(j.answerDigest, j.caseId).toBe(digest(answer!));
     }
   });
 });

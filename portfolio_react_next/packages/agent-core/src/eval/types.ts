@@ -74,6 +74,8 @@ export interface RunSummary {
 export interface RunBundle {
   generatedAt: string;
   model: string;
+  /** 수집 시점 도구별 계약 해시. 어떤 실행을 다시 받아야 하는지 이걸로 가른다. */
+  toolDigests?: Record<string, string>;
   repeat: number;
   variants: Variant[];
   runs: RunSummary[];
@@ -203,6 +205,18 @@ export interface Judgment {
   rubricId: string;
   verdict: 'pass' | 'fail' | 'blocked';
   reason: string;
+  /**
+   * 이 판정이 무엇을 보고 내려졌는지의 지문 - 채점한 답변과 판정 질문의 해시.
+   *
+   * 심판 수집이 이 층에서 가장 비싼 단계다(케이스 × 실행 × 루브릭). 그런데 판정은 답변과
+   * 질문에만 의존하므로, 둘 다 그대로면 다시 물어도 같은 것을 묻는 셈이다. 지문이 없으면
+   * 그 사실을 알 방법이 없어 매번 전부 다시 받게 된다.
+   *
+   * 옛 산출물에는 없으므로 선택 필드다. 없으면 재사용하지 않고 다시 받는다 - 모르는 것을
+   * 안다고 치는 것보다 비용을 치르는 편이 낫다.
+   */
+  answerDigest?: string;
+  questionDigest?: string;
 }
 
 export interface JudgmentBundle {

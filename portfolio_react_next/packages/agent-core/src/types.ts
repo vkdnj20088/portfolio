@@ -211,6 +211,12 @@ export interface TraceArtifact {
    * **다른 도구 위에서 만들어진 것**이고, 화면과 테스트가 그것을 밝힌다.
    */
   toolsetDigest: string;
+  /**
+   * 수집 시점 **도구별** 계약 해시. 낡음 판정이 이걸 본다 - 집합 전체가 아니라 이 실행이
+   * 실제로 쓴 도구만 대조하면, 무관한 도구가 늘어난 것으로 재수집이 불리지 않는다.
+   * 옛 산출물에는 없으므로 선택 필드이고, 없으면 집합 해시로 거칠게 판정한다.
+   */
+  toolDigests?: Record<string, string>;
   budget: Budget;
   finalState: RunState;
   /** 화면 상단에 그대로 나가는 한 줄 결론. */
@@ -221,6 +227,7 @@ export interface TraceArtifact {
 export interface TraceBundle {
   generatedAt: string;
   toolsetDigest: string;
+  toolDigests?: Record<string, string>;
   traces: TraceArtifact[];
 }
 

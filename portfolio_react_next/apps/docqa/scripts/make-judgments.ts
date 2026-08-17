@@ -18,11 +18,11 @@
  * 사용법(키가 있는 로컬에서, runs.json 수집 뒤):
  *   ANTHROPIC_API_KEY=sk-ant-... pnpm --filter @chat/docqa run make:judgments
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
-import type { Judgment } from '@chat/agent-core';
+import { digest, type Judgment, type JudgmentBundle } from '@chat/agent-core';
 import { cases, runBundle } from '../src/lib/agent/eval/dataset';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -76,6 +76,49 @@ if (!process.env.ANTHROPIC_API_KEY) {
 
 const client = new Anthropic();
 
+/** `--force` 면 재사용하지 않고 전부 다시 받는다. */
+const FORCE = process.argv.slice(2).includes('--force');
+
+/**
+ * 이미 받아 둔 판정을 다시 쓸 수 있는지.
+ *
+ * 심판은 답변과 질문만 보고 판정한다. 둘 다 그대로면 다시 물어도 같은 것을 묻는 것이고,
+ * 그 왕복은 값을 만들지 않으면서 비용만 만든다. 실행을 일부만 다시 받은 경우 - 도구 하나가
+ * 바뀌어 그 도구를 쓴 실행만 새로 받은 경우 - 나머지 판정을 그대로 두면 여기서 가장 큰
+ * 절감이 난다.
+ *
+ * 루브릭 문구가 바뀌면 재사용하지 않는다. 프레이밍이 곧 심판의 정의라, 바뀐 프레이밍의
+ * 판정과 옛 판정을 섞으면 일치도가 무엇을 재는지 알 수 없게 된다.
+ */
+const judgmentKey = (
+  j: Pick<Judgment, 'caseId' | 'checkId' | 'variantId' | 'runIndex' | 'rubricId'>,
+) => [j.caseId, j.checkId, j.variantId, j.runIndex, j.rubricId].join('|');
+
+function previousJudgments(): Map<string, Judgment> {
+  const empty = new Map<string, Judgment>();
+  if (FORCE) return empty;
+  try {
+    const prev = JSON.parse(readFileSync(OUT, 'utf8')) as JudgmentBundle;
+    if (digest(prev.rubrics) !== digest(RUBRICS)) return empty;
+    return new Map([...prev.judgments, ...prev.trapJudgments].map((j) => [judgmentKey(j), j]));
+  } catch {
+    return empty;
+  }
+}
+
+/** 지문이 같으면 그대로 쓴다. 같은 답에 같은 질문을 다시 묻는 왕복은 값을 만들지 않는다. */
+function reuse(
+  previous: Map<string, Judgment>,
+  key: Judgment,
+  answerDigest: string,
+  questionDigest: string,
+): Judgment | null {
+  const prev = previous.get(judgmentKey(key));
+  return prev?.answerDigest === answerDigest && prev.questionDigest === questionDigest
+    ? prev
+    : null;
+}
+
 async function judge(
   rubric: (typeof RUBRICS)[number],
   question: string,
@@ -127,6 +170,8 @@ async function main() {
   const judgments: Judgment[] = [];
   const trapJudgments: Judgment[] = [];
   const generatedAt = new Date().toISOString();
+  const previous = previousJudgments();
+  let reused = 0;
 
   for (const c of cases()) {
     const judgeChecks = c.checks.filter((k) => k.kind === 'judge' && k.question);
@@ -134,8 +179,24 @@ async function main() {
     const runs = rb.runs.filter((r) => r.scenarioId === c.scenarioId);
 
     for (const check of judgeChecks) {
+      const questionDigest = digest(check.question!);
       for (const run of runs) {
+        const answerDigest = digest(run.answer);
+        let hit = 0;
         for (const rubric of RUBRICS) {
+          const slot = {
+            caseId: c.id,
+            checkId: check.id,
+            variantId: run.variantId,
+            runIndex: run.runIndex,
+            rubricId: rubric.id,
+          } as Judgment;
+          const prev = reuse(previous, slot, answerDigest, questionDigest);
+          if (prev) {
+            judgments.push(prev);
+            hit += 1;
+            continue;
+          }
           const { verdict, reason } = await judge(rubric, check.question!, c.title, run.answer);
           judgments.push({
             caseId: c.id,
@@ -145,29 +206,65 @@ async function main() {
             rubricId: rubric.id,
             verdict,
             reason,
+            answerDigest,
+            questionDigest,
           });
         }
-        console.error(`  ${c.id}/${check.id} ${run.variantId}/${run.runIndex} 판정 완료`);
+        reused += hit;
+        console.error(
+          `  ${c.id}/${check.id} ${run.variantId}/${run.runIndex} 판정 완료` +
+            (hit ? ` (재사용 ${hit}/${RUBRICS.length})` : ''),
+        );
       }
 
       // 함정은 구성·회차와 무관하다. 심판이 명백한 오답을 잡는지만 본다.
       if (c.trap) {
+        const trapDigest = digest(c.trap.answer);
+        let trapHit = 0;
         for (const rubric of RUBRICS) {
-          const { verdict, reason } = await judge(rubric, check.question!, c.title, c.trap.answer);
-          trapJudgments.push({
+          const slot = {
             caseId: `trap:${c.id}`,
             checkId: check.id,
             variantId: '-',
             runIndex: -1,
             rubricId: rubric.id,
+          } as Judgment;
+          const prev = reuse(previous, slot, trapDigest, questionDigest);
+          if (prev) {
+            trapJudgments.push(prev);
+            trapHit += 1;
+            reused += 1;
+            continue;
+          }
+          const { verdict, reason } = await judge(rubric, check.question!, c.title, c.trap.answer);
+          trapJudgments.push({
+            ...slot,
             verdict,
             reason,
+            answerDigest: trapDigest,
+            questionDigest,
           });
         }
-        console.error(`  ${c.id} 함정 판정 완료`);
+        console.error(
+          `  ${c.id} 함정 판정 완료` + (trapHit ? ` (재사용 ${trapHit}/${RUBRICS.length})` : ''),
+        );
       }
     }
   }
+
+  // 순서를 고정한다 - 재사용된 판정이 파일 안에서 자리를 옮기면, 내용이 그대로인 재수집이
+  // 읽을 수 없는 diff 를 만든다.
+  const caseOrder = new Map(cases().map((c, i) => [c.id, i]));
+  const rubricOrder = new Map(RUBRICS.map((r, i) => [r.id, i]));
+  const bySlot = (a: Judgment, b: Judgment) =>
+    (caseOrder.get(a.caseId.replace(/^trap:/, '')) ?? 0) -
+      (caseOrder.get(b.caseId.replace(/^trap:/, '')) ?? 0) ||
+    a.checkId.localeCompare(b.checkId) ||
+    a.variantId.localeCompare(b.variantId) ||
+    a.runIndex - b.runIndex ||
+    (rubricOrder.get(a.rubricId) ?? 0) - (rubricOrder.get(b.rubricId) ?? 0);
+  judgments.sort(bySlot);
+  trapJudgments.sort(bySlot);
 
   writeFileSync(
     OUT,
@@ -178,7 +275,11 @@ async function main() {
     ) + '\n',
     'utf8',
   );
-  console.error(`\n판정 ${judgments.length}건, 함정 ${trapJudgments.length}건 -> ${OUT}`);
+  // 재사용을 조용히 하면 "전부 다시 받았다"로 읽힌다.
+  console.error(
+    `\n판정 ${judgments.length}건 + 함정 ${trapJudgments.length}건 중 ` +
+      `새로 받은 것 ${judgments.length + trapJudgments.length - reused}건, 재사용 ${reused}건 -> ${OUT}`,
+  );
 }
 
 main().catch((e: unknown) => {

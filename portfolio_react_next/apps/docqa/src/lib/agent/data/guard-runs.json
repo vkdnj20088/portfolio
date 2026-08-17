@@ -2165,5 +2165,12 @@
         }
       ]
     }
-  ]
+  ],
+  "toolDigests": {
+    "docqa.search": "695e5cd7ec1c4791",
+    "docqa.answer": "ba6dac43c989dbfd",
+    "guard.evaluateIpPolicy": "ba0826f8b4e7645a",
+    "inbox.readTicket": "f8a0d7e6cf3fcd38",
+    "relay.schedule": "c329914260b66348"
+  }
 }
