@@ -30,6 +30,16 @@ def main(path: str) -> int:
         print("실험 결과가 비어 있다 - 측정이 돌지 않았다")
         return 1
 
+    # 반쯤 돌다 멈춘 결과에 초록불을 주지 않는다. emit 은 파일에 **병합**하므로 이 검사가
+    # 없으면 지난 실행이 남긴 항목만으로 게이트가 통과할 수 있다 - 그때 초록불이 말하는 것은
+    # 이번 실행이 아니라 지난 실행이다. 게이트가 무엇을 봤는지가 곧 게이트의 값어치다.
+    missing = sorted({"concurrent-migration", "rolling-update", "pod-kill", "readiness-off"} - exps.keys())
+    if missing:
+        fail(f"실험이 빠졌다: {', '.join(missing)}")
+    modes = {e.get("leaseMode") for n, e in exps.items() if n.startswith("two-workers-")}
+    if len(modes) < 3:
+        fail(f"리스 모드가 {len(modes)}종만 돌았다 - 층을 걷어낸 대조가 성립하지 않는다")
+
     for name, e in sorted(exps.items()):
         print(f"[{name}]")
         if name.startswith("two-workers-"):

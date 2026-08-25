@@ -19,7 +19,63 @@ RESULTS="$K8S/results/runs.json"
 
 log() { printf '\n\033[1m== %s\033[0m\n' "$*" >&2; }
 
-sql() { kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -uext -plabpass extdb -N -B -e \"$1\"" 2>/dev/null; }
+# 질의 한 번. 실패를 **삼키지 않는다** - 처음 CI 에서 이 함수가 조용히 1 을 돌려주는 바람에
+# 실험 첫 줄에서 멈췄는데 무엇이 없어서 멈췄는지 로그에 아무것도 남지 않았다. 비밀번호 경고만
+# 걸러내고 진짜 오류는 질의와 함께 올린다. 클러스터 왕복은 가끔 흔들리므로 세 번까지 본다 -
+# 다만 몇 번째에 됐는지를 적는다(조용한 재시도는 불안정을 안정으로 보이게 한다).
+sql() {
+  local q="$1" out err rc attempt
+  err=$(mktemp)
+  for attempt in 1 2 3; do
+    # rc 를 조건문 밖에서 줍지 않는다 - if 가 끝난 뒤의 $? 는 조건의 실패를 그대로 담지 않아
+    # 실패를 0 으로 돌려줄 수 있다. 실패를 성공으로 바꾸는 자리는 만들지 않는다.
+    out=$(kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -uext -plabpass extdb -N -B -e \"$q\"" 2>"$err") && rc=0 || rc=$?
+    if [ "$rc" -eq 0 ]; then
+      [ "$attempt" -gt 1 ] && echo "  (sql ${attempt}회차에 성공)" >&2
+      rm -f "$err"
+      printf '%s\n' "$out"
+      return 0
+    fi
+    [ "$attempt" -lt 3 ] && sleep 3
+  done
+  {
+    echo "sql 실패(rc=$rc, 3회 시도): $q"
+    grep -v 'Using a password on the command line' "$err" || true
+  } >&2
+  rm -f "$err"
+  return "$rc"
+}
+
+# 성공 여부만 보는 조용한 질의(폴링 전용). 사람에게 실패를 말해야 하는 자리에는 sql() 를 쓴다.
+sql_try() { kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -uext -plabpass extdb -N -B -e \"$1\"" >/dev/null 2>&1; }
+
+# 멈췄을 때 사람이 볼 것들. 로컬에서는 손으로 볼 수 있지만 CI 에서는 이때 안 찍으면 영원히 못 본다.
+dump_diag() {
+  kubectl -n "$NS" get pods -o wide >&2 || true
+  kubectl -n "$NS" get events --sort-by=.lastTimestamp 2>&1 | tail -25 >&2 || true
+  kubectl -n "$NS" logs -l role=web --tail=40 >&2 || true
+}
+
+# 실험 전 전제 확인. 전제가 깨졌을 때 실험 도중에 조용히 죽는 대신 **무엇이 없는지** 말하게 한다.
+# 버전을 찍는 것은 장식이 아니다 - 로컬과 CI 가 같은 클러스터를 도는지가 이 실험실의 전제라,
+# 결과를 옮겨 말하려면 두 곳의 버전이 로그에 남아 있어야 한다.
+preflight() {
+  log "사전 점검"
+  kubectl version 2>&1 | sed 's/^/  /' >&2 || true
+  kubectl -n "$NS" get pods -o wide >&2 || { echo "클러스터에 닿지 않는다" >&2; return 1; }
+
+  # 앱이 정말 prod(MySQL)로 떴는지는 스키마 이력 테이블의 존재가 말해 준다. 기본 프로파일로
+  # 뜨면 H2 라 여기에 아무것도 없고, 그때 실험은 **다른 데이터베이스를 세는 일**이 된다.
+  local i
+  for i in $(seq 1 30); do
+    sql_try "SELECT COUNT(*) FROM flyway_schema_history" && return 0
+    sleep 2
+  done
+  echo "60초를 기다려도 extdb.flyway_schema_history 에 질의할 수 없다 - 아래를 보라." >&2
+  sql "SHOW TABLES" >&2 || true
+  dump_diag
+  return 1
+}
 
 # ── 세우기 ────────────────────────────────────────────────────────────────
 build_images() {
@@ -61,8 +117,17 @@ enqueue() {
   for i in $(seq 1 "$count"); do
     curl -sS -o /dev/null -X POST "$GUARD_URL/api/relay/jobs" \
       -H 'Content-Type: application/json' \
-      -d "{\"idempotencyKey\":\"lab-$run_id-$i\",\"type\":\"WEBHOOK_PUSH\",\"scenario\":\"$scenario\",\"seed\":$i,\"maxAttempts\":3,\"publishMode\":\"OUTBOX\",\"failPersist\":false}"
+      -d "{\"idempotencyKey\":\"lab-$run_id-$i\",\"type\":\"WEBHOOK_PUSH\",\"scenario\":\"$scenario\",\"seed\":$i,\"maxAttempts\":3,\"publishMode\":\"OUTBOX\",\"failPersist\":false}" || true
   done
+  # 들어간 것을 **DB 에서** 센다. HTTP 응답만 보면 포트 매핑이 끊겼거나 요청이 거절돼도
+  # 실험은 계속 돌고, 끝에 가서 "작업 200건 중 0건만 종단에 닿았다"는 엉뚱한 결론이 남는다.
+  # 부하가 안 들어간 것과 워커가 일을 안 한 것은 다른 사건이라 여기서 갈라 놓는다.
+  local got
+  got=$(sql "SELECT COUNT(*) FROM relay_job WHERE idempotency_key LIKE 'lab-$run_id-%'")
+  if [ "$got" != "$count" ]; then
+    echo "예약이 ${count}건 중 ${got}건만 들어갔다 - 부하가 성립하지 않아 실험을 멈춘다($GUARD_URL)" >&2
+    return 1
+  fi
 }
 
 # 이 실행의 작업이 전부 종단에 닿을 때까지 기다린다. 타임아웃은 실패가 아니라 사실이므로
@@ -85,12 +150,25 @@ reset_queue() {
 
 now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
 
+# 로그를 어디서부터 셀지의 기준 시각. **클러스터의 시계**로 잡는다 - 호스트(맥)와 노드(리눅스 VM)는
+# 다른 시계인데 kubectl logs --since-time 은 노드가 찍은 시각과 비교하기 때문이다. MySQL 도 워커도
+# 같은 노드 커널 위에 있어 둘의 시계는 같다.
+#
+# 여유를 두지 않는다. 처음엔 시계 어긋남을 걱정해 5초를 뺐는데, 같은 모드를 연달아 돌리면
+# 한 회차가 7초 만에 끝나서 그 5초가 **앞 회차를 삼켰다**(20건을 돌렸는데 40이 나왔다).
+# 같은 시계를 쓰는데 여유를 두는 것은 정확도를 사서 경계를 파는 일이다.
+log_since() { sql "SELECT DATE_FORMAT(UTC_TIMESTAMP(), '%Y-%m-%dT%H:%i:%sZ')"; }
+
 # 파드별 경합 건수. leaseMode=NONE 에서 무엇이 대신 막았는지의 증거다 -
 # 리스 경합(낙관적 락이 리스에서 걸림)과 시도 경합(실행 직전에 걸림)을 갈라 센다.
+#
+# 시각으로 자르는 이유: 파드가 재시작되면 로그도 새로 시작하지만, **같은 설정을 연달아 돌리면**
+# set env 가 아무것도 바꾸지 않아 롤아웃이 일어나지 않는다. 그때는 앞 실행의 로그가 그대로 남아
+# 숫자가 부푼다(20건을 돌렸는데 73/93 이 나왔다). 증거로 쓸 숫자라면 경계가 분명해야 한다.
 conflict_counts() {
-  local kind="$1" total=0 n
+  local kind="$1" since="$2" total=0 n
   for pod in $(kubectl -n "$NS" get pods -l role=worker -o name); do
-    n=$(kubectl -n "$NS" logs "$pod" 2>/dev/null | grep -c "relay $kind conflict" || true)
+    n=$(kubectl -n "$NS" logs "$pod" --since-time="$since" 2>/dev/null | grep -c "relay $kind conflict" || true)
     total=$((total + n))
   done
   echo "$total"
@@ -98,9 +176,9 @@ conflict_counts() {
 
 # 워커 파드별로 이 실행에서 시도를 몇 번 실행했는지. "정말 둘 다 일했는가"의 증거다.
 pod_work_counts() {
-  local pod n
+  local since="$1" pod n
   for pod in $(kubectl -n "$NS" get pods -l role=worker -o name); do
-    n=$(kubectl -n "$NS" logs "$pod" 2>/dev/null | grep -cE 'relay attempt (ok|failed)|relay job dead-lettered' || true)
+    n=$(kubectl -n "$NS" logs "$pod" --since-time="$since" 2>/dev/null | grep -cE 'relay attempt (ok|failed)|relay job dead-lettered' || true)
     printf '%s=%s ' "${pod#pod/}" "$n"
   done
 }
@@ -119,10 +197,11 @@ exp_two_workers() {
   kubectl -n "$NS" set env deploy/guard-worker \
     APP_RELAY_WORKER_LEASE_MODE="$mode" APP_RELAY_WORKER_TICK_MS=20 >/dev/null
   kubectl -n "$NS" rollout status deploy/guard-worker --timeout=300s >/dev/null
-  # 방금 재시작했으므로 아래 로그 집계는 이 실행분만 센다.
   reset_queue
 
-  local started ended left
+  local started ended left since
+  # 로그 집계의 시작선. 부하를 넣기 직전에 찍어야 이 실행분만 센다.
+  since=$(log_since)
   started=$(now_ms)
   enqueue "$run_id" "$n" ALWAYS_SUCCEED
   left=$(wait_drain "$run_id" 180)
@@ -133,9 +212,9 @@ exp_two_workers() {
   attempts=$(sql "SELECT COUNT(*) FROM relay_attempt a JOIN relay_job j ON j.id=a.job_id WHERE j.idempotency_key LIKE 'lab-$run_id-%'")
   expected=$(sql "SELECT COALESCE(SUM(attempt_count),0) FROM relay_job WHERE idempotency_key LIKE 'lab-$run_id-%'")
   dup=$(sql "SELECT COUNT(*) FROM (SELECT job_id FROM relay_attempt a JOIN relay_job j ON j.id=a.job_id WHERE j.idempotency_key LIKE 'lab-$run_id-%' GROUP BY a.job_id, a.run, a.attempt_no HAVING COUNT(*)>1) d")
-  pods=$(pod_work_counts)
-  lease_conf=$(conflict_counts lease)
-  attempt_conf=$(conflict_counts attempt)
+  pods=$(pod_work_counts "$since")
+  lease_conf=$(conflict_counts lease "$since")
+  attempt_conf=$(conflict_counts attempt "$since")
 
   emit "two-workers-$mode-r$rep" "$(cat <<JSON
 {"leaseMode":"$mode","repeat":$rep,"jobs":$n,"succeeded":$succeeded,"unsettled":"$left",
@@ -321,7 +400,12 @@ print(f"  {name}: {payload.strip()}", file=sys.stderr)
 PY
 }
 
+# 결과 파일은 **이 실행 하나**를 담는다. emit 이 기존 파일에 병합하므로, 도중에 실패하면
+# 지난 실행(다른 사람의 기계일 수도 있는)의 항목이 남고 게이트가 그 낡은 숫자를 검사해
+# 통과할 수 있다. 측정이 반쯤 돌았는데 초록불이 켜지는 것이 가장 나쁜 결과다.
 measure() {
+  preflight
+  rm -f "$RESULTS"
   exp_migration
   exp_lease_ablation
   exp_rolling_update

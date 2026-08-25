@@ -26,7 +26,9 @@ jobs:
   lab:
     runs-on: ubuntu-latest
     # 실험이 여럿이고 각 실험이 롤아웃을 기다린다. 무한정 붙잡지 않게 상한을 둔다.
-    timeout-minutes: 45
+    # 리스 대조만 9회(모드 3 × 반복 3)라 로컬 실측으로 measure 하나가 30분 안팎이다 -
+    # 45분은 빌드까지 얹으면 아슬아슬해서, 상한에 걸린 실패가 실험 실패로 보이게 된다.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -42,9 +44,17 @@ jobs:
 
       # kind 클러스터. 노드 구성은 로컬과 같은 파일을 쓴다 - 로컬에서 재현되는 것과
       # CI 에서 도는 것이 다른 클러스터면 실험 결과를 옮겨 말할 수 없다.
+      #
+      # 그래서 kind·노드 이미지·kubectl 을 전부 못박는다. 못박지 않으면 액션의 기본값이
+      # 바뀌는 날 클러스터 버전이 조용히 달라지고, 그때 CI 의 숫자는 로컬의 숫자와 다른
+      # 클러스터에서 나온 것이 된다. 그것을 같은 결과라고 부를 수 없다.
+      # 노드 이미지는 다이제스트까지 적는다 - 태그는 다시 밀릴 수 있다.
       - name: kind 클러스터
         uses: helm/kind-action@v1
         with:
+          version: v0.32.0
+          node_image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5
+          kubectl_version: v1.36.4
           config: k8s/cluster/kind-cluster.yaml
           cluster_name: portfolio
           wait: 180s
@@ -75,15 +85,24 @@ jobs:
       - name: 불변식 검사
         run: python3 k8s/scripts/assert_invariants.py k8s/results/runs.json
 
+      # 실패했을 때 사람이 볼 것을 남긴다. 여기서 안 찍으면 클러스터가 잡과 함께 사라져
+      # 영원히 못 본다 - 실제로 실험이 첫 줄에서 멈췄는데 원인을 알 수 없던 적이 있다.
       - name: 진단 수집
         if: always()
         run: |
           mkdir -p k8s/results/diag
+          kubectl version > k8s/results/diag/versions.txt 2>&1 || true
+          kubectl get nodes -o wide >> k8s/results/diag/versions.txt 2>&1 || true
           kubectl -n portfolio get all -o wide > k8s/results/diag/resources.txt 2>&1 || true
           kubectl -n portfolio describe pods > k8s/results/diag/pods.txt 2>&1 || true
+          # 이벤트가 없으면 재시작·OOM·스케줄 실패를 파드 로그만 보고는 알 수 없다.
+          kubectl -n portfolio get events --sort-by=.lastTimestamp > k8s/results/diag/events.txt 2>&1 || true
           for p in $(kubectl -n portfolio get pods -o name); do
             kubectl -n portfolio logs "$p" --tail=500 > "k8s/results/diag/${p#pod/}.log" 2>&1 || true
+            # 재시작한 컨테이너는 죽기 직전 로그가 이전 컨테이너에 있다.
+            kubectl -n portfolio logs "$p" --previous --tail=500 > "k8s/results/diag/${p#pod/}.prev.log" 2>&1 || true
           done
+          find k8s/results/diag -size 0 -delete || true
 
       - name: 결과 업로드
         if: always()
