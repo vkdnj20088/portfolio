@@ -1,0 +1,62 @@
+# 1주차 - 첫 파드. loandoc 은 이미 Dockerfile 이 있어 가장 빨리 뜬다.
+#
+# 여기서 배우는 것은 넷이다: Deployment 가 ReplicaSet 을 만들고 ReplicaSet 이 Pod 을 만든다,
+# Service 가 라벨로 파드를 찾는다, 프로브가 트래픽을 붙이고 뗀다, 리소스 요청이 스케줄을 정한다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loandoc
+  namespace: portfolio
+  labels: { app: loandoc }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: loandoc }
+  template:
+    metadata:
+      labels: { app: loandoc }
+    spec:
+      # 두 파드가 같은 노드에 몰리면 "노드 하나가 죽어도 산다"를 말할 수 없다.
+      # 강제(required)가 아니라 선호(preferred)로 두는 이유: 노드가 하나뿐인 환경에서도
+      # 스케줄이 실패하지 않아야 같은 매니페스트를 로컬과 CI 가 함께 쓴다.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: { app: loandoc }
+      containers:
+        - name: loandoc
+          image: portfolio/loandoc:dev
+          # kind 에 이미지를 직접 적재하므로(kind load) 레지스트리를 보러 가면 안 된다.
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            # §0 - 배포에 키를 두지 않는다. 키가 없으면 룰 단독으로 동작한다.
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          # 요청(request)은 스케줄러가 보는 값이고 상한(limit)은 커널이 강제하는 값이다.
+          # 둘을 안 적으면 BestEffort 클래스가 되어 메모리 압박 때 가장 먼저 죽는다.
+          resources:
+            requests: { cpu: 50m, memory: 192Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          # 기동이 느린 컨테이너를 liveness 가 죽이지 않도록 startup 을 따로 둔다.
+          # startup 이 통과하기 전에는 liveness/readiness 가 아예 돌지 않는다.
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities: { drop: ["ALL"] }

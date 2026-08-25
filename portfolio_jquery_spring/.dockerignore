@@ -1,0 +1,9 @@
+# 빌드 컨텍스트에서 빼는 것 - jar 하나만 있으면 된다.
+.git
+.gradle
+build/*
+!build/libs
+src
+frontend
+node_modules
+*.md

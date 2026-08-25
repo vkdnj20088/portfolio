@@ -1,0 +1,76 @@
+# 3주차 - 이 실험의 본체.
+#
+# 코드에는 다중 인스턴스 능력이 이미 있다(SELECT ... FOR UPDATE SKIP LOCKED + 낙관적 락 +
+# UNIQUE(job_id, run, attempt_no)). 그런데 RelayWorker 주석이 스스로 이렇게 적어 두었다 -
+# "운영 배포는 단일 인스턴스라 워커 1개만 쓴다". 즉 **켜 본 적이 없는 능력**이다.
+# 여기서 처음으로 켠다. 파드 둘, 프로세스 둘, JDBC 커넥션 둘.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guard-worker
+  namespace: portfolio
+  labels: { app: guard, role: worker }
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # 웹과 **반대**로 잡는다. 웹은 트래픽을 받으니 새 파드를 먼저 띄우고(surge=1,
+      # unavailable=0), 워커는 트래픽을 받지 않으니 하나를 먼저 내린다.
+      #
+      # 취향이 아니라 필수다. 아래 반친화가 required 이고 replicas 가 스케줄 가능한 노드 수와
+      # 같으면, surge 파드가 앉을 노드가 없어 롤아웃이 **영원히 Pending 으로 멈춘다**
+      # (실제로 겪었다: "0/3 nodes are available: 2 node(s) didn't match pod anti-affinity").
+      # 하나를 내려 자리를 비워야 새 파드가 뜬다. 큐 워커는 잠깐 한 대로 도는 것이 무해하다.
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels: { app: guard, role: worker }
+  template:
+    metadata:
+      labels: { app: guard, role: worker }
+    spec:
+      affinity:
+        podAntiAffinity:
+          # 워커는 **강제로** 다른 노드에 띄운다. 같은 노드에 몰리면 "진짜 두 프로세스"라는
+          # 말이 반만 참이 된다. 노드가 부족하면 스케줄이 실패하는데, 그건 감춰서 될 일이
+          # 아니라 실험 전제가 깨졌다는 사실이므로 Pending 으로 드러나는 편이 낫다.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels: { app: guard, role: worker }
+      containers:
+        - name: guard
+          image: portfolio/guard:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef: { name: guard-config }
+          env:
+            - name: APP_RELAY_WORKER_ENABLED
+              value: "true"
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: mysql-auth, key: MYSQL_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: mysql-auth, key: MYSQL_PASSWORD } }
+            # 어느 파드가 그 시도를 실행했는지 로그로 셀 수 있게 파드 이름을 넣는다.
+            - name: POD_NAME
+              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+          resources:
+            requests: { cpu: 200m, memory: 384Mi }
+            limits: { cpu: "1", memory: 768Mi }
+          startupProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            periodSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            periodSeconds: 10
+      # 워커는 요청을 받지 않으므로 preStop 지연이 필요 없다. 대신 진행 중인 시도가
+      # 커밋될 시간을 준다 - 여기서 짧게 끊으면 그것이 4번 실험(SIGKILL)의 상황이 된다.
+      terminationGracePeriodSeconds: 30

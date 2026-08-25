@@ -1,0 +1,92 @@
+# 3주차 - 상태를 가진 워크로드.
+#
+# Deployment 가 아니라 StatefulSet 인 이유: 파드 이름이 안정적이어야(mysql-0) 볼륨이 같은
+# 파드에게 다시 붙는다. Deployment 의 파드는 이름이 매번 달라져 어느 볼륨이 누구 것인지
+# 말할 수 없다. 복제는 하나다 - 이 실험이 증명하려는 것은 DB HA 가 아니라 **앱이 여럿일 때**의
+# 안전성이라, DB 를 늘리면 변수만 는다.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: portfolio
+spec:
+  # 헤드리스 서비스 - StatefulSet 의 파드에 안정적인 DNS(mysql-0.mysql)를 준다.
+  clusterIP: None
+  selector: { app: mysql }
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-auth
+  namespace: portfolio
+type: Opaque
+stringData:
+  # 실험용 고정 값이다. 시크릿을 리포에 두는 것은 운영에서는 금지지만, 이 클러스터는 CI 안에서
+  # 태어나 몇 분 뒤 사라지고 외부에 노출되지 않는다. 운영 대응은 External Secrets 나 SOPS 이고,
+  # 그 경계를 흐리지 않으려고 여기 이유를 적어 둔다.
+  MYSQL_ROOT_PASSWORD: "labroot"
+  MYSQL_DATABASE: "extdb"
+  MYSQL_USER: "ext"
+  MYSQL_PASSWORD: "labpass"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: portfolio
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels: { app: mysql }
+  template:
+    metadata:
+      labels: { app: mysql }
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+          args:
+            # 리스 실험이 InnoDB 행 잠금 위에 서 있다. 잠금 대기를 5초로 줄여, FOR_UPDATE 모드가
+            # 기다리다 막히는 경우가 실험을 몇 분씩 붙잡지 않게 한다.
+            #
+            # --default-authentication-plugin 은 여기 두지 않는다. 8.4 에서 제거된 옵션이라
+            # 서버가 "unknown variable" 로 기동을 중단한다(실제로 CrashLoopBackOff 를 겪었다).
+            # 8.4 의 기본값이 이미 caching_sha2_password 이고, 바꿔야 한다면 --authentication-policy 다.
+            - --innodb-lock-wait-timeout=5
+          ports:
+            - name: mysql
+              containerPort: 3306
+          envFrom:
+            - secretRef: { name: mysql-auth }
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { cpu: "1", memory: 1Gi }
+          # readiness 에 mysqladmin ping 을 쓴다. TCP 포트가 열리는 시점과 질의를 받는 시점이
+          # 다르기 때문이다 - 포트만 보고 준비됐다고 하면 앱이 커넥션 거절을 맞는다.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests: { storage: 2Gi }

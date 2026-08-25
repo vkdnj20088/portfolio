@@ -1,0 +1,94 @@
+# k8s 실험실 - kind 클러스터를 CI 안에 세우고 실험을 실제로 돌린다.
+#
+# 이 워크플로는 배포가 아니다. 라이브는 여전히 EC2 한 대 + systemd 이고(infra/),
+# 여기서 증명하는 것은 **다중 인스턴스 안전성**뿐이다 - 운영 배포가 단일 인스턴스라
+# 코드에 있는 다중 인스턴스 능력이 켜진 적이 없어서, 켜 볼 자리가 필요했다.
+#
+# 로컬과 같은 스크립트(k8s/scripts/lab.sh)를 돈다. 사람이 손으로 kubectl 을 두드려 얻은
+# 숫자는 다음 사람이 재현할 수 없다.
+name: k8s-lab
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'k8s/**'
+      - 'portfolio_jquery_spring/src/main/java/com/portfolio/extension/service/RelayWorker.java'
+      - 'portfolio_jquery_spring/src/main/java/com/portfolio/extension/repository/RelayJobRepository.java'
+      - '.github/workflows/k8s-lab.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: k8s-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    # 실험이 여럿이고 각 실험이 롤아웃을 기다린다. 무한정 붙잡지 않게 상한을 둔다.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: jar 빌드
+        working-directory: portfolio_jquery_spring
+        run: ./gradlew bootJar
+
+      # kind 클러스터. 노드 구성은 로컬과 같은 파일을 쓴다 - 로컬에서 재현되는 것과
+      # CI 에서 도는 것이 다른 클러스터면 실험 결과를 옮겨 말할 수 없다.
+      - name: kind 클러스터
+        uses: helm/kind-action@v1
+        with:
+          config: k8s/cluster/kind-cluster.yaml
+          cluster_name: portfolio
+          wait: 180s
+
+      - name: 이미지 빌드와 적재
+        run: |
+          docker build --build-arg GIT_SHA="${GITHUB_SHA::7}" -t portfolio/guard:dev portfolio_jquery_spring
+          docker build -t portfolio/loandoc:dev portfolio_python_fastapi
+          docker pull mysql:8.4
+          kind load docker-image portfolio/guard:dev portfolio/loandoc:dev mysql:8.4 --name portfolio
+
+      - name: 배포
+        run: |
+          kubectl apply -f k8s/cluster/namespace.yaml
+          kubectl apply -f k8s/mysql/statefulset.yaml
+          kubectl -n portfolio rollout status statefulset/mysql --timeout=300s
+          kubectl apply -f k8s/loandoc/ -f k8s/guard/
+          kubectl -n portfolio rollout status deploy/loandoc --timeout=300s
+          kubectl -n portfolio rollout status deploy/guard-web --timeout=300s
+          kubectl -n portfolio rollout status deploy/guard-worker --timeout=300s
+
+      - name: 실험 실행
+        run: ./k8s/scripts/lab.sh measure
+
+      # 게이트. 실험이 "돌았다"로 끝나면 아무도 결과를 보지 않는다 - 무너지면 안 되는 성질을
+      # 여기서 단언한다. 경과 시간처럼 실행마다 달라지는 값은 단언하지 않는다(잡음이 게이트를
+      # 흔들면 게이트를 끄게 된다).
+      - name: 불변식 검사
+        run: python3 k8s/scripts/assert_invariants.py k8s/results/runs.json
+
+      - name: 진단 수집
+        if: always()
+        run: |
+          mkdir -p k8s/results/diag
+          kubectl -n portfolio get all -o wide > k8s/results/diag/resources.txt 2>&1 || true
+          kubectl -n portfolio describe pods > k8s/results/diag/pods.txt 2>&1 || true
+          for p in $(kubectl -n portfolio get pods -o name); do
+            kubectl -n portfolio logs "$p" --tail=500 > "k8s/results/diag/${p#pod/}.log" 2>&1 || true
+          done
+
+      - name: 결과 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k8s-lab-results
+          path: k8s/results
+          if-no-files-found: warn

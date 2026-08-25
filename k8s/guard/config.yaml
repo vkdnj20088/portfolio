@@ -1,0 +1,27 @@
+# 2주차 - 설정과 비밀을 이미지 밖으로.
+#
+# 같은 이미지가 로컬(H2)에서도 클러스터(MySQL)에서도 돌아야 한다. 그래서 프로파일과 접속 정보를
+# 이미지에 굽지 않고 ConfigMap/Secret 으로 주입한다. Spring 의 완화 바인딩(relaxed binding)이
+# SPRING_PROFILES_ACTIVE 같은 대문자 환경변수를 spring.profiles.active 로 읽어 준다.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guard-config
+  namespace: portfolio
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  # prod 프로파일은 server.address 를 127.0.0.1 로 못박는다 - EC2 에서 nginx 만 앱에 닿게 하려는
+  # 심층 방어다. 그런데 파드에서 루프백에 바인딩하면 Service 가 절대 닿지 못한다(kube-proxy 는
+  # 파드 IP 로 보낸다). 컨테이너 경계가 이미 그 격리를 하므로 여기서는 파드 IP 전체에 연다.
+  SERVER_ADDRESS: "0.0.0.0"
+  DB_HOST: "mysql-0.mysql.portfolio.svc.cluster.local"
+  DB_PORT: "3306"
+  DB_NAME: "extdb"
+  # 다중 인스턴스가 전제이므로 추가 임계 구역은 공유 MySQL 의 네임드 락으로 직렬화한다.
+  # in-process 로 두면 단일 JVM 만 보장하므로 파드가 둘이 되는 순간 그 보장이 사라진다.
+  APP_DISTRIBUTED_LOCK_PROVIDER: "mysql"
+  # actuator 헬스 그룹(liveness/readiness)을 명시적으로 켠다. Spring Boot 가 쿠버네티스를
+  # 자동 감지해 켜 주기도 하지만, 프로브가 자동 감지에 기대면 감지가 빗나가는 날 조용히
+  # 404 가 되고 파드가 영원히 NotReady 가 된다 - 선언을 매니페스트에 남긴다.
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"

@@ -64,6 +64,15 @@ app:
   ip-seed:
     # IP 규칙 더미 데이터 시딩 건수. 0 이면 시딩 안 함(로컬/테스트 기본). 라이브 데모는 1000000 로 채운다.
     count: 0
+  relay:
+    worker:
+      # 리스가 기대는 층. SKIP_LOCKED(기본, 운영) | FOR_UPDATE | NONE.
+      # 뒤의 둘은 k8s 실험실에서 층을 하나씩 걷어내 무엇이 대신 막는지 재려고만 있다(k8s/README.md).
+      lease-mode: SKIP_LOCKED
+      # 리스를 잡은 뒤 실행 전에 붙잡는 시간(ms). 0 이면 없다.
+      # 취약 구간(리스 커밋 ~ 실행 커밋)을 넓혀 프로세스 종료를 실제로 맞히기 위한 계측 장치다.
+      # 운영에서 켤 값이 아니다 - 켜면 처리량이 그대로 그만큼 줄어든다.
+      lease-hold-ms: 0
   distributed-lock:
     # in-process(단일 JVM, 기본) | mysql(GET_LOCK) | redis(Redisson). 커스텀 추가 임계 구역 직렬화.
     provider: in-process

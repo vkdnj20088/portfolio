@@ -1,0 +1,96 @@
+# 웹(요청을 받는 역할). 같은 이미지를 쓰되 **워커는 끈다** -
+# 트래픽을 받는 파드와 큐를 도는 파드를 갈라야 각각을 따로 늘리고 따로 재배포할 수 있다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guard-web
+  namespace: portfolio
+  labels: { app: guard, role: web }
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # 무중단 검증의 전제. surge=1 로 새 파드를 먼저 띄우고, unavailable=0 으로
+      # 준비된 파드 수가 절대 줄지 않게 한다. 이 두 값이 곧 "무중단"의 정의다.
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels: { app: guard, role: web }
+  template:
+    metadata:
+      labels: { app: guard, role: web }
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: { app: guard, role: web }
+      containers:
+        - name: guard
+          image: portfolio/guard:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef: { name: guard-config }
+          env:
+            - name: APP_RELAY_WORKER_ENABLED
+              value: "false"
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: mysql-auth, key: MYSQL_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: mysql-auth, key: MYSQL_PASSWORD } }
+            - name: POD_NAME
+              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+          resources:
+            requests: { cpu: 200m, memory: 384Mi }
+            limits: { cpu: "1", memory: 768Mi }
+          # JVM + Flyway 마이그레이션이라 기동이 길다. startup 을 넉넉히 두고, 그것이
+          # 통과하기 전에는 liveness 가 돌지 않게 해 기동 중 재시작 루프를 막는다.
+          startupProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            periodSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            periodSeconds: 10
+          # 종료 시 진행 중인 요청을 흘려보낼 시간. 파드가 Terminating 이 되는 순간과
+          # 엔드포인트에서 빠지는 순간이 동시가 아니라, 그 틈에 온 요청이 죽은 파드로 간다.
+          lifecycle:
+            preStop:
+              exec: { command: ["sh", "-c", "sleep 5"] }
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guard-web
+  namespace: portfolio
+spec:
+  type: NodePort
+  selector: { app: guard, role: web }
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 30080
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: guard-web
+  namespace: portfolio
+spec:
+  # 노드 드레인 같은 자발적 중단에서 최소 한 파드는 남긴다. 롤링 업데이트의 maxUnavailable 과
+  # 다른 축이다 - 저건 배포가 지키고 이건 클러스터 운영이 지킨다.
+  minAvailable: 1
+  selector:
+    matchLabels: { app: guard, role: web }

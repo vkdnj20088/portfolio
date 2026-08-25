@@ -6,6 +6,7 @@ import com.portfolio.extension.domain.RelayJob;
 import com.portfolio.extension.domain.RelayOutboxEvent;
 import com.portfolio.extension.observability.RelayMetrics;
 import com.portfolio.extension.relay.RelayJobStatus;
+import com.portfolio.extension.relay.RelayLeaseMode;
 import com.portfolio.extension.relay.RelayOutcomes;
 import com.portfolio.extension.repository.RelayAttemptRepository;
 import com.portfolio.extension.repository.RelayJobRepository;
@@ -56,6 +57,20 @@ public class RelayWorker {
     private final RelayMetrics metrics;
     private final TransactionTemplate tx;
     private final boolean enabled;
+    /** 리스가 어느 층에 기대는가. 운영은 SKIP_LOCKED 뿐이고 나머지는 실험용이다. */
+    private final RelayLeaseMode leaseMode;
+    /**
+     * 리스를 잡은 뒤 실행 전에 붙잡고 있는 시간(계측용, 기본 0 = 없음).
+     *
+     * <p>리스 커밋과 실행 커밋 사이가 이 워커의 **취약 구간**이다 - 그 사이에 프로세스가 죽으면
+     * 작업은 RUNNING 으로 남고, 이 코드에는 그것을 회수하는 경로가 없다. 그런데 실제 구간은
+     * 마이크로초라 밖에서 프로세스를 죽여 맞히는 것이 사실상 불가능하다(200건에 4회 죽여
+     * 한 건도 못 맞혔다). 그래서 **구간을 넓혀 놓고 진짜로 죽인다** - 죽이는 것은 여전히
+     * 외부의 SIGKILL 이고, 넓힌 것은 겨냥할 창뿐이다.
+     *
+     * <p>기본값이 0 이라 켜지 않으면 존재하지 않는 것과 같다. 운영에서 켤 값이 아니다.
+     */
+    private final long leaseHoldMs;
 
     /** 다음 폴 시각(적응형). wake() 가 과거로 당겨 즉시 폴하게 만든다. */
     private volatile Instant nextPollAt = Instant.EPOCH;
@@ -63,13 +78,32 @@ public class RelayWorker {
     public RelayWorker(RelayJobRepository jobs, RelayAttemptRepository attempts,
             RelayOutboxRepository outbox, RelayMetrics metrics,
             PlatformTransactionManager transactionManager,
-            @Value("${app.relay.worker.enabled:true}") boolean enabled) {
+            @Value("${app.relay.worker.enabled:true}") boolean enabled,
+            @Value("${app.relay.worker.lease-mode:SKIP_LOCKED}") RelayLeaseMode leaseMode,
+            @Value("${app.relay.worker.lease-hold-ms:0}") long leaseHoldMs) {
         this.jobs = jobs;
         this.attempts = attempts;
         this.outbox = outbox;
         this.metrics = metrics;
         this.tx = new TransactionTemplate(transactionManager);
         this.enabled = enabled;
+        this.leaseMode = leaseMode;
+        this.leaseHoldMs = leaseHoldMs;
+        // 이 파드가 어느 모드로 도는지 기동 로그에 한 줄 남긴다. 실험이 "모드를 바꿨다"고
+        // 주장하려면 바뀐 것이 로그에 있어야 한다 - 주장과 증거를 같은 곳에 둔다.
+        log.info("relay worker: enabled={} leaseMode={} leaseHoldMs={}", enabled, leaseMode, leaseHoldMs);
+    }
+
+    /**
+     * 리스 후보 조회. 기본은 {@code FOR UPDATE SKIP LOCKED} 이고, 나머지 둘은 층을 걷어냈을 때
+     * 무엇이 대신 막는지 실측하기 위한 경로다({@link RelayLeaseMode}).
+     */
+    private List<RelayJob> lease(Instant now) {
+        return switch (leaseMode) {
+            case FOR_UPDATE -> jobs.leaseReadyForUpdate(now, LEASE_BATCH);
+            case NONE -> jobs.leaseReadyNoLock(now, LEASE_BATCH);
+            case SKIP_LOCKED -> jobs.leaseReady(now, LEASE_BATCH);
+        };
     }
 
     /** 예약·재처리 직후 호출 - 다음 틱에서 바로 폴한다. */
@@ -90,7 +124,7 @@ public class RelayWorker {
         List<Long> leased;
         try {
             leased = tx.execute(status -> {
-                List<RelayJob> ready = jobs.leaseReady(now, LEASE_BATCH);
+                List<RelayJob> ready = lease(now);
                 for (RelayJob job : ready) {
                     job.markRunning();
                 }
@@ -98,7 +132,9 @@ public class RelayWorker {
             });
         } catch (OptimisticLockingFailureException e) {
             // 취소/재처리와 리스가 같은 행에서 스쳤다 - 이번 틱을 접고 다음 틱이 다시 본다.
-            log.debug("relay lease conflict, retry next tick", e);
+            // 잠금을 걷어낸 실험(leaseMode=NONE)에서는 이 자리가 **마지막에서 두 번째 방어선**이
+            // 된다. 실험이 무엇에 막혔는지 세려면 debug 로는 보이지 않으므로 한 단 올려 남긴다.
+            log.warn("relay lease conflict (mode={}), retry next tick", leaseMode);
             return;
         }
 
@@ -112,6 +148,15 @@ public class RelayWorker {
         }
 
         nextPollAt = now; // 활동 중 - 다음 틱도 바로 폴
+        if (leaseHoldMs > 0) {
+            // 계측 전용 지연. 여기서 죽으면 위에서 커밋한 RUNNING 이 그대로 남는다.
+            try {
+                Thread.sleep(leaseHoldMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
         for (Long id : leased) {
             executeAttempt(id);
         }

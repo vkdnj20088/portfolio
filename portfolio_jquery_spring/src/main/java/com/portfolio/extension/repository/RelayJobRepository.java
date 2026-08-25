@@ -35,6 +35,25 @@ public interface RelayJobRepository extends JpaRepository<RelayJob, Long> {
             + "LIMIT :limit FOR UPDATE SKIP LOCKED", nativeQuery = true)
     List<RelayJob> leaseReady(@Param("now") Instant now, @Param("limit") int limit);
 
+    /**
+     * 실험용 - 잠긴 행을 <b>기다린다</b>({@code SKIP LOCKED} 없이 {@code FOR UPDATE}).
+     * 상호배제는 그대로지만 대기가 생기므로, 이 모드가 증명하는 것은 정확성이 아니라 처리량이다.
+     */
+    @Query(value = "SELECT * FROM relay_job WHERE status IN ('PENDING', 'RETRYING') "
+            + "AND next_attempt_at <= :now ORDER BY next_attempt_at, id "
+            + "LIMIT :limit FOR UPDATE", nativeQuery = true)
+    List<RelayJob> leaseReadyForUpdate(@Param("now") Instant now, @Param("limit") int limit);
+
+    /**
+     * 실험용 - 행 잠금 없이 읽는다. 워커 둘이 같은 행을 집고, 그때 무엇이 막는지를 본다
+     * (낙관적 락의 version, 그리고 {@code UNIQUE(job_id, run, attempt_no)}).
+     * 운영에서 쓸 모드가 아니다 - 무엇이 마지막 방어선인지 확인하려고만 존재한다.
+     */
+    @Query(value = "SELECT * FROM relay_job WHERE status IN ('PENDING', 'RETRYING') "
+            + "AND next_attempt_at <= :now ORDER BY next_attempt_at, id "
+            + "LIMIT :limit", nativeQuery = true)
+    List<RelayJob> leaseReadyNoLock(@Param("now") Instant now, @Param("limit") int limit);
+
     /** 큐 현황 - 상태별 건수(화면 상단 카운터). */
     long countByStatus(RelayJobStatus status);
 
