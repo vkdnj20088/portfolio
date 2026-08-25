@@ -6,6 +6,7 @@
 # 숫자는 다음 사람이 재현할 수 없고, 재현할 수 없는 숫자는 포트폴리오에 적을 수 없다.
 #
 #   ./k8s/scripts/lab.sh up          클러스터 + 이미지 + 배포
+#   ./k8s/scripts/lab.sh images      이미지만 빌드·적재(CI 가 이 경로를 쓴다)
 #   ./k8s/scripts/lab.sh measure     실험 전부 실행 후 k8s/results/runs.json 갱신
 #   ./k8s/scripts/lab.sh down        클러스터 제거
 set -euo pipefail
@@ -16,10 +17,19 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 K8S="$ROOT/k8s"
 GUARD_URL="http://localhost:30080"
 RESULTS="$K8S/results/runs.json"
+# DB 이미지는 다이제스트로 고정한다. mysql:8.4 는 **움직이는 태그**라, 같은 8.4.11 인데도
+# 새 빌드에서 유닉스 소켓 경로가 사라져 CI 가 로컬과 다른 서버를 돌았다(그 실패가 이 고정의
+# 이유다). kind 는 다이제스트 참조를 적재하지 못하므로, 받아서 우리 이름으로 다시 태그한다.
+MYSQL_UPSTREAM="mysql@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb"
+MYSQL_IMAGE="portfolio/mysql:8.4"
 
 log() { printf '\n\033[1m== %s\033[0m\n' "$*" >&2; }
 
-# 질의 한 번. 실패를 **삼키지 않는다** - 처음 CI 에서 이 함수가 조용히 1 을 돌려주는 바람에
+# 질의 한 번. **TCP 로 붙는다**(-h 127.0.0.1) - 유닉스 소켓 경로는 이미지 빌드에 따라 달라져서,
+# 소켓으로 붙으면 서버가 멀쩡한데도 클라이언트만 못 붙는 일이 생긴다(실제로 CI 를 이렇게 잃었다).
+# 3306 은 앱도 프로브도 쓰는 경로라, 여기만 다른 길로 갈 이유가 없다.
+#
+# 실패를 **삼키지 않는다** - 처음 CI 에서 이 함수가 조용히 1 을 돌려주는 바람에
 # 실험 첫 줄에서 멈췄는데 무엇이 없어서 멈췄는지 로그에 아무것도 남지 않았다. 비밀번호 경고만
 # 걸러내고 진짜 오류는 질의와 함께 올린다. 클러스터 왕복은 가끔 흔들리므로 세 번까지 본다 -
 # 다만 몇 번째에 됐는지를 적는다(조용한 재시도는 불안정을 안정으로 보이게 한다).
@@ -29,7 +39,7 @@ sql() {
   for attempt in 1 2 3; do
     # rc 를 조건문 밖에서 줍지 않는다 - if 가 끝난 뒤의 $? 는 조건의 실패를 그대로 담지 않아
     # 실패를 0 으로 돌려줄 수 있다. 실패를 성공으로 바꾸는 자리는 만들지 않는다.
-    out=$(kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -uext -plabpass extdb -N -B -e \"$q\"" 2>"$err") && rc=0 || rc=$?
+    out=$(kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -h 127.0.0.1 -P 3306 -uext -plabpass extdb -N -B -e \"$q\"" 2>"$err") && rc=0 || rc=$?
     if [ "$rc" -eq 0 ]; then
       [ "$attempt" -gt 1 ] && echo "  (sql ${attempt}회차에 성공)" >&2
       rm -f "$err"
@@ -47,7 +57,7 @@ sql() {
 }
 
 # 성공 여부만 보는 조용한 질의(폴링 전용). 사람에게 실패를 말해야 하는 자리에는 sql() 를 쓴다.
-sql_try() { kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -uext -plabpass extdb -N -B -e \"$1\"" >/dev/null 2>&1; }
+sql_try() { kubectl -n "$NS" exec mysql-0 -- sh -c "mysql -h 127.0.0.1 -P 3306 -uext -plabpass extdb -N -B -e \"$1\"" >/dev/null 2>&1; }
 
 # 멈췄을 때 사람이 볼 것들. 로컬에서는 손으로 볼 수 있지만 CI 에서는 이때 안 찍으면 영원히 못 본다.
 dump_diag() {
@@ -84,9 +94,12 @@ build_images() {
   docker build -q --build-arg GIT_SHA="$(git -C "$ROOT" rev-parse --short HEAD)" \
     -t portfolio/guard:dev "$ROOT/portfolio_jquery_spring" >/dev/null
   docker build -q -t portfolio/loandoc:dev "$ROOT/portfolio_python_fastapi" >/dev/null
-  docker pull -q mysql:8.4 >/dev/null
+  # 다이제스트로 받아 우리 이름으로 태그한다. kind 는 다이제스트 참조를 그대로 적재하지 못한다
+  # ("content digest ... not found") - 태그를 거쳐야 한다.
+  docker pull -q "$MYSQL_UPSTREAM" >/dev/null
+  docker tag "$MYSQL_UPSTREAM" "$MYSQL_IMAGE"
   # kind 노드는 호스트 도커의 이미지를 보지 못한다 - 명시적으로 적재한다.
-  kind load docker-image portfolio/guard:dev portfolio/loandoc:dev mysql:8.4 --name "$CLUSTER" >/dev/null
+  kind load docker-image portfolio/guard:dev portfolio/loandoc:dev "$MYSQL_IMAGE" --name "$CLUSTER" >/dev/null
 }
 
 up() {
@@ -417,6 +430,7 @@ measure() {
 
 case "${1:-}" in
   up) up ;;
+  images) build_images ;;
   down) down ;;
   status) status ;;
   sql) sql "$2" ;;

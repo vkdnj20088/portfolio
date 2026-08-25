@@ -59,12 +59,11 @@ jobs:
           cluster_name: portfolio
           wait: 180s
 
+      # 이미지 빌드·적재는 **로컬과 같은 코드**를 쓴다. 여기에 도커 명령을 따로 적어 두면
+      # 두 곳이 서서히 갈라지고, 갈라진 것을 아무도 모른다 - DB 이미지를 다이제스트로 고정한
+      # 것도 그 스크립트 안에 있다.
       - name: 이미지 빌드와 적재
-        run: |
-          docker build --build-arg GIT_SHA="${GITHUB_SHA::7}" -t portfolio/guard:dev portfolio_jquery_spring
-          docker build -t portfolio/loandoc:dev portfolio_python_fastapi
-          docker pull mysql:8.4
-          kind load docker-image portfolio/guard:dev portfolio/loandoc:dev mysql:8.4 --name portfolio
+        run: ./k8s/scripts/lab.sh images
 
       - name: 배포
         run: |

@@ -50,8 +50,10 @@ colima start --cpu 4 --memory 6 --disk 20
 
 CI 는 `helm/kind-action` 이 클러스터를 세웁니다([`.github/workflows/k8s-lab.yml`](../.github/workflows/k8s-lab.yml)).
 kind·노드 이미지·kubectl 버전은 로컬과 같은 값으로 못박아 두었습니다(kind v0.32.0 /
-`kindest/node:v1.36.1` / kubectl v1.36.4). 두 곳이 서로 다른 클러스터를 돌면 한쪽에서 얻은
-숫자를 다른 쪽 이야기로 옮겨 말할 수 없습니다.
+`kindest/node:v1.36.1` / kubectl v1.36.4). MySQL 이미지도 다이제스트로 고정합니다 - `mysql:8.4`
+는 움직이는 태그라, 같은 8.4.11 인데도 새 빌드에서 유닉스 소켓 경로가 사라져 CI 가 로컬과 다른
+서버를 돌았습니다. 두 곳이 서로 다른 것을 돌면 한쪽에서 얻은 숫자를 다른 쪽 이야기로 옮겨 말할
+수 없습니다.
 
 ## 이 실험실이 앱에 남긴 스위치
 

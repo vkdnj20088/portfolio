@@ -49,7 +49,12 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: mysql:8.4
+          # 실험 스크립트가 공식 mysql 이미지를 **다이제스트로** 받아 이 이름으로 태그해 적재한다
+          # (k8s/scripts/lab.sh). mysql:8.4 를 그대로 쓰면 태그가 움직여 로컬과 CI 가 다른 서버를
+          # 돌게 되는데, 실제로 그 차이로 CI 가 죽었다(소켓 경로가 사라진 새 빌드). 여기 이름이
+          # 없는 채로 매니페스트만 적용하면 이미지를 못 찾고 멈춘다 - 조용히 다른 서버를 받는
+          # 것보다 낫다.
+          image: portfolio/mysql:8.4
           imagePullPolicy: IfNotPresent
           args:
             # 리스 실험이 InnoDB 행 잠금 위에 서 있다. 잠금 대기를 5초로 줄여, FOR_UPDATE 모드가
