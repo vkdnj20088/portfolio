@@ -15,17 +15,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isSearch = pathname.startsWith('/search');
   const isEval = pathname.startsWith('/eval');
   const isAgent = pathname.startsWith('/agent');
+  const isApproval = pathname.startsWith('/approval');
   // 인트로 카드의 data-demo 와 같은 키. 이 앱은 화면마다 다른 카드라 라우트에서 고른다.
   // 품질 지표(/eval)는 카드가 아니라 목록 밖 링크 한 줄이다 - 키는 보내되 표식은 붙지 않는다.
-  // /agent 는 데모 카드가 아니라 아홉 데모 위에 올라가는 층이라 인트로 카드 키가 없다.
-  // 카드가 없으므로 복귀 링크는 목록 자체로 보낸다(키를 지어내면 없는 카드를 강조하게 된다).
-  const demoKey = isAgent
-    ? 'docqa-qa'
-    : isEval
-      ? 'docqa-eval'
-      : isSearch
-        ? 'docqa-search'
-        : 'docqa-qa';
+  // /agent 와 /approval 은 인트로의 데모 카드가 아니다 - 카드는 아홉 장 그대로 두고 목록 밖
+  // 링크로만 걸었다. 카드가 없으므로 키를 지어내지 않고 이 앱의 대표 카드로 보낸다.
+  const demoKey =
+    isAgent || isApproval
+      ? 'docqa-qa'
+      : isEval
+        ? 'docqa-eval'
+        : isSearch
+          ? 'docqa-search'
+          : 'docqa-qa';
   const portfolioHome = usePortfolioHome(PORTFOLIO_FALLBACK, demoKey);
 
   const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
@@ -46,7 +48,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="topbar">
+      {/* 실험대는 제어판·타임라인·카운터 세 열이라 920px 안에서는 어느 열도 읽히지 않는다.
+          그 라우트에서만 셸과 상단바를 함께 넓힌다 - 한쪽만 넓히면 헤더와 본문의 폭이 어긋난다. */}
+      <header className={`topbar${isApproval ? ' isWide' : ''}`}>
         {/* 여섯 데모 중 이 앱만 화면에 소유자 표기가 없었다(브라우저 탭 제목에만 있었다).
             데모는 서브도메인으로 직접 열려서 인트로를 안 거친 평가자에게는 여기가 유일한
             자기소개 자리다. 푸터가 아니라 상단바에 두는 이유: §0 배지가 이미 여기 있어
@@ -65,7 +69,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </div>
         <nav className="nav" aria-label="제품">
-          <Link href="/" aria-current={!isSearch && !isEval && !isAgent ? 'page' : undefined}>
+          <Link
+            href="/"
+            aria-current={!isSearch && !isEval && !isAgent && !isApproval ? 'page' : undefined}
+          >
             근거 QA
           </Link>
           <Link href="/search" aria-current={isSearch ? 'page' : undefined}>
@@ -76,6 +83,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <Link href="/agent" aria-current={isAgent ? 'page' : undefined}>
             에이전트 실행
+          </Link>
+          {/* 여섯 번째가 아니라 다섯 번째다. 에이전트 층의 세 화면은 세그먼트로 묶었지만
+              실험대는 주제가 달라 묶을 상위 개념이 없다. */}
+          <Link href="/approval" aria-current={isApproval ? 'page' : undefined}>
+            이중 승인
           </Link>
         </nav>
         <button
@@ -95,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      <main className="shell">{children}</main>
+      <main className={`shell${isApproval ? ' isWide' : ''}`}>{children}</main>
 
       <a className="portfolioHome" href={portfolioHome} aria-label="포트폴리오로 돌아가기">
         <span aria-hidden="true">&#8592;</span>

@@ -18,7 +18,7 @@
 | 폴더 | 데모 | 스택 | 무게중심 | 라이브 | 테스트 |
 |------|------|------|----------|--------|--------|
 | `portfolio_react_next` | LLM 챗봇 목업 | Next 16 / React 19 / TS, pnpm + Turborepo | 프론트엔드, UX, 스트리밍, 접근성, 키 게이트 LLM 전송 | [chat](https://chat.jongeunchoi.dev/) | 단위 159 + e2e 4 |
-| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 16 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거/인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 82 + 에이전트 코어 34 |
+| `portfolio_react_next/apps/docqa` | 문서 근거 QA + 시맨틱 검색 (JC DocuQA) | Next 16 / React 19 / TS, 결정적 TF-IDF 색인 | 리트리벌, 추출형 MRC, 근거/인용, 품질 계측 | [docqa](https://docqa.jongeunchoi.dev/) | 단위 92 + 검색 42 + 에이전트 코어 96 + 승인 도메인 58 |
 | `portfolio_exchange_next` | 가상자산 거래소 목업 | Next 16 / React 19 / TS, lightweight-charts | 매칭엔진, 실시간, 성능, 멀티탭 | [exchange](https://exchange.jongeunchoi.dev/) | 단위 54(RTL 포함) |
 | `portfolio_jquery_spring` | 파일 확장자 차단 + IP 접근 제어 + 작업 릴레이 | Spring Boot 4.1 / Java 21, jQuery 4 + TS/webpack | 백엔드, 동시성, 보안, 관측성, 배포 | [file](https://file.jongeunchoi.dev/) / [ip](https://ip.jongeunchoi.dev/) / [relay](https://guard.jongeunchoi.dev/relay.html) | 백엔드 189 + 통합 6종 24 + 프론트 33 |
 | `portfolio_python_fastapi` | 대출 서류 분류 파이프라인 (JC LoanDoc) | Python 3 / FastAPI, pypdf | 문서 파이프라인, 룰 + LLM 폴백 하이브리드, 재현성 | [loandoc](https://loandoc.jongeunchoi.dev/) | 단위 59 + E2E 스모크 |
@@ -81,6 +81,7 @@ pnpm dev          # http://localhost:3000
 - `/eval` **품질 지표** - 직접 라벨링한 **골드셋 33문항**으로 Recall@k/MRR/답변 정확도/**불응답 정확도**를 재고, 오답과 과잉 불응답까지 같은 표에 공개합니다. 이 수치는 테스트의 **회귀 게이트**이기도 합니다.
 - `/eval` **LLM 독해 대조군** - 같은 골드셋에 같은 검색 결과를 주고 **읽는 쪽만** LLM 으로 바꾼 판정을 나란히 놓습니다. 우열표가 아니라 무엇이 다른가를 보는 표이고, LLM 이 더 맞힌 문항도 감추지 않습니다. 배포에 키를 두지 않으므로 키 보유자가 1회 수집해 커밋한 판정을 재생합니다(챗/loandoc 과 같은 장치).
 - `/agent` **에이전트 실행 되짚기** - 데모가 아니라 **아홉 데모 위의 층**입니다(인트로 카드는 아홉 그대로). 도구를 쓰는 에이전트가 문서 검색/근거 QA/IP 접근 제어를 도구로 불러 다단계 과제를 풀고, 실행 전체가 span 트리로 남습니다. **모델 응답은 커밋된 것을 재생하지만 도구는 지금 다시 실행해** 출력을 대조합니다. traceId 가 `X-Request-Id` 로 나가 Spring 로그와 같은 ID 로 이어집니다.
+- `/approval` **이중 승인 실험대** - 이것도 데모 카드가 아니라 한 층입니다(인트로 카드는 아홉 그대로). 외부 결제 승인이 timeout 일 때 그것은 실패가 아니라 **모름**이고, 성공/실패 2 값으로 접으면 어느 쪽으로 접어도 틀린다는 것을 **방어선을 끄고 켠 같은 실행**을 나란히 돌려 숫자로 보입니다. 작업 릴레이 데모가 남긴 빈칸(부작용을 되돌릴 수 없어 재시도 자체가 위험한 경우)을 다룹니다. 프리셋 여섯 중 둘은 방어선의 유무가 아니라 **그럴듯한 오답**을 실행해 틀렸음을 보입니다. 서버도 외부 호출도 없이 브라우저에서 전부 계산합니다.
 - **실 LLM/벡터DB 없이**, 답변이 인용 문단과 축자 일치하는지 매 응답 대조(`verifyGrounding`)해 배지로 노출합니다 - 지어낸 말이 섞이면 즉시 드러납니다. "근거 문장을 잘못 고를 수 있다"는 한계는 숨기지 않고 `/eval` 에 수치로 둡니다.
 - 답변은 실제 SSE(`POST /api/answer`)로 받고, 전송이 죽으면 같은 계약의 mock 으로 **중복 없이 이어받아** 강등합니다(전송은 배지에 정직하게 표시).
 - 상세: [portfolio_react_next/README.md](portfolio_react_next/README.md) 의 부록

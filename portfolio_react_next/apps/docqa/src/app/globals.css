@@ -1507,3 +1507,423 @@ mark {
 .outcome.isNeutral {
   color: var(--color-text-muted);
 }
+
+/* ── 이중 승인 실험대 ───────────────────────────────────── */
+/* 세 열(제어판·타임라인·카운터)이라 920px 안에서는 어느 열도 읽히지 않는다.
+   이 라우트에서만 셸과 상단바를 함께 넓힌다 - 한쪽만 넓히면 폭이 어긋난다. */
+.shell.isWide,
+.topbar.isWide {
+  max-width: 1200px;
+}
+
+.apBadge {
+  display: inline-block;
+  margin-top: var(--space-3);
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.apPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+.apPreset {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+.apPreset:hover {
+  border-color: var(--color-border-strong);
+}
+.apPreset.isOn {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+.apPreset .pId {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+}
+.apProves {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+.apProves.apCustom {
+  color: var(--color-text-muted);
+}
+.apProves .apArrow {
+  color: var(--color-text-muted);
+}
+
+.apLayout {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr) 236px;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .apLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* 숫자 열만 붙여 둔다. 타임라인을 읽는 동안 승인 건수가 화면에서 사라지면 대조가 끊기고,
+   넓은 셸에서는 이 열의 아래쪽이 화면 오른쪽 아래 고정된 복귀 버튼에 가린다. */
+@media (min-width: 1081px) {
+  .apCounters {
+    position: sticky;
+    top: 76px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+}
+.apPanel,
+.apTimelines,
+.apCounters {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  min-width: 0;
+}
+.apH2 {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-base);
+  letter-spacing: -0.01em;
+}
+
+.apField {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.apField > label,
+.apField > legend {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 0;
+}
+.apField select,
+.apField input[type='number'] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: var(--text-sm);
+}
+.apField select:disabled {
+  opacity: 0.55;
+}
+.apHint {
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+.apLimits {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+.apCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.apCheck input {
+  margin-top: 3px;
+  flex: none;
+}
+.apCheck em {
+  display: block;
+  font-style: normal;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.apRow {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.apRow > label,
+.apRowLabel {
+  flex: none;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.apRow input[type='number'] {
+  width: 6.5em;
+}
+.apUnit {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.apSegs {
+  display: flex;
+  gap: 4px;
+}
+.apSegs button {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.apSegs button.isOn {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+  font-weight: 600;
+}
+
+.apWarn {
+  margin-bottom: var(--space-3);
+  padding: 8px var(--space-3);
+  border-left: 3px solid var(--color-warning);
+  background: var(--color-warning-subtle);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+}
+.apLanes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+@media (max-width: 720px) {
+  .apLanes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.apLane {
+  min-width: 0;
+}
+.apLane > header {
+  padding-bottom: 6px;
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+.apLane > header h3 {
+  font-size: var(--text-sm);
+}
+.apLane > header p {
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+.apTick {
+  margin-bottom: var(--space-3);
+}
+.apTickNo {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+.apTick ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.apStep {
+  padding: 6px var(--space-2);
+  border-left: 3px solid var(--color-border-strong);
+  background: var(--color-surface);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--text-xs);
+  line-height: 1.55;
+}
+.apStep.tone-ok {
+  border-left-color: var(--color-success);
+}
+.apStep.tone-warn {
+  border-left-color: var(--color-warning);
+}
+.apStep.tone-bad {
+  border-left-color: var(--color-danger);
+  background: var(--color-danger-subtle);
+}
+.apStep .sLabel {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.apStep .sWhy {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.apBigPair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.apBig {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.apBig.isBad {
+  border-color: var(--color-danger);
+  background: var(--color-danger-subtle);
+}
+.apBig strong {
+  font-size: 34px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+.apBig .bCaption {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.apBig .bExpect {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.apBig .bExpect.isOk {
+  color: var(--color-success);
+}
+.apBig .bExpect.isMiss {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+.apBigCaption {
+  margin-top: 6px;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.apVerdict {
+  margin-top: var(--space-3);
+  padding: 8px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.apVerdict.isBad {
+  background: var(--color-danger-subtle);
+  border-left: 3px solid var(--color-danger);
+}
+.apCounterRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.2em 3.2em;
+  gap: 4px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.apCounterRow.apCounterHead {
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.apCounterRow.apCounterHead .cValue {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+.apCounterRow .cLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.apCounterRow .cValue {
+  text-align: right;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.apCounterRow .cValue em {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.apStatuses {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-xs);
+}
+.apStatuses dt {
+  color: var(--color-text-muted);
+}
+.apStatuses dd {
+  margin: 2px 0 var(--space-2);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.apNote {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+.apDrift {
+  margin-bottom: var(--space-3);
+  padding: 8px var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+.apDrift.isOk {
+  border-left: 3px solid var(--color-success);
+  background: var(--color-surface);
+}
+.apDrift.isBad {
+  border-left: 3px solid var(--color-danger);
+  background: var(--color-danger-subtle);
+  font-weight: 600;
+}
+.apPair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.apPair b {
+  font-weight: 600;
+}
+.apPair b.isBad {
+  color: var(--color-danger);
+}
+.apPair span {
+  color: var(--color-text-muted);
+}
