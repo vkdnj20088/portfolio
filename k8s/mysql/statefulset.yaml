@@ -49,12 +49,17 @@ spec:
     spec:
       containers:
         - name: mysql
-          # 실험 스크립트가 공식 mysql 이미지를 **다이제스트로** 받아 이 이름으로 태그해 적재한다
-          # (k8s/scripts/lab.sh). mysql:8.4 를 그대로 쓰면 태그가 움직여 로컬과 CI 가 다른 서버를
-          # 돌게 되는데, 실제로 그 차이로 CI 가 죽었다(소켓 경로가 사라진 새 빌드). 여기 이름이
-          # 없는 채로 매니페스트만 적용하면 이미지를 못 찾고 멈춘다 - 조용히 다른 서버를 받는
-          # 것보다 낫다.
-          image: portfolio/mysql:8.4
+          # 다이제스트로 못박는다. `mysql:8.4` 는 움직이는 태그라, 같은 8.4.11 인데도 새 빌드에서
+          # 유닉스 소켓 경로가 사라져 로컬과 CI 가 다른 서버를 돌았다(실험 스크립트가 그 소켓으로
+          # 붙고 있어 CI 가 죽었다. 스크립트는 이제 TCP 로 붙지만, 서버가 실행마다 달라지는 것은
+          # 그것대로 막는다).
+          #
+          # 이 이미지만 kind 로 적재하지 않고 **노드가 직접 받는다.** 앱 이미지 둘은 여기서 만든
+          # 단일 플랫폼 이미지라 적재되지만, 레지스트리의 멀티아치 이미지는 `docker save` 가
+          # 매니페스트 목록을 가리키는 색인을 내놓아 `ctr import --all-platforms` 가 없는 블롭을
+          # 찾다 멈춘다("content digest ... not found"). 다이제스트를 풀어 태그로 받아도 같다.
+          # 노드의 containerd 는 레지스트리에서 제 플랫폼을 골라 받으므로 이 문제가 없다.
+          image: mysql:8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
           imagePullPolicy: IfNotPresent
           args:
             # 리스 실험이 InnoDB 행 잠금 위에 서 있다. 잠금 대기를 5초로 줄여, FOR_UPDATE 모드가

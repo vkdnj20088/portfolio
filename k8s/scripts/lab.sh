@@ -17,11 +17,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 K8S="$ROOT/k8s"
 GUARD_URL="http://localhost:30080"
 RESULTS="$K8S/results/runs.json"
-# DB 이미지는 다이제스트로 고정한다. mysql:8.4 는 **움직이는 태그**라, 같은 8.4.11 인데도
-# 새 빌드에서 유닉스 소켓 경로가 사라져 CI 가 로컬과 다른 서버를 돌았다(그 실패가 이 고정의
-# 이유다). kind 는 다이제스트 참조를 적재하지 못하므로, 받아서 우리 이름으로 다시 태그한다.
-MYSQL_UPSTREAM="mysql@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb"
-MYSQL_IMAGE="portfolio/mysql:8.4"
 
 log() { printf '\n\033[1m== %s\033[0m\n' "$*" >&2; }
 
@@ -94,12 +89,11 @@ build_images() {
   docker build -q --build-arg GIT_SHA="$(git -C "$ROOT" rev-parse --short HEAD)" \
     -t portfolio/guard:dev "$ROOT/portfolio_jquery_spring" >/dev/null
   docker build -q -t portfolio/loandoc:dev "$ROOT/portfolio_python_fastapi" >/dev/null
-  # 다이제스트로 받아 우리 이름으로 태그한다. kind 는 다이제스트 참조를 그대로 적재하지 못한다
-  # ("content digest ... not found") - 태그를 거쳐야 한다.
-  docker pull -q "$MYSQL_UPSTREAM" >/dev/null
-  docker tag "$MYSQL_UPSTREAM" "$MYSQL_IMAGE"
-  # kind 노드는 호스트 도커의 이미지를 보지 못한다 - 명시적으로 적재한다.
-  kind load docker-image portfolio/guard:dev portfolio/loandoc:dev "$MYSQL_IMAGE" --name "$CLUSTER" >/dev/null
+  # kind 노드는 호스트 도커의 이미지를 보지 못한다 - 여기서 만든 둘은 명시적으로 적재한다.
+  # DB 이미지는 넣지 않는다. 레지스트리의 멀티아치 이미지는 적재가 안 되고(매니페스트 목록을
+  # 가리키는 색인 때문에 ctr 이 없는 블롭을 찾는다), 노드가 다이제스트로 직접 받는 편이 낫다
+  # (k8s/mysql/statefulset.yaml).
+  kind load docker-image portfolio/guard:dev portfolio/loandoc:dev --name "$CLUSTER" >/dev/null
 }
 
 up() {
