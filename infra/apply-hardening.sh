@@ -40,6 +40,7 @@ for f in "${CONFD}/portfolio-hardening.conf" \
          "${SNIPPETS}/portfolio-static-headers.conf" \
          "${SNIPPETS}/portfolio-robots-disallow.conf" \
          "${SNIPPETS}/portfolio-guard-html.conf" \
+         "${SNIPPETS}/portfolio-block-next-image.conf" \
          "${AVAILABLE}/portfolio" \
          "${AVAILABLE}/portfolio-domain"; do
   [[ -f "$f" ]] && cp -a "$f" "${BACKUP}/$(basename "$f")"
@@ -53,7 +54,7 @@ rollback() {
     && cp -a "${BACKUP}/portfolio-hardening.conf" "${CONFD}/" \
     || rm -f "${CONFD}/portfolio-hardening.conf"
   for n in portfolio-proxy-app.conf portfolio-static-headers.conf portfolio-robots-disallow.conf \
-         portfolio-guard-html.conf portfolio-ticker-headers.conf; do
+         portfolio-guard-html.conf portfolio-ticker-headers.conf portfolio-block-next-image.conf; do
     # 백업에 없으면 이번 실행에서 새로 만든 파일이다 - 지운다(설정이 이 파일을 include 하는
     # 상태로 되돌아가지 않으므로, 남겨 두면 다음 nginx -t 만 헷갈리게 한다).
     [[ -f "${BACKUP}/${n}" ]] && cp -a "${BACKUP}/${n}" "${SNIPPETS}/" || rm -f "${SNIPPETS}/${n}"
@@ -79,6 +80,7 @@ install -m 0644 -o root -g root "$INFRA/nginx/snippets/static-headers.conf"     
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/robots-disallow.conf"    "${SNIPPETS}/portfolio-robots-disallow.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/guard-html.conf"        "${SNIPPETS}/portfolio-guard-html.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/snippets/ticker-headers.conf"     "${SNIPPETS}/portfolio-ticker-headers.conf"
+install -m 0644 -o root -g root "$INFRA/nginx/snippets/block-next-image.conf"   "${SNIPPETS}/portfolio-block-next-image.conf"
 install -m 0644 -o root -g root "$INFRA/nginx/portfolio.conf"                   "${AVAILABLE}/portfolio"
 echo "conf.d / snippets / portfolio 배치 완료"
 

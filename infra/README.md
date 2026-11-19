@@ -18,6 +18,7 @@ nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 
 | `apply-hardening.sh` | 위 드롭인/스니펫/사이트 설정 배치 + 검증 + 실패 시 자동 원복 |
 | `nginx/snippets/tls-ip.conf` | 포트 블록들이 공유하는 TLS 설정 - **인증서 경로가 여기 한 곳에만** 있습니다 |
 | `nginx/snippets/proxy-app.conf` | 앱 프록시 공통 헤더 |
+| `nginx/snippets/block-next-image.conf` | Next 이미지 최적화 API(`/_next/image`)를 404 로 닫는다. TLS server 블록마다 `http2 on;` 다음 줄에서 include. 쓰는 이미지가 없어 화면 영향 없음(2026-11-20 Next 원격 코드 실행 공지 대응, 이후에도 공격면 축소로 유지) |
 | `systemd/portfolio-chat.service` | Next standalone `node apps/chat/server.js` (127.0.0.1:3000) |
 | `systemd/portfolio-docqa.service` | Next standalone `node apps/docqa/server.js` (127.0.0.1:3030) |
 | `systemd/portfolio-exchange.service` | Next standalone `node server.js` (127.0.0.1:3010, 단독 프로젝트라 경로가 다름) |
@@ -26,6 +27,7 @@ nginx 설정, systemd 유닛, 프로비저닝, 배포 파이프라인을 전부 
 | `env/*.env.example` | `/etc/portfolio/*.env` 템플릿(시크릿은 서버에서만, 미커밋) |
 | `nginx/portfolio-bootstrap.conf` | 발급 전 80 전용 사이트(닭과 달걀 해소 - 아래 참고) |
 | `provision.sh` | 새 EC2 최초 1회(패키지/스왑/Docker MySQL/유저/유닛/nginx/인트로 웹루트) |
+| `migrate-nginx-org.sh` | nginx 를 우분투 패키지에서 **nginx.org 공식 안정판**으로 바꾼다(설정 트리는 그대로, 작업 사용자만 nginx). 실패하면 우분투 판과 원래 설정으로 되돌린다. provision.sh 가 nginx 를 깐 직후 부른다 |
 | `sync-units.sh` | 배포가 올린 systemd 유닛을 `/etc` 로 반영 + `daemon-reload` 하는 루트 헬퍼 |
 | `issue-cert-ip.sh` | IP 인증서 발급 + 스니펫에 경로 심기 + 통합 설정 활성화 + 6시간 갱신 타이머 |
 | `deploy-remote.sh` | 러너에서 실행: 전송 -> 릴리스 교체 -> 헬스 게이트 -> 롤백 |
@@ -341,3 +343,17 @@ pnpm 의 `node_modules` 는 `.pnpm` 저장소를 가리키는 심링크 구조�
 **따라가 실체를 복사**하므로(BSD 와 다름) 그 구조가 뭉개지고, 서버에서
 `Cannot find module 'styled-jsx'` 같은 형태로만 드러납니다. 워크플로는 `cp -a` 로 심링크를 보존하고,
 복사 직후 `next/package.json` 해석과 `require-hook` 로드를 확인해 **빌드 단계에서** 실패시킵니다.
+
+## nginx 를 nginx.org 판으로 쓰는 이유 (2026-11-19)
+
+2026-11-18 nginx 보안 공지(HTTP/2 흐름 제어 원격 코드 실행 CVE-2026-123007, HTTP/2 해제 후 사용 CVE-2026-123633,
+TLS 1.3 요청 본문 무한 루프 CVE-2026-118899 등 10건)에 이 서버는 8개 포트 전부 HTTP/2 를 켜고 있어 영향권이었습니다.
+nginx.org 는 같은 날 1.30.7 을 냈지만 우분투 24.04 패키지(1.24)는 미수정이었고, 임시 조치인 HTTP/2 끄기로는
+TLS 1.3 건이 막히지 않습니다. 그래서 바이너리만 nginx.org 안정판으로 바꿨습니다(`migrate-nginx-org.sh`).
+
+- 설정 트리(sites-available, snippets, conf.d)는 그대로입니다. 바뀐 것은 작업 프로세스 사용자(`www-data` -> `nginx`,
+  nginx.org 판의 임시 폴더 권한 때문)와 우분투 동적 모듈 include 한 줄(이 서버는 쓰는 모듈이 없다)뿐입니다.
+- 자동 보안 업데이트(unattended-upgrades)에 nginx.org 저장소를 넣어 다음 수정판도 저절로 올라갑니다.
+- HTTP/2 표기를 `listen ... ssl http2`(1.25.1+ 에서 경고)에서 블록마다 `http2 on;` 으로 바꿨습니다.
+- 같은 공지의 연구진이 root 까지 올린 고리(커널 SCTP 결함)를 끊으려고 SCTP 모듈을 막았습니다(`/etc/modprobe.d/disable-sctp.conf`).
+- 교체 전후 16개 주소(도메인 8 + IP 포트 8) 응답이 같고, 전 포트 HTTP/2 협상과 인증서 갱신 리허설을 확인했습니다.

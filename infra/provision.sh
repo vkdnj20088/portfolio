@@ -27,6 +27,11 @@ apt-get update -y
 apt-get install -y nginx openjdk-21-jre-headless curl ca-certificates gnupg rsync \
   python3-venv fonts-nanum
 
+log "nginx 를 nginx.org 안정판으로"
+# 우분투 패키지는 nginx 보안 수정이 늦다(2026-11-18 공지 때 며칠간 미수정). 위에서 깐 우분투 판의 설정 트리는
+# 그대로 두고 바이너리만 nginx.org 판으로 바꾼다. 아래의 nginx 설정(http2 on 등)은 1.25.1+ 를 전제로 한다.
+bash "$INFRA/migrate-nginx-org.sh"
+
 log "Node 22 (NodeSource)"
 if ! command -v node >/dev/null 2>&1; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
